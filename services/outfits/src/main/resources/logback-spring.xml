@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logs estructurados en JSON hacia stdout. En ECS, el driver awslogs los recoge
+  y los manda a CloudWatch Logs tal cual, sin parseo intermedio.
+
+  trace_id y span_id los inyecta el agente de OpenTelemetry en el MDC, asi que
+  un log se puede cruzar con su traza sin trabajo extra.
+
+  Para leerlos a ojo en local: docker compose logs outfits | jq
+-->
+<configuration>
+  <springProperty scope="context" name="servicio" source="spring.application.name" defaultValue="desconocido"/>
+
+  <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <timeZone>UTC</timeZone>
+      <!-- Sin esto, la propiedad de contexto 'servicio' se emite ademas
+           del customField de abajo y el JSON sale con la clave repetida.
+           CloudWatch Logs Insights se queda con una de las dos sin decir
+           cual. -->
+      <includeContext>false</includeContext>
+      <fieldNames>
+        <timestamp>momento</timestamp>
+        <level>nivel</level>
+        <message>mensaje</message>
+        <logger>origen</logger>
+        <thread>hilo</thread>
+        <stackTrace>traza_error</stackTrace>
+        <version>[ignore]</version>
+        <levelValue>[ignore]</levelValue>
+      </fieldNames>
+      <customFields>{"servicio":"${servicio}"}</customFields>
+      <includeMdcKeyName>trace_id</includeMdcKeyName>
+      <includeMdcKeyName>span_id</includeMdcKeyName>
+      <includeMdcKeyName>trace_flags</includeMdcKeyName>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="JSON"/>
+  </root>
+</configuration>

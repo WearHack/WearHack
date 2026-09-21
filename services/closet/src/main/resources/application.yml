@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: closet
+
+server:
+  port: ${SERVER_PORT:8082}
+  shutdown: graceful
+  # Sin esto, un contenedor que arranca frio puede tardar mas de lo necesario
+  # en aceptar la primera conexion.
+  tomcat:
+    threads:
+      min-spare: 4
+
+wearhack:
+  version: '@project.version@'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Solo lo que necesitamos. Exponer '*' regala superficie de ataque.
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  # El agente de OpenTelemetry se encarga de las trazas. Micrometer solo
+  # necesita saber a que servicio pertenecen las metricas.
+  metrics:
+    tags:
+      service: closet
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
