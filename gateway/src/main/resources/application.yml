@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Una ruta por servicio. El prefijo /api/v1/<servicio> lo conserva el
+          # servicio de abajo, asi que no hay que reescribir la ruta: lo que
+          # entra por el gateway es lo que el servicio ve.
+          routes:
+            - id: usuarios
+              uri: ${URI_USUARIOS:http://usuarios:8081}
+              predicates:
+                - Path=/api/v1/usuarios/**
+            - id: closet
+              uri: ${URI_CLOSET:http://closet:8082}
+              predicates:
+                - Path=/api/v1/closet/**
+            - id: outfits
+              uri: ${URI_OUTFITS:http://outfits:8083}
+              predicates:
+                - Path=/api/v1/outfits/**
+            - id: publicidad
+              uri: ${URI_PUBLICIDAD:http://publicidad:8084}
+              predicates:
+                - Path=/api/v1/publicidad/**
+            - id: colorimetria
+              uri: ${URI_COLORIMETRIA:http://colorimetria:8085}
+              predicates:
+                - Path=/api/v1/colorimetria/**
+            - id: recomendador
+              uri: ${URI_RECOMENDADOR:http://recomendador:8086}
+              predicates:
+                - Path=/api/v1/recomendador/**
+
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 10s
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+wearhack:
+  version: '@project.version@'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+    gateway:
+      # Util para depurar rutas en local. En AWS conviene cerrarlo: lista la
+      # topologia entera del backend.
+      access: ${ACTUATOR_GATEWAY_ACCESS:read-only}
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      service: gateway
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
