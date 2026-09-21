@@ -12,6 +12,10 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+# Lo genera uv al instalar, pero nadie lo lee: los Dockerfiles y CI instalan
+# desde pyproject.toml. Commitearlo daria una falsa sensacion de build
+# reproducible. Ver el ADR de dependencias de Python.
+uv.lock
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
