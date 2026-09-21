@@ -43,13 +43,18 @@ COPY --from=build --chown=wearhack:wearhack /build/extraido/application/ ./
 USER wearhack
 EXPOSE 8080
 
+# networkaddress.cache.ttl acota cuanto cachea la JVM una resolucion DNS. En
+# ECS las IPs de las tareas cambian en cada despliegue, y el gateway es el
+# unico que llama a los demas por nombre: sin esto puede quedarse apuntando a
+# una tarea que ya no existe. El negativo a 0 para no recordar un fallo de
+# resolucion mientras un servicio todavia esta arrancando.
 ENV OTEL_SERVICE_NAME=gateway \
     OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
     OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
     OTEL_METRICS_EXPORTER=otlp \
     OTEL_LOGS_EXPORTER=none \
     SERVER_PORT=8080 \
-    JAVA_TOOL_OPTIONS="-javaagent:/opt/otel/opentelemetry-javaagent.jar -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+    JAVA_TOOL_OPTIONS="-javaagent:/opt/otel/opentelemetry-javaagent.jar -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -Dnetworkaddress.cache.ttl=10 -Dnetworkaddress.cache.negative.ttl=0"
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=5 \
   CMD wget -qO- "http://127.0.0.1:${SERVER_PORT}/actuator/health/readiness" | grep -q '"status":"UP"' || exit 1
