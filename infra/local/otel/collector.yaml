@@ -1,0 +1,68 @@
+# Collector de OpenTelemetry para el entorno local.
+#
+# Todos los servicios le mandan trazas y metricas por OTLP. Aqui solo las
+# imprime por consola, que es lo que hace falta para comprobar que el cableado
+# funciona. En AWS este mismo archivo cambia los exporters por awsxray y
+# awsemf, y el resto se queda igual.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Primero el limitador: si la memoria se dispara, conviene rechazar lo que
+  # entra antes de haberlo puesto en un lote.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 15
+
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+  # Fuera los health checks. Cada contenedor se sondea cada diez segundos, para
+  # siempre, y eso son miles de trazas al dia que no dicen nada. En AWS ademas
+  # se pagan: X-Ray cobra por traza registrada.
+  #
+  # Se filtra aqui y no en cada servicio a proposito: es una regla, en un sitio,
+  # que vale igual para los de Java y los de Python.
+  #
+  # Solo caen spans sin hijos, asi que no deja trazas huerfanas.
+  filter/salud:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["url.path"] == "/health"'
+        - 'IsMatch(attributes["url.path"], "^/actuator/health.*")'
+        - 'IsMatch(attributes["http.route"], "^/actuator/health.*")'
+
+exporters:
+  # 'normal' imprime una linea por lote con el resumen. 'detailed' saca cada
+  # span entero: util para depurar un caso concreto, ilegible para mirar si
+  # las trazas estan llegando.
+  debug:
+    verbosity: normal
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/salud, batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]

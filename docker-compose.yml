@@ -1,0 +1,256 @@
+# Entorno local completo de WearHack.
+#
+#   cp .env.example .env
+#   docker compose up -d
+#
+# El unico puerto que hace falta es el del gateway. Los demas se publican para
+# poder depurar un servicio suelto, no porque el cliente los use.
+
+name: wearhack
+
+# Bloques repetidos. Los ocho servicios comparten casi toda la configuracion:
+# el equipo rota entre ellos y conviene que cambiar algo comun sea un solo sitio.
+x-otel: &otel
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+  OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+  OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_always_on}
+
+x-servicio: &servicio
+  restart: unless-stopped
+  networks: [wearhack]
+  depends_on:
+    otel-collector:
+      condition: service_started
+
+services:
+
+  # ----------------------------------------------------------------- datos ---
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    networks: [wearhack]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-wearhack}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-wearhack_local_dev}
+      MONGO_DB: ${MONGO_DB:-wearhack}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-datos:/data/db
+      # Solo se ejecuta con el volumen vacio. Para relanzarlo sin borrar datos:
+      #   docker compose exec -T mongo mongosh --quiet "$MONGO_URI" \
+      #     < infra/local/mongo/init/01-colecciones.js
+      - ./infra/local/mongo/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  minio:
+    # MinIO dejo de publicar en Docker Hub: quay.io es el registro oficial.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    networks: [wearhack]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-wearhack}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-wearhack_local_dev}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-datos:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Contenedor de un solo uso: crea los buckets y se apaga.
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    networks: [wearhack]
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
+      S3_BUCKET_PRENDAS: ${S3_BUCKET_PRENDAS:-wearhack-prendas}
+      S3_BUCKET_ROSTROS: ${S3_BUCKET_ROSTROS:-wearhack-rostros}
+    volumes:
+      - ./infra/local/minio/init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+
+  # --------------------------------------------------------- observabilidad ---
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    restart: unless-stopped
+    networks: [wearhack]
+    command: ["--config=/etc/otel/collector.yaml"]
+    volumes:
+      - ./infra/local/otel/collector.yaml:/etc/otel/collector.yaml:ro
+    ports:
+      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
+      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
+
+  # --------------------------------------------------------------- entrada ---
+  gateway:
+    <<: *servicio
+    build:
+      context: ./gateway
+    environment:
+      <<: *otel
+      OTEL_SERVICE_NAME: gateway
+      SERVER_PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      usuarios:
+        condition: service_healthy
+      closet:
+        condition: service_healthy
+      outfits:
+        condition: service_healthy
+      publicidad:
+        condition: service_healthy
+      colorimetria:
+        condition: service_healthy
+      recomendador:
+        condition: service_healthy
+
+  # ---------------------------------------------- servicios de negocio (Java) ---
+  # MONGO_URI y S3_* se pasan desde ya aunque el esqueleto todavia no los use:
+  # asi la topologia es la real y no hay que tocar compose cuando se conecten.
+  usuarios:
+    <<: *servicio
+    build:
+      context: ./services
+      dockerfile: usuarios/Dockerfile
+    environment: &entorno-negocio
+      <<: *otel
+      OTEL_SERVICE_NAME: usuarios
+      SERVER_PORT: 8081
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
+    ports:
+      - "${USUARIOS_PORT:-8081}:8081"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+  closet:
+    <<: *servicio
+    build:
+      context: ./services
+      dockerfile: closet/Dockerfile
+    environment:
+      <<: *entorno-negocio
+      OTEL_SERVICE_NAME: closet
+      SERVER_PORT: 8082
+    ports:
+      - "${CLOSET_PORT:-8082}:8082"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+  outfits:
+    <<: *servicio
+    build:
+      context: ./services
+      dockerfile: outfits/Dockerfile
+    environment:
+      <<: *entorno-negocio
+      OTEL_SERVICE_NAME: outfits
+      SERVER_PORT: 8083
+    ports:
+      - "${OUTFITS_PORT:-8083}:8083"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+  publicidad:
+    <<: *servicio
+    build:
+      context: ./services
+      dockerfile: publicidad/Dockerfile
+    environment:
+      <<: *entorno-negocio
+      OTEL_SERVICE_NAME: publicidad
+      SERVER_PORT: 8084
+    ports:
+      - "${PUBLICIDAD_PORT:-8084}:8084"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+  # -------------------------------------------------- servicios de IA (Python) ---
+  colorimetria:
+    <<: *servicio
+    build:
+      context: ./services/colorimetria
+    environment:
+      <<: *otel
+      SERVICIO: colorimetria
+      SERVER_PORT: 8085
+      ENTORNO: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
+      S3_BUCKET_ROSTROS: ${S3_BUCKET_ROSTROS:-wearhack-rostros}
+    ports:
+      - "${COLORIMETRIA_PORT:-8085}:8085"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  recomendador:
+    <<: *servicio
+    build:
+      context: ./services/recomendador
+    environment:
+      <<: *otel
+      SERVICIO: recomendador
+      SERVER_PORT: 8086
+      ENTORNO: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
+    ports:
+      - "${RECOMENDADOR_PORT:-8086}:8086"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+networks:
+  wearhack:
+    driver: bridge
+
+volumes:
+  mongo-datos:
+  minio-datos:
