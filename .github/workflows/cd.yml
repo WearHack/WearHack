@@ -1,0 +1,187 @@
+# Despliega a ECS Fargate lo que cambio en main.
+#
+# Sin llaves estaticas: GitHub pide un token OIDC y AWS lo cambia por
+# credenciales temporales. No hay nada que rotar ni que se pueda filtrar en un
+# log.
+#
+# ANTES DE LA PRIMERA EJECUCION hay que crear en AWS el proveedor OIDC de
+# GitHub y un rol cuya politica de confianza acote 'sub' a este repositorio.
+# Un rol que confie en toda la organizacion deja desplegar desde cualquier
+# repo de la cuenta. Ver docs/adr/ y infra/terraform/.
+#
+# Variables que hay que definir en el repo (Settings -> Secrets and variables):
+#   AWS_REGION            p.ej. us-east-1
+#   AWS_ROLE_ARN          arn:aws:iam::<cuenta>:role/<rol-de-despliegue>
+#   ECR_REGISTRY          <cuenta>.dkr.ecr.<region>.amazonaws.com
+#   ECS_CLUSTER           nombre del cluster
+# Todos son placeholders hasta que exista la infraestructura.
+
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      servicio:
+        description: Servicio a desplegar a mano
+        required: true
+        type: choice
+        options:
+          - gateway
+          - usuarios
+          - closet
+          - outfits
+          - publicidad
+          - colorimetria
+          - recomendador
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  # Nunca dos despliegues a la vez sobre el mismo entorno. Y sin cancelar: un
+  # despliegue a medias deja el servicio en un estado que nadie quiere heredar.
+  group: cd-produccion
+  cancel-in-progress: false
+
+jobs:
+
+  cambios:
+    name: Que desplegar
+    runs-on: ubuntu-latest
+    outputs:
+      servicios: ${{ steps.decidir.outputs.servicios }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filtro
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            gateway:
+              - 'gateway/**'
+            usuarios:
+              - 'services/usuarios/**'
+              - 'services/pom.xml'
+            closet:
+              - 'services/closet/**'
+              - 'services/pom.xml'
+            outfits:
+              - 'services/outfits/**'
+              - 'services/pom.xml'
+            publicidad:
+              - 'services/publicidad/**'
+              - 'services/pom.xml'
+            colorimetria:
+              - 'services/colorimetria/**'
+            recomendador:
+              - 'services/recomendador/**'
+
+      # La lista se arma aqui y no en la expresion de la matriz. Un
+      # 'condicion && fromJSON(a) || fromJSON(b)' en linea parece elegante,
+      # pero en un despliegue manual el filtro no corrio y fromJSON recibiria
+      # una cadena vacia. Este paso deja las dos ramas a la vista.
+      - name: Decidir la lista
+        id: decidir
+        env:
+          CAMBIADOS: ${{ steps.filtro.outputs.changes }}
+          ELEGIDO: ${{ inputs.servicio }}
+          EVENTO: ${{ github.event_name }}
+        run: |
+          if [ "$EVENTO" = "workflow_dispatch" ]; then
+            # jq arma el JSON, asi el nombre del servicio no puede romper
+            # la lista aunque llegue con comillas dentro.
+            LISTA=$(jq -cn --arg s "$ELEGIDO" '[$s]')
+          else
+            LISTA=${CAMBIADOS:-[]}
+          fi
+          echo "servicios=$LISTA" >> "$GITHUB_OUTPUT"
+
+  desplegar:
+    name: Desplegar ${{ matrix.servicio }}
+    needs: cambios
+    if: needs.cambios.outputs.servicios != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Como mucho dos servicios a la vez: mas despliegues simultaneos compiten
+      # por la capacidad del cluster y alargan la ventana en la que conviven
+      # dos versiones.
+      max-parallel: 2
+      matrix:
+        servicio: ${{ fromJSON(needs.cambios.outputs.servicios) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pedir credenciales temporales a AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: cd-${{ matrix.servicio }}-${{ github.run_id }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      # El contexto del build depende del lenguaje: los servicios Java
+      # necesitan ver el pom padre y los de Python se bastan solos.
+      - name: Decidir contexto y Dockerfile
+        id: contexto
+        run: |
+          case "${{ matrix.servicio }}" in
+            gateway)
+              echo "context=./gateway" >> "$GITHUB_OUTPUT"
+              echo "file=./gateway/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            colorimetria|recomendador)
+              echo "context=./services/${{ matrix.servicio }}" >> "$GITHUB_OUTPUT"
+              echo "file=./services/${{ matrix.servicio }}/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "context=./services" >> "$GITHUB_OUTPUT"
+              echo "file=./services/${{ matrix.servicio }}/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      # Se etiqueta con el SHA del commit ademas de 'latest'. Un rollback es
+      # entonces volver a desplegar un tag concreto, no adivinar que habia
+      # antes en 'latest'.
+      - name: Construir y publicar en ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.contexto.outputs.context }}
+          file: ${{ steps.contexto.outputs.file }}
+          push: true
+          tags: |
+            ${{ vars.ECR_REGISTRY }}/wearhack/${{ matrix.servicio }}:${{ github.sha }}
+            ${{ vars.ECR_REGISTRY }}/wearhack/${{ matrix.servicio }}:latest
+          cache-from: type=gha,scope=${{ matrix.servicio }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servicio }}
+
+      - name: Leer la definicion de tarea vigente
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "wearhack-${{ matrix.servicio }}" \
+            --query taskDefinition > tarea.json
+
+      - name: Apuntar la definicion a la imagen nueva
+        id: tarea
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: tarea.json
+          container-name: ${{ matrix.servicio }}
+          image: ${{ vars.ECR_REGISTRY }}/wearhack/${{ matrix.servicio }}:${{ github.sha }}
+
+      - name: Desplegar en ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.tarea.outputs.task-definition }}
+          service: wearhack-${{ matrix.servicio }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          # Espera a que el servicio quede estable. Sin esto el workflow sale en
+          # verde con las tareas nuevas aun arrancando, y un despliegue roto
+          # parece correcto.
+          wait-for-service-stability: true

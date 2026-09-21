@@ -1,0 +1,228 @@
+# Construye y prueba SOLO lo que cambio en el PR.
+#
+# El monorepo tiene siete servicios. Reconstruirlos todos en cada PR seria una
+# espera larga por un cambio de una linea, y seis de cada siete builds no
+# probarian nada. El job 'cambios' decide que toca y el resto se salta solo.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Un push nuevo sobre la misma rama cancela el build anterior: no tiene
+  # sentido pagar por probar un commit que ya quedo atras.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  cambios:
+    name: Que cambio
+    runs-on: ubuntu-latest
+    outputs:
+      java: ${{ steps.java.outputs.changes }}
+      python: ${{ steps.python.outputs.changes }}
+      gateway: ${{ steps.otros.outputs.gateway }}
+      infra: ${{ steps.otros.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 'changes' devuelve el array JSON de filtros que dieron positivo, que es
+      # justo lo que necesita una matriz dinamica mas abajo.
+      #
+      # Cada servicio se reconstruye tambien cuando cambia el pom padre o este
+      # mismo workflow: los dos pueden romperlo sin que su carpeta se toque.
+      - uses: dorny/paths-filter@v3
+        id: java
+        with:
+          filters: |
+            usuarios:
+              - 'services/usuarios/**'
+              - 'services/pom.xml'
+              - '.github/workflows/ci.yml'
+            closet:
+              - 'services/closet/**'
+              - 'services/pom.xml'
+              - '.github/workflows/ci.yml'
+            outfits:
+              - 'services/outfits/**'
+              - 'services/pom.xml'
+              - '.github/workflows/ci.yml'
+            publicidad:
+              - 'services/publicidad/**'
+              - 'services/pom.xml'
+              - '.github/workflows/ci.yml'
+
+      - uses: dorny/paths-filter@v3
+        id: python
+        with:
+          filters: |
+            colorimetria:
+              - 'services/colorimetria/**'
+              - '.github/workflows/ci.yml'
+            recomendador:
+              - 'services/recomendador/**'
+              - '.github/workflows/ci.yml'
+
+      - uses: dorny/paths-filter@v3
+        id: otros
+        with:
+          filters: |
+            gateway:
+              - 'gateway/**'
+              - '.github/workflows/ci.yml'
+            infra:
+              - 'docker-compose.yml'
+              - 'infra/**'
+              - '.github/workflows/ci.yml'
+
+  java:
+    name: Java (${{ matrix.servicio }})
+    needs: cambios
+    if: needs.cambios.outputs.java != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      # Sin esto, el primer servicio que falle cancela los demas y hay que
+      # abrir otro PR para ver si tambien estaban rotos.
+      fail-fast: false
+      matrix:
+        servicio: ${{ fromJSON(needs.cambios.outputs.java) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar y probar
+        run: mvn -B -f services/${{ matrix.servicio }}/pom.xml verify
+
+      # Construir la imagen aqui y no solo al desplegar: si el Dockerfile esta
+      # roto conviene saberlo en el PR, no despues de fusionar.
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./services/${{ matrix.servicio }}/Dockerfile
+          push: false
+          cache-from: type=gha,scope=${{ matrix.servicio }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servicio }}
+
+  gateway:
+    name: Gateway
+    needs: cambios
+    if: needs.cambios.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar y probar
+        run: mvn -B -f gateway/pom.xml verify
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./gateway
+          push: false
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,mode=max,scope=gateway
+
+  python:
+    name: Python (${{ matrix.servicio }})
+    needs: cambios
+    if: needs.cambios.outputs.python != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: ${{ fromJSON(needs.cambios.outputs.python) }}
+    defaults:
+      run:
+        working-directory: services/${{ matrix.servicio }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.12 y no 3.14: es la version de los contenedores. Probar en una
+      # distinta a la que corre en produccion deja pasar justo los fallos que
+      # dependen de la version.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: |
+          uv venv
+          uv pip install -r pyproject.toml --extra dev
+
+      - name: Revisar estilo
+        run: uv run ruff check .
+
+      - name: Probar
+        run: uv run pytest -q
+        env:
+          OTEL_SDK_DISABLED: 'true'
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/${{ matrix.servicio }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.servicio }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servicio }}
+
+  infra:
+    name: Infra
+    needs: cambios
+    if: needs.cambios.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No levanta el entorno: solo comprueba que el compose sea valido y que
+      # las referencias entre servicios cuadren. Levantarlo entero aqui seria
+      # varios minutos por cada cambio de una variable.
+      - name: Validar docker compose
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+
+  ci:
+    # Un unico check para proteger la rama. Sin esto habria que marcar como
+    # obligatorios siete jobs que casi siempre se saltan, y un job saltado no
+    # deja fusionar.
+    name: CI
+    if: always()
+    needs: [cambios, java, gateway, python, infra]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar que nada fallo
+        run: |
+          if echo '${{ join(needs.*.result, ' ') }}' | grep -qE 'failure|cancelled'; then
+            echo "Algun job fallo o se cancelo."
+            exit 1
+          fi
+          echo "Todo lo que tenia que correr, corrio bien."
