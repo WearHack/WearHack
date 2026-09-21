@@ -20,16 +20,21 @@ WORKDIR /build
 COPY pom.xml ./pom.xml
 COPY ${SERVICIO} ./${SERVICIO}
 
+# Se construye el modulo directamente y no con -pl sobre el agregador: el
+# agregador exige que existan los cuatro modulos y aqui solo copiamos uno.
+# Maven resuelve el pom padre por relativePath para heredar, sin mirar su
+# lista de modulos.
+#
 # La cache de ~/.m2 sobrevive entre builds: sin esto cada cambio de una linea
 # se vuelve a bajar medio Maven Central.
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -q -pl ${SERVICIO} -am -DskipTests package
+    mvn -B -q -f ${SERVICIO}/pom.xml -DskipTests package
 
 # El agente de OpenTelemetry sale de Maven Central, que es el unico registro del
 # que ya dependemos. Bajarlo de GitHub Releases anadiria otro host que puede
 # estar caido justo cuando toca desplegar.
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -q dependency:copy \
+    mvn -B -q -f ${SERVICIO}/pom.xml dependency:copy \
       -Dartifact=io.opentelemetry.javaagent:opentelemetry-javaagent:${OTEL_AGENT_VERSION} \
       -DoutputDirectory=/opt/otel \
       -Dmdep.stripVersion=true
