@@ -25,3 +25,12 @@ def test_el_analisis_declara_que_no_esta_implementado():
     )
 
     assert respuesta.status_code == 501
+
+
+def test_el_health_tambien_responde_en_la_ruta_del_gateway():
+    """Los seis servicios responden en /api/v1/<servicio>/health. Sin esto el
+    gateway tendria que reescribir la ruta solo para los de Python."""
+    respuesta = cliente.get("/api/v1/colorimetria/health")
+
+    assert respuesta.status_code == 200
+    assert respuesta.json()["servicio"] == "colorimetria"

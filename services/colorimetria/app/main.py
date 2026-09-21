@@ -41,7 +41,14 @@ def crear_app() -> FastAPI:
         version=config.version,
         lifespan=ciclo_de_vida,
     )
+    # El mismo health en dos rutas, cada una con su publico.
+    # /health lo llama el healthcheck del contenedor y, en AWS, el target
+    # group del ALB. El de /api/v1/<servicio> es el que sale por el
+    # gateway, y existe para que los seis servicios respondan igual: sin
+    # el, el gateway tendria que reescribir la ruta solo para los dos
+    # servicios de Python.
     app.include_router(router_health)
+    app.include_router(router_health, prefix=f"/api/v1/{config.servicio}")
     app.include_router(colorimetria.router)
 
     # /health queda fuera de las trazas: lo llama el healthcheck del contenedor

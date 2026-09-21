@@ -25,3 +25,12 @@ def test_los_outfits_declaran_que_no_estan_implementados():
     )
 
     assert respuesta.status_code == 501
+
+
+def test_el_health_tambien_responde_en_la_ruta_del_gateway():
+    """Los seis servicios responden en /api/v1/<servicio>/health. Sin esto el
+    gateway tendria que reescribir la ruta solo para los de Python."""
+    respuesta = cliente.get("/api/v1/recomendador/health")
+
+    assert respuesta.status_code == 200
+    assert respuesta.json()["servicio"] == "recomendador"
