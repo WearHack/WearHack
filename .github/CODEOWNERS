@@ -1,0 +1,40 @@
+# CODEOWNERS de WearHack
+#
+# Los equipos de aqui son PLACEHOLDERS. Hay que crearlos en la GitHub
+# Organization (Settings -> Teams) y darles permiso de lectura sobre el repo
+# antes de que GitHub los asigne como revisores automaticos.
+#
+# Somos 6 generalistas que rotamos entre servicios: estas reglas NO son
+# propiedad exclusiva, son "que alguien que conozca la zona mire el PR".
+
+# Fallback: cualquier ruta no cubierta abajo
+*                           @WearHack/core
+
+# Cliente movil y web
+/client/                    @WearHack/mobile
+
+# Entrada al sistema: ruteo, auth y control de acceso
+/gateway/                   @WearHack/backend @WearHack/seguridad
+
+# Servicios de negocio (Spring Boot)
+/services/pom.xml           @WearHack/backend
+/services/usuarios/         @WearHack/backend
+/services/closet/           @WearHack/backend
+/services/outfits/          @WearHack/backend
+/services/publicidad/       @WearHack/backend
+
+# Servicios de IA (FastAPI)
+/services/colorimetria/     @WearHack/ia
+/services/recomendador/     @WearHack/ia
+
+# Infraestructura, contenedores y datos
+/infra/                     @WearHack/infra
+/docker-compose.yml         @WearHack/infra
+/infra/local/mongo/         @WearHack/infra @WearHack/backend
+
+# CI/CD y reglas del repo: cambios aqui afectan a todo el mundo
+/.github/                   @WearHack/infra @WearHack/core
+/.github/CODEOWNERS         @WearHack/core
+
+# Decisiones de arquitectura: las revisa todo el equipo
+/docs/adr/                  @WearHack/core

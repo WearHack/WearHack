@@ -1,0 +1,57 @@
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+!**/maven-wrapper.jar
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- Flutter / Dart ----
+client/.dart_tool/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+client/build/
+client/ios/Pods/
+client/ios/.symlinks/
+client/android/.gradle/
+client/android/local.properties
+client/.packages
+*.iml
+
+# Modelos on-device: pesan demasiado para git, se bajan aparte
+client/assets/models/*
+!client/assets/models/README.md
+
+# ---- Terraform ----
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# ---- Entorno / secretos ----
+.env
+.env.local
+*.pem
+*.key
+
+# ---- Editores / SO ----
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---- Datos locales de contenedores ----
+.data/
