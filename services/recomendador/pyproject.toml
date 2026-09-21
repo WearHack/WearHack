@@ -1,0 +1,42 @@
+[project]
+name = "recomendador"
+version = "0.1.0"
+description = "Motor combinatorio de outfits y prendas puente. Esqueleto."
+requires-python = ">=3.12"
+
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.32.1",
+  "pydantic-settings==2.7.0",
+  "python-json-logger==3.2.1",
+  # Observabilidad. El SDK se configura a mano en app/telemetry.py: es mas
+  # codigo que el arranque automatico, pero se lee y se depura mejor, que
+  # importa cuando seis personas rotan entre servicios.
+  "opentelemetry-sdk==1.29.0",
+  "opentelemetry-exporter-otlp-proto-grpc==1.29.0",
+  "opentelemetry-instrumentation-fastapi==0.50b0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+  "pytest-asyncio==0.25.0",
+  "httpx==0.28.1",
+  "ruff==0.8.4",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
