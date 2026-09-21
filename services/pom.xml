@@ -25,6 +25,9 @@
 
   <modules>
     <module>usuarios</module>
+    <module>closet</module>
+    <module>outfits</module>
+    <module>publicidad</module>
   </modules>
 
   <properties>
