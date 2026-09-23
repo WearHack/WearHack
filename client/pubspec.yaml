@@ -1,0 +1,24 @@
+name: wearhack
+description: Cliente de WearHack. Android, iOS y Web desde un solo proyecto.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Los modelos on-device no van en git: pesan demasiado. La carpeta existe con
+  # un README que explica de donde bajarlos. Ver assets/models/README.md.
+  assets:
+    - assets/models/

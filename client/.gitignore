@@ -1,0 +1,10 @@
+# Especifico del cliente. Lo general esta en el .gitignore de la raiz.
+.dart_tool/
+.packages
+build/
+*.iml
+
+# Lo genera flutter create y depende de la maquina
+android/local.properties
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
