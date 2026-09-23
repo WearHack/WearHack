@@ -35,14 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 17 porque es lo que fija el proyecto de Android generado
+      # (sourceCompatibility y jvmTarget). Compilar con otra deja avisos y, con
+      # suerte, un fallo claro; sin suerte, un APK que se comporta distinto.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      # Clavada a la version con la que se desarrolla. Que CI use otra convierte
+      # cada diferencia de toolchain en un fallo que no se reproduce en local.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.x'
+          flutter-version: '3.47.5'
           channel: stable
           cache: true
 
