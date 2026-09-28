@@ -25,6 +25,14 @@ jobs:
   cambios:
     name: Que cambio
     runs-on: ubuntu-latest
+    # dorny/paths-filter pide la lista de archivos del PR a la API de GitHub, y
+    # para eso exige pull-requests: read. Los permisos de un job REEMPLAZAN a los
+    # globales, no se suman: por eso contents: read se repite aqui, que es lo que
+    # necesita checkout. Sin esto el job falla con un 403 en cada pull request, y
+    # el job final 'ci' con el.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       java: ${{ steps.java.outputs.changes }}
       python: ${{ steps.python.outputs.changes }}
