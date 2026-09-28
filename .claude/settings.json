@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(mvn *)",
+      "Bash(flutter analyze*)",
+      "Bash(flutter test*)",
+      "Bash(flutter pub get*)",
+      "Bash(dart format*)",
+      "Bash(dart analyze*)",
+      "Bash(docker compose ps*)",
+      "Bash(docker compose logs*)",
+      "Bash(docker compose config*)",
+      "Bash(curl -s localhost:*)",
+      "Bash(curl -sf localhost:*)"
+    ],
+    "ask": [
+      "Bash(docker compose up*)",
+      "Bash(docker compose down*)",
+      "Bash(docker compose restart*)",
+      "Bash(docker build*)",
+      "Bash(npx *)",
+      "Bash(npm install*)",
+      "Bash(pip install*)",
+      "Edit(client/android/**)",
+      "Edit(client/ios/**)",
+      "Edit(client/web/**)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Bash(git checkout main*)",
+      "Bash(git checkout develop*)",
+      "Bash(git switch main*)",
+      "Bash(git switch develop*)",
+      "Bash(rm -rf *)",
+      "Bash(docker compose down -v*)",
+      "Bash(docker compose down --volumes*)",
+      "Read(.env)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guardarrail-git.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

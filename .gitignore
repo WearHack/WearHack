@@ -44,6 +44,11 @@ client/assets/models/*
 !*.tfvars.example
 .terraform.lock.hcl
 
+# ---- Configuracion personal de agentes ----
+# El settings.json del proyecto SI se commitea: son las reglas del equipo.
+# Este es el de cada uno, para relajarse las suyas sin imponerselo al resto.
+.claude/settings.local.json
+
 # ---- Entorno / secretos ----
 .env
 .env.local
