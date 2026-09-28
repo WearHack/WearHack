@@ -56,9 +56,14 @@ como `run_status: "incomplete"`**, porque la fase de validacion no corre. La
 guia y las revisiones acotadas no se ven afectadas, porque no usan los
 validadores.
 
-Para una auditoria completa, usar Linux, macOS o un contenedor. **Aun no se ha
-comprobado que el suite pase en Linux**: Docker no estaba corriendo al
-verificarlo. Hacerlo es lo primero antes de fiarse de una auditoria completa.
+Para una auditoria completa, usar Linux, macOS o un contenedor. **Verificado en
+Linux** (imagen `node:22-slim`, 2026-09-28): las 65 pruebas del suite pasan, 0
+fallidas y 0 omitidas. La copia esta integra y los validadores funcionan donde el
+sistema ofrece `O_NOFOLLOW` y `O_NONBLOCK`.
+
+Para probarlo de nuevo desde Windows, con Docker corriendo, desde esta carpeta:
+
+    docker run --rm -v "$(pwd -W):/skill:ro" -w /skill node:22-slim node --test validate-findings.test.cjs validate-coverage-ledger.test.cjs
 
 ## Cuando usarla
 

@@ -93,7 +93,7 @@ de `dart:io`, que en web no existe, asi que un import mal colocado rompe
 | | |
 |---|---|
 | **Tipos** | `feat`, `fix`, `chore`, `ci`, `docs`, `build`, `refactor`, `test`, `perf` |
-| **Scopes** | `repo`, `gateway`, `usuarios`, `closet`, `outfits`, `publicidad`, `colorimetria`, `recomendador`, `client`, `infra`, `ci`, `docs`, `agents` |
+| **Scopes** | `repo`, `services` (lo comun a los servicios, como el POM padre), `gateway`, `usuarios`, `closet`, `outfits`, `publicidad`, `colorimetria`, `recomendador`, `client`, `infra`, `ci`, `docs`, `agents`. Un servicio nuevo es scope valido en cuanto existe |
 
 El cuerpo explica **por que**, no que. El que ya esta en el diff.
 
@@ -184,22 +184,71 @@ explicitamente empezar de cero.
 
 ---
 
-## Anadir un servicio toca seis sitios
+## Anadir un servicio toca once sitios
 
-Esta es la trampa mas facil del repo. Un servicio nuevo necesita:
+Esta es la trampa mas facil del repo. Un servicio nuevo se menciona en:
 
-1. Su modulo, con POM y `Dockerfile`
-2. Registro en `services/pom.xml` (si es Java)
-3. Entrada en `docker-compose.yml`
-4. Filtro en `.github/workflows/ci.yml`
-5. Linea en `.github/CODEOWNERS`
-6. Ruta en `gateway/src/main/resources/application.yml`
+1. Su modulo, con POM o `pyproject.toml` y `Dockerfile`
+2. `services/pom.xml` (solo Java)
+3. `docker-compose.yml`: el servicio
+4. `docker-compose.yml`: el `depends_on` del gateway
+5. `.env.example`: su puerto
+6. `gateway/src/main/resources/application.yml`: la ruta
+7. `GatewayApplicationTest`: exige **exactamente** las rutas actuales, y falla en CI
+   si se anade una sin actualizarlo
+8. `.github/workflows/ci.yml`: el filtro
+9. `.github/workflows/cd.yml`: el filtro
+10. `.github/workflows/cd.yml`: la opcion del despliegue manual y, **solo en
+    Python**, la linea del `case` que elige el contexto de build
+11. Documentacion: `CODEOWNERS`, la plantilla de PR, el `README.md` y las tablas de
+    puertos de este archivo y de `docs/arquitectura.md`
 
-**Olvidar el cuarto no rompe nada**, y por eso es el peligroso: el servicio
-simplemente deja de construirse en CI y nadie se entera hasta que algo falla en
-produccion.
+**Olvidar los sitios 8 y 9 no rompe nada**, y por eso son los peligrosos: el
+servicio deja de probarse en CI, o de desplegarse, sin un solo error. Un Python
+fuera de la linea del `case` del sitio 10 si falla, pero tarde: en el despliegue.
 
-Usa la skill `crear-servicio`, que los cubre los seis.
+Usa la skill `crear-servicio`. Termina con un comprobador que revisa los once
+sitios y que se puede lanzar en cualquier momento:
+
+```bash
+python .claude/skills/crear-servicio/verificar-registro.py <servicio>
+```
+
+---
+
+## Skills
+
+En `.claude/skills/`. Las cuatro primeras son de WearHack y cada una trae un script
+que hace lo mecanico para que el agente se dedique al juicio.
+
+| Skill | Cuando |
+|---|---|
+| `crear-servicio` | Anadir un servicio nuevo. Toca los once sitios y lo comprueba |
+| `verificar-entorno` | Despues de levantar el compose o tocar un servicio. Solo lee |
+| `nuevo-adr` | Se toma o se cambia una decision de arquitectura |
+| `preparar-commit` | Al terminar un cambio: agrupa por scope y valida el mensaje. **No commitea** |
+| `security-audit` | Revision de seguridad. Copia de Cloudflare, ver su `ORIGEN.md` |
+
+**`security-audit` no funciona del todo en Windows.** Sus validadores exigen
+`O_NOFOLLOW`, que Node no define ahi, asi que una auditoria completa solo puede
+terminar como incompleta. La guia y las revisiones acotadas si sirven. Detalle en
+`.claude/skills/security-audit/ORIGEN.md`.
+
+### Diagramas: Mermaid es la fuente, Archify es para presentar
+
+Los diagramas del repo van en **Mermaid**, en `docs/arquitectura.md`: es texto, se
+revisa en un PR y GitHub lo renderiza. **Archify** genera HTML interactivo y queda
+mucho mejor, pero GitHub no lo muestra, asi que sirve para entregas y demos, no
+como fuente. Ver [ADR 0018](docs/adr/0018-mermaid-como-fuente-y-archify-para-presentar.md).
+
+Archify **no esta en el repo**: cada persona lo instala una vez.
+
+```bash
+npx skills add tt-a1i/archify -g
+```
+
+Pide Node 18 o superior. Hace una peticion HTTP para avisar de actualizaciones; se
+desactiva con `ARCHIFY_UPDATE_CHECK_DISABLED=1`.
 
 ---
 
