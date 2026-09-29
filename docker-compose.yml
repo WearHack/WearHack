@@ -202,6 +202,27 @@ services:
       mongo:
         condition: service_healthy
 
+  # ------------------------------------------------------ Core (Spring Modulith) ---
+  # Un solo deployable que reune usuarios, closet, outfits y publicidad. Convive de
+  # momento con los cuatro servicios de arriba, que desaparecen cuando el Core los
+  # sustituye del todo. A diferencia de ellos, NO va detras del gateway: el cliente le
+  # pega directo, que es lo que se hace en local. En AWS el borde sera API Gateway.
+  core:
+    <<: *servicio
+    build:
+      context: ./services/core
+    environment:
+      <<: *entorno-negocio
+      OTEL_SERVICE_NAME: core
+      SERVER_PORT: 8090
+    ports:
+      - "${CORE_PORT:-8090}:8090"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
   # -------------------------------------------------- servicios de IA (Python) ---
   colorimetria:
     <<: *servicio
