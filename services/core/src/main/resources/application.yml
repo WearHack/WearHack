@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: core
+
+server:
+  port: ${SERVER_PORT:8090}
+  shutdown: graceful
+  tomcat:
+    threads:
+      min-spare: 4
+
+wearhack:
+  version: '@project.version@'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Solo lo que necesitamos. Exponer '*' regala superficie de ataque.
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  # El agente de OpenTelemetry se encarga de las trazas. Micrometer solo necesita
+  # saber a que servicio pertenecen las metricas.
+  metrics:
+    tags:
+      service: core
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
