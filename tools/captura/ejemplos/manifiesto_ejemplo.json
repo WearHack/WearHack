@@ -1,0 +1,21 @@
+{
+  "esquema": 1,
+  "archivos": [
+    {
+      "ruta": "P3_LEDC_D2_R1_G.json",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "bytes": 1200
+    },
+    {
+      "ruta": "P3_LEDC_D2_R1_G_foto.jpg",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bytes": 3000000
+    },
+    {
+      "ruta": "P3_LEDC_D2_R1_G_recorte.png",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bytes": 250000
+    }
+  ],
+  "hash_global": "a4882481a93748cf0fa2e87e1be7595b6965c633e76d09719244f864c0bf754f"
+}

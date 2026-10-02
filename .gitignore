@@ -64,3 +64,12 @@ Thumbs.db
 
 # ---- Datos locales de contenedores ----
 .data/
+
+# ---- Calibracion de colorimetria: nada de esto va al repositorio ----
+# Fotos de personas (docs/politica-datos-colorimetria-wearhack.md, seccion 12).
+# Es una red de seguridad contra un `git add` por descuido, no la defensa: la
+# defensa es que la app y el script se nieguen a escribir dentro de un repo.
+lote_*.zip
+*_foto.jpg
+*_foto.heic
+*_recorte.png

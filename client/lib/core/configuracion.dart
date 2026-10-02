@@ -17,5 +17,12 @@ class Configuracion {
     defaultValue: 'http://10.0.2.2:8080',
   );
 
+  /// Activa el modo de captura de pruebas (calibracion de colorimetria).
+  ///
+  /// Solo para builds internas: `--dart-define=CAPTURA_PRUEBAS=true`. Sin el
+  /// flag el modo no existe: no hay ruta, menu ni gesto que lo abra, y como el
+  /// codigo solo se alcanza detras de esta constante, el compilador lo descarta.
+  static const bool capturaPruebas = bool.fromEnvironment('CAPTURA_PRUEBAS');
+
   static const String version = '0.1.0';
 }
