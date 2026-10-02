@@ -97,7 +97,12 @@ class PerfilRgb {
     required this.curvaRojo,
     required this.curvaVerde,
     required this.curvaAzul,
+    this.descripcion,
   });
+
+  /// Nombre del perfil tal como lo declara su tag `desc` (por ejemplo
+  /// "Display P3"), o `null` si no lo trae.
+  final String? descripcion;
 
   final Xyz rojo;
   final Xyz verde;
@@ -117,6 +122,7 @@ class PerfilRgb {
     curvaRojo: CurvaTonal.srgb,
     curvaVerde: CurvaTonal.srgb,
     curvaAzul: CurvaTonal.srgb,
+    descripcion: 'sRGB',
   );
 
   /// Convierte un color codificado (cada canal de 0 a 1) en XYZ referido a D50.
@@ -193,7 +199,47 @@ class PerfilRgb {
       curvaRojo: curva('rTRC'),
       curvaVerde: curva('gTRC'),
       curvaAzul: curva('bTRC'),
+      descripcion: _leerDescripcion(datos, tags['desc']),
     );
+  }
+
+  /// Lee el nombre del perfil. Nunca lanza: un nombre ilegible es `null`, no
+  /// un motivo para rechazar un perfil cuyos colorantes si se pueden leer.
+  static String? _leerDescripcion(ByteData datos, (int, int)? tag) {
+    if (tag == null) return null;
+    final int inicio = tag.$1;
+    final int fin = inicio + tag.$2;
+    try {
+      final String tipo = _firma(datos, inicio);
+      if (tipo == 'desc') {
+        // ICC v2: conteo ASCII (con el NUL final) y los caracteres.
+        final int n = datos.getUint32(inicio + 8);
+        if (n <= 0 || inicio + 12 + n > fin) return null;
+        final List<int> bytes = <int>[
+          for (int i = 0; i < n; i++) datos.getUint8(inicio + 12 + i),
+        ];
+        final int nul = bytes.indexOf(0);
+        final String texto = String.fromCharCodes(
+          nul < 0 ? bytes : bytes.sublist(0, nul),
+        ).trim();
+        return texto.isEmpty ? null : texto;
+      }
+      if (tipo == 'mluc') {
+        // ICC v4: texto multilingue; se toma el primer registro (UTF-16 BE).
+        if (datos.getUint32(inicio + 8) < 1) return null;
+        final int largo = datos.getUint32(inicio + 20);
+        final int desplazamiento = datos.getUint32(inicio + 24);
+        final int desde = inicio + desplazamiento;
+        if (largo < 2 || desde + largo > fin) return null;
+        final String texto = String.fromCharCodes(<int>[
+          for (int i = 0; i + 1 < largo; i += 2) datos.getUint16(desde + i),
+        ]).trim();
+        return texto.isEmpty ? null : texto;
+      }
+    } on RangeError {
+      return null;
+    }
+    return null;
   }
 
   static CurvaTonal _leerCurva(ByteData datos, int inicio, String nombre) {

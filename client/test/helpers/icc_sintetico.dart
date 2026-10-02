@@ -4,8 +4,10 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:image/image.dart' as img;
 import 'package:wearhack/core/color/conversion.dart';
 import 'package:wearhack/core/color/perfil_icc.dart';
+import 'package:wearhack/core/recorte/recortador_facial.dart';
 
 /// Colorantes de Display P3 con blanco D65 (la matriz estandar P3-D65 a XYZ).
 const Xyz p3RojoD65 = (0.4865709, 0.2289746, 0.0);
@@ -71,6 +73,38 @@ Uint8List tagXyz(Xyz v) => Uint8List.fromList(<int>[
   ..._s15f16(v.$3),
 ]);
 
+/// Tag `desc` de ICC v2: conteo ASCII (con NUL final) y los caracteres.
+Uint8List tagDescV2(String texto, {int? conteoDeclarado}) {
+  final List<int> ascii = <int>[...texto.codeUnits, 0];
+  return _rellenar(
+    Uint8List.fromList(<int>[
+      ..._firma('desc'),
+      ..._u32(0),
+      ..._u32(conteoDeclarado ?? ascii.length),
+      ...ascii,
+    ]),
+  );
+}
+
+/// Tag `mluc` de ICC v4 con un solo registro, en UTF-16 BE.
+Uint8List tagMluc(String texto) {
+  final List<int> utf16 = <int>[
+    for (final int u in texto.codeUnits) ...<int>[u >> 8, u & 0xFF],
+  ];
+  return _rellenar(
+    Uint8List.fromList(<int>[
+      ..._firma('mluc'),
+      ..._u32(0),
+      ..._u32(1), // un registro
+      ..._u32(12), // tamano de registro
+      ..._firma('enUS'),
+      ..._u32(utf16.length),
+      ..._u32(28), // desplazamiento desde el inicio del tag
+      ...utf16,
+    ]),
+  );
+}
+
 /// Curva `curv` de un solo exponente (gamma).
 Uint8List curvaGamma(double gamma) {
   final ByteData cuerpo = ByteData(2)..setUint16(0, (gamma * 256).round());
@@ -133,6 +167,7 @@ Uint8List construirPerfil({
   bool incluirMatriz = true,
   String firma = 'acsp',
   int relleno = 0,
+  Uint8List? descripcion,
 }) {
   final List<(String, Uint8List)> tags = <(String, Uint8List)>[
     if (incluirMatriz) ('rXYZ', tagXyz(rojo)),
@@ -142,6 +177,7 @@ Uint8List construirPerfil({
     ('gTRC', curva),
     ('bTRC', curva),
     if (relleno > 0) ('priv', _rellenar(Uint8List(relleno))),
+    if (descripcion != null) ('desc', descripcion),
   ];
   final int inicioDatos = 128 + 4 + tags.length * 12;
   final BytesBuilder tabla = BytesBuilder();
@@ -182,11 +218,12 @@ Uint8List construirPerfil({
 }
 
 /// Display P3: colorantes P3-D65 adaptados a D50, con la curva de sRGB.
-Uint8List perfilDisplayP3() => construirPerfil(
+Uint8List perfilDisplayP3({Uint8List? descripcion}) => construirPerfil(
   rojo: xyzD65aD50(p3RojoD65),
   verde: xyzD65aD50(p3VerdeD65),
   azul: xyzD65aD50(p3AzulD65),
   curva: curvaSrgbParametrica(),
+  descripcion: descripcion,
 );
 
 /// sRGB, con los colorantes D50 del perfil oficial y la curva como `para`.
@@ -236,4 +273,41 @@ Uint8List jpegConIcc(
     for (final int s in orden) ...segmentos[s],
     ...jpegSinPerfil.sublist(2),
   ]);
+}
+
+/// Un JPEG sintetico. `color` decide el color de cada pixel; `orientacion` es
+/// el valor EXIF (1 a 8) o `null` para no escribir ninguno.
+Uint8List jpegSintetico(
+  int ancho,
+  int alto, {
+  (int, int, int) Function(int x, int y)? color,
+  int? orientacion,
+  int calidad = 95,
+}) {
+  final img.Image im = img.Image(width: ancho, height: alto);
+  for (final img.Pixel p in im) {
+    final (int, int, int) c = color == null ? (128, 128, 128) : color(p.x, p.y);
+    p
+      ..r = c.$1
+      ..g = c.$2
+      ..b = c.$3;
+  }
+  if (orientacion != null) im.exif.imageIfd.orientation = orientacion;
+  return img.encodeJpg(im, quality: calidad);
+}
+
+/// Detector falso: devuelve las cajas que se le den y recuerda lo que recibio.
+class DetectorFalso implements DetectorRostro {
+  DetectorFalso(this.cajas);
+
+  List<CajaRostro> cajas;
+  Uint8List? recibido;
+  int llamadas = 0;
+
+  @override
+  Future<List<CajaRostro>> detectar(Uint8List jpegVertical) async {
+    llamadas++;
+    recibido = jpegVertical;
+    return cajas;
+  }
 }

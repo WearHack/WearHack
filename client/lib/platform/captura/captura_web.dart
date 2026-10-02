@@ -37,7 +37,7 @@ class FaceCropperWeb implements FaceCropper {
   bool get disponible => false;
 
   @override
-  Future<Uint8List?> recortar(Uint8List foto) async {
+  Future<RecorteFacial?> recortar(Uint8List foto) async {
     throw const CapturaNoDisponible(
       'El recorte de rostro solo corre en movil.',
     );

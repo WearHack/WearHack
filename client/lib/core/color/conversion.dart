@@ -10,6 +10,7 @@
 library;
 
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:wearhack/core/color/perfil_icc.dart';
 import 'package:wearhack/core/vocabulario.dart';
@@ -87,4 +88,84 @@ int _codificarSrgb(double lineal) {
       ? 12.92 * v
       : 1.055 * math.pow(v, 1 / 2.4).toDouble() - 0.055;
   return (codificado * 255).round().clamp(0, 255);
+}
+
+/// Convierte a sRGB muchos pixeles de 8 bits de un mismo perfil.
+///
+/// Un recorte tiene millones de pixeles, y [perfilASrgb8] llama a `pow` varias
+/// veces por cada uno. Aqui la curva del perfil se tabula (256 entradas por
+/// canal), los tres pasos matriciales (colorantes, Bradford, XYZ a sRGB) se
+/// funden en una sola matriz, y la curva de sRGB se tabula tambien. El
+/// resultado difiere de [perfilASrgb8] en un byte como mucho.
+class ConversorASrgb {
+  ConversorASrgb(PerfilRgb perfil)
+    : _rojo = _tabular(perfil.curvaRojo),
+      _verde = _tabular(perfil.curvaVerde),
+      _azul = _tabular(perfil.curvaAzul),
+      _m = _matrizCombinada(perfil);
+
+  static const int _pasosDeCodificacion = 16384;
+
+  static final Uint8List _codificar = Uint8List.fromList(<int>[
+    for (int i = 0; i < _pasosDeCodificacion; i++)
+      _codificarSrgb(i / (_pasosDeCodificacion - 1)),
+  ]);
+
+  final Float64List _rojo;
+  final Float64List _verde;
+  final Float64List _azul;
+  final Float64List _m;
+
+  static Float64List _tabular(CurvaTonal curva) => Float64List.fromList(
+    <double>[for (int i = 0; i < 256; i++) curva.aLineal(i / 255.0)],
+  );
+
+  static Float64List _matrizCombinada(PerfilRgb p) {
+    final List<List<double>> colorantes = <List<double>>[
+      <double>[p.rojo.$1, p.verde.$1, p.azul.$1],
+      <double>[p.rojo.$2, p.verde.$2, p.azul.$2],
+      <double>[p.rojo.$3, p.verde.$3, p.azul.$3],
+    ];
+    final List<List<double>> m = _producto(
+      _xyzD65ASrgbLineal,
+      _producto(matrizBradfordD50aD65, colorantes),
+    );
+    return Float64List.fromList(<double>[for (final List<double> f in m) ...f]);
+  }
+
+  static List<List<double>> _producto(
+    List<List<double>> a,
+    List<List<double>> b,
+  ) => <List<double>>[
+    for (int i = 0; i < 3; i++)
+      <double>[
+        for (int j = 0; j < 3; j++)
+          a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j],
+      ],
+  ];
+
+  /// Convierte en sitio un buffer de pixeles RGB empaquetados (3 bytes por
+  /// pixel, sin canal alfa).
+  void convertirEnSitio(Uint8List rgb) {
+    if (rgb.length % 3 != 0) {
+      throw ArgumentError(
+        'El buffer no es RGB empaquetado (3 bytes por pixel)',
+      );
+    }
+    const double tope = _pasosDeCodificacion - 1;
+    for (int i = 0; i < rgb.length; i += 3) {
+      final double r = _rojo[rgb[i]];
+      final double g = _verde[rgb[i + 1]];
+      final double b = _azul[rgb[i + 2]];
+      rgb[i] = _codificar[_indice(_m[0] * r + _m[1] * g + _m[2] * b, tope)];
+      rgb[i + 1] = _codificar[_indice(_m[3] * r + _m[4] * g + _m[5] * b, tope)];
+      rgb[i + 2] = _codificar[_indice(_m[6] * r + _m[7] * g + _m[8] * b, tope)];
+    }
+  }
+
+  static int _indice(double lineal, double tope) {
+    if (lineal <= 0) return 0;
+    if (lineal >= 1) return tope.toInt();
+    return (lineal * tope + 0.5).floor();
+  }
 }
