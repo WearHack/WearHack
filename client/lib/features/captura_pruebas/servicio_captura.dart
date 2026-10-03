@@ -7,9 +7,11 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/recorte/controles_calidad.dart';
 import 'package:wearhack/features/captura_pruebas/almacen_capturas.dart';
 import 'package:wearhack/features/captura_pruebas/metadatos.dart';
 import 'package:wearhack/features/captura_pruebas/modelos.dart';
+import 'package:wearhack/features/captura_pruebas/parametros_exif.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
 /// No hay una autorizacion de calibracion firmada para esta persona.
@@ -32,6 +34,18 @@ class SinRostro implements Exception {
   String toString() => 'SinRostro: no se vio un rostro usable; repite la toma';
 }
 
+/// Lo que devuelve [ServicioCapturaPruebas.registrarToma]: los metadatos que se
+/// guardaron y los controles de calidad del recorte.
+///
+/// Los controles no van en el JSON (se pueden recalcular), pero la pantalla los
+/// necesita para sugerir repetir la toma con una recomendacion concreta.
+class ResultadoRegistro {
+  const ResultadoRegistro({required this.metadatos, required this.controles});
+
+  final MetadatosToma metadatos;
+  final ControlesCalidad controles;
+}
+
 class ServicioCapturaPruebas {
   const ServicioCapturaPruebas({required this.almacen, required this.cropper});
 
@@ -47,13 +61,13 @@ class ServicioCapturaPruebas {
   /// Lanza [AutorizacionNoConfirmada], [SinRostro] (sin escribir nada),
   /// [TomaYaExiste], y lo que lance el recorte (`ConfiguracionRecorteInvalida`,
   /// `PerfilIccNoSoportado`, `FormatException`).
-  Future<MetadatosToma> registrarToma({
+  Future<ResultadoRegistro> registrarToma({
     required IdToma id,
     required bool autorizacionFirmada,
     required Uint8List foto,
     required DatosDelCelular celular,
-    required ParametrosDeCamara parametrosCamara,
     required DateTime momento,
+    ParametrosDeCamara? parametrosCamara,
     String extensionFoto = 'jpg',
     bool reemplazar = false,
   }) async {
@@ -62,15 +76,19 @@ class ServicioCapturaPruebas {
     final RecorteFacial? recorte = await cropper.recortar(foto);
     if (recorte == null) throw const SinRostro();
 
-    return almacen.guardarToma(
+    final MetadatosToma metadatos = await almacen.guardarToma(
       id: id,
       foto: foto,
       extensionFoto: extensionFoto,
       recorte: recorte,
       celular: celular,
-      parametrosCamara: parametrosCamara,
+      parametrosCamara: parametrosCamara ?? leerParametrosDeCamara(foto),
       momento: momento,
       reemplazar: reemplazar,
+    );
+    return ResultadoRegistro(
+      metadatos: metadatos,
+      controles: recorte.controles,
     );
   }
 }

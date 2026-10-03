@@ -7,6 +7,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:wearhack/core/color/jpeg_icc.dart';
 import 'package:wearhack/core/recorte/recortador_facial.dart';
@@ -359,7 +360,7 @@ void main() {
       servicio = ServicioCapturaPruebas(almacen: almacen, cropper: cropper);
     });
 
-    Future<MetadatosToma> registrar({
+    Future<ResultadoRegistro> registrar({
       bool autorizacion = true,
       IdToma? id,
       Uint8List? foto,
@@ -369,7 +370,8 @@ void main() {
       autorizacionFirmada: autorizacion,
       foto: foto ?? fotoDePrueba(),
       celular: datosDelCelular(),
-      parametrosCamara: const ParametrosDeCamara(),
+      // Sin parametrosCamara: es lo que hace la app, y asi el servicio los lee
+      // del EXIF de la foto.
       momento: DateTime.utc(2026, 10, 15, 20, 42, 7),
       reemplazar: reemplazar,
     );
@@ -457,6 +459,70 @@ void main() {
           idDe(repeticion: Repeticion.r2),
         ))['tarjeta_gris'],
         isFalse,
+      );
+    });
+
+    Uint8List fotoConIso(int iso) {
+      final img.Image im = img.Image(width: 400, height: 400);
+      for (final img.Pixel p in im) {
+        p
+          ..r = 150
+          ..g = 120
+          ..b = 100;
+      }
+      im.exif.exifIfd[0x8827] = img.IfdValueLong(iso); // ISOSpeed
+      im.exif.exifIfd[0x829a] = img.IfdValueRational(1, 100); // ExposureTime
+      im.exif.exifIfd[0xa403] = img.IfdValueShort(0); // WhiteBalance auto
+      return img.encodeJpg(im, quality: 95);
+    }
+
+    Map<String, Object?> parametrosGuardados(Map<String, Object?> json) =>
+        (json['camara']! as Map<String, Object?>)['parametros']!
+            as Map<String, Object?>;
+
+    test('sin parametros explicitos los lee del EXIF de la foto', () async {
+      await registrar(foto: fotoConIso(400));
+
+      final Map<String, Object?> par = parametrosGuardados(
+        await almacen.leerMetadatos(idDe()),
+      );
+      expect(par['iso'], 400);
+      expect(par['exposicion'], closeTo(0.01, 1e-6));
+      expect(par['balance_blancos'], 'auto');
+    });
+
+    test(
+      'una foto sin EXIF deja los parametros en null, no inventados',
+      () async {
+        await registrar();
+
+        final Map<String, Object?> par = parametrosGuardados(
+          await almacen.leerMetadatos(idDe()),
+        );
+        expect(par['iso'], isNull);
+        expect(par['exposicion'], isNull);
+        expect(par['balance_blancos'], isNull);
+      },
+    );
+
+    test('unos parametros explicitos mandan sobre el EXIF', () async {
+      await servicio.registrarToma(
+        id: idDe(),
+        autorizacionFirmada: true,
+        foto: fotoConIso(400),
+        celular: datosDelCelular(),
+        parametrosCamara: const ParametrosDeCamara(iso: 800),
+        momento: DateTime.utc(2026, 10, 15, 20, 42, 7),
+      );
+
+      final Map<String, Object?> par = parametrosGuardados(
+        await almacen.leerMetadatos(idDe()),
+      );
+      expect(par['iso'], 800);
+      expect(
+        par['exposicion'],
+        isNull,
+        reason: 'lo explicito no se mezcla con el EXIF',
       );
     });
 

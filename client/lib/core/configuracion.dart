@@ -24,5 +24,13 @@ class Configuracion {
   /// codigo solo se alcanza detras de esta constante, el compilador lo descarta.
   static const bool capturaPruebas = bool.fromEnvironment('CAPTURA_PRUEBAS');
 
+  /// Enciende la guia de distancia en vivo del modo de captura de pruebas.
+  ///
+  /// Apagada por defecto: depende de pasar fotogramas de la camara a ML Kit, y
+  /// eso no se ha verificado en un telefono. Ver `CamaraDeCaptura`.
+  static const bool capturaGuiaEnVivo = bool.fromEnvironment(
+    'CAPTURA_GUIA_EN_VIVO',
+  );
+
   static const String version = '0.1.0';
 }

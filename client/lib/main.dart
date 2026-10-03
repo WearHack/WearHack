@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/platform/captura.dart';
+import 'package:wearhack/platform/captura_pruebas.dart';
 
 void main() {
   runApp(const AplicacionWearHack());
@@ -52,6 +53,16 @@ class PantallaEsqueleto extends StatelessWidget {
             // resolvio a la implementacion correcta para este target.
             Text('clasificacion on-device: ${pipeline.disponible}'),
             Text('recorte de rostro: ${recortador.disponible}'),
+            // Solo en builds internas (--dart-define=CAPTURA_PRUEBAS=true). La
+            // constante se resuelve al compilar, asi que sin el flag este
+            // boton y todo lo que abre desaparecen del programa.
+            if (Configuracion.capturaPruebas) ...<Widget>[
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => abrirCapturaPruebas(context),
+                child: const Text('Captura de pruebas (build interna)'),
+              ),
+            ],
           ],
         ),
       ),
