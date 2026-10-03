@@ -28,6 +28,10 @@ client/build/
 client/ios/Pods/
 client/ios/.symlinks/
 client/android/.gradle/
+client/android/.kotlin/
+# Registros de caida de la JVM de Gradle (falta de memoria al compilar).
+client/android/hs_err_pid*.log
+client/android/replay_pid*.log
 client/android/local.properties
 client/.packages
 *.iml
