@@ -7,8 +7,18 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
+  archive: ^4.3.0
+  camera: ^0.12.1
+  crypto: ^3.0.7
+  device_info_plus: ^13.3.0
   flutter:
     sdk: flutter
+  google_mlkit_face_detection: ^0.15.1
+  image: ^4.10.1
+  package_info_plus: ^10.2.2
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

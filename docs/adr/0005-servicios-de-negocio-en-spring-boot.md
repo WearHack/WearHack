@@ -1,7 +1,8 @@
 # ADR 0005: Cuatro servicios de negocio en Spring Boot
 
-- **Estado:** aceptado
+- **Estado:** sustituido
 - **Fecha:** 2026-09-22
+- **Sustituido por:** [ADR 0019](0019-core-modular-con-spring-modulith-en-lugar-de-cuatro.md)
 
 ## Contexto
 

@@ -14,6 +14,8 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>NSCameraUsageDescription</key>
+	<string>WearHack usa la camara para fotografiar prendas y para la calibracion de color.</string>
 	<key>CFBundleName</key>
 	<string>wearhack</string>
 	<key>CFBundlePackageType</key>

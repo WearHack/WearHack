@@ -1,0 +1,36 @@
+@startuml
+title <size:24>WearHack Core</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("WearHackCore_boundary", "WearHack Core", $tags="") {
+  Container_Boundary("WearHackCore.WearHackCore_boundary", "WearHack Core", $tags="") {
+    Component(WearHackCore.WearHackCore.Plataforma, "Plataforma", $techn="Module", $descr="", $tags="", $link="")
+    Component(WearHackCore.WearHackCore.Closet, "Closet", $techn="Module", $descr="", $tags="", $link="")
+    Component(WearHackCore.WearHackCore.Outfits, "Outfits", $techn="Module", $descr="", $tags="", $link="")
+    Component(WearHackCore.WearHackCore.Publicidad, "Publicidad", $techn="Module", $descr="", $tags="", $link="")
+    Component(WearHackCore.WearHackCore.Usuarios, "Usuarios", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(WearHackCore.WearHackCore.Usuarios, WearHackCore.WearHackCore.Plataforma, "depends on", $techn="", $tags="", $link="")
+Rel(WearHackCore.WearHackCore.Publicidad, WearHackCore.WearHackCore.Plataforma, "depends on", $techn="", $tags="", $link="")
+Rel(WearHackCore.WearHackCore.Closet, WearHackCore.WearHackCore.Plataforma, "depends on", $techn="", $tags="", $link="")
+Rel(WearHackCore.WearHackCore.Outfits, WearHackCore.WearHackCore.Plataforma, "depends on", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

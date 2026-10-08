@@ -8,7 +8,11 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/recorte/recortador_facial.dart';
 import 'package:wearhack/core/vocabulario.dart';
+
+export 'package:wearhack/core/recorte/recortador_facial.dart'
+    show CajaRostro, RecorteFacial;
 
 /// Lo que el pipeline on-device saca de la foto de una prenda.
 class PrendaClasificada {
@@ -57,15 +61,28 @@ abstract interface class GarmentPipeline {
   bool get disponible;
 }
 
-/// Detecta el rostro, lo recorta y lo normaliza.
+/// Detecta el rostro y lo recorta.
 ///
 /// Para la colorimetria el backend recibe **solo el recorte**, nunca la foto
-/// completa. Esa decision es de privacidad y de coste: una cara recortada y
-/// normalizada son unos pocos kilobytes, y el resto de la escena no aporta
-/// nada al calculo de la temporada.
+/// completa. Esa decision es de privacidad y de coste: una cara recortada son
+/// unos pocos kilobytes, y el resto de la escena no aporta nada al calculo de
+/// la temporada.
+///
+/// Esta es la **unica** funcion de recorte del cliente: el flujo real de
+/// colorimetria y el modo de captura de pruebas la llaman, no hay copias. El
+/// recorte sale en sRGB y sin perfil incrustado. No normaliza la iluminacion
+/// ni reescala: eso esta por decidir con el protocolo de normalizacion.
 abstract interface class FaceCropper {
-  /// Devuelve el recorte normalizado, o `null` si no se ve una cara usable.
-  Future<Uint8List?> recortar(Uint8List foto);
+  /// Recibe el JPEG original de la camara y devuelve el recorte, o `null` si
+  /// no se ve un rostro usable.
+  ///
+  /// Un control de calidad que no se cumple no es `null`: queda en
+  /// `RecorteFacial.controles`, y la app sugiere repetir sin obligar.
+  ///
+  /// Lanza `ConfiguracionRecorteInvalida` si faltan los margenes del recorte,
+  /// `PerfilIccNoSoportado` si la foto trae un perfil que no se sabe leer, y
+  /// `FormatException` si no es un JPEG.
+  Future<RecorteFacial?> recortar(Uint8List foto);
 
   bool get disponible;
 }

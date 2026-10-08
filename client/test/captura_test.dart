@@ -8,7 +8,13 @@ library;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
+import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/platform/captura.dart';
+import 'package:wearhack/platform/captura/captura_movil.dart'
+    show FaceCropperMovil;
+
+import 'helpers/icc_sintetico.dart';
 
 void main() {
   test('en movil la captura se reporta disponible', () {
@@ -30,5 +36,57 @@ void main() {
     const fallo = CapturaNoDisponible('solo en movil');
 
     expect(fallo.toString(), contains('solo en movil'));
+  });
+
+  group('recorte facial en movil', () {
+    test('sin margenes configurados falla diciendo cuales faltan', () async {
+      // Es la prueba de que el recorte no inventa los valores "no definidos".
+      await expectLater(
+        crearFaceCropper().recortar(jpegSintetico(300, 300)),
+        throwsA(
+          isA<ConfiguracionRecorteInvalida>().having(
+            (e) => e.toString(),
+            'mensaje',
+            contains('RECORTE_MARGEN_SUPERIOR'),
+          ),
+        ),
+      );
+    });
+
+    test('de punta a punta, con el isolate que usa la app', () async {
+      final FaceCropper cropper = FaceCropperMovil(
+        detector: DetectorFalso(<CajaRostro>[
+          const CajaRostro(left: 100, top: 100, width: 100, height: 100),
+        ]),
+        configuracion: const ConfiguracionRecorte(
+          margenSuperior: 0.5,
+          margenInferior: 0.25,
+          margenLateral: 0.5,
+        ),
+      );
+
+      final RecorteFacial? recorte = await cropper.recortar(
+        jpegSintetico(400, 400),
+      );
+
+      expect(recorte, isNotNull);
+      // x: 100-50=50 a 200+50=250; y: 100-50=50 a 200+25=225.
+      expect((recorte!.ancho, recorte.alto), (200, 175));
+      final img.Image png = img.decodePng(recorte.png)!;
+      expect((png.width, png.height), (200, 175));
+    });
+
+    test('sin rostro devuelve null', () async {
+      final FaceCropper cropper = FaceCropperMovil(
+        detector: DetectorFalso(<CajaRostro>[]),
+        configuracion: const ConfiguracionRecorte(
+          margenSuperior: 0,
+          margenInferior: 0,
+          margenLateral: 0,
+        ),
+      );
+
+      expect(await cropper.recortar(jpegSintetico(300, 300)), isNull);
+    });
   });
 }

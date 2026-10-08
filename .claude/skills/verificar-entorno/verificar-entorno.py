@@ -35,8 +35,14 @@ import urllib.request
 
 RAIZ_COMPOSE = None  # se ejecuta desde la raiz del repo, donde vive docker-compose.yml
 
-# Servicios de infraestructura: no exponen /api/v1/<nombre>/health por el gateway
-INFRA = {"mongo", "minio", "minio-init", "otel-collector", "gateway"}
+# Servicios que no se comprueban por el gateway. Los de infraestructura no exponen
+# /api/v1/<nombre>/health. El Core tampoco: no va detras del gateway, se le pega
+# directo (ver la seccion 3b). Mientras convivan el Core y los servicios viejos, esta
+# lista cambia; cuando el gateway desaparezca, este script se reescribe.
+INFRA = {"mongo", "minio", "minio-init", "otel-collector", "gateway", "core"}
+
+# Modulos del Core. Cada uno responde /api/v1/<modulo>/health en el propio Core.
+MODULOS_DEL_CORE = ("usuarios", "closet", "outfits", "publicidad")
 
 # minio-init es un contenedor de un solo uso: termina y es lo esperado
 UN_SOLO_USO = {"minio-init"}
@@ -92,10 +98,14 @@ def esta_sano(servicio: str, estado: tuple[str, str] | None) -> bool:
     return corriendo == "running"
 
 
-def puerto_del_gateway() -> int | None:
-    r = compose("port", "gateway", "8080")
+def puerto_publicado(servicio: str, puerto_interno: int) -> int | None:
+    r = compose("port", servicio, str(puerto_interno))
     m = re.search(r":(\d+)\s*$", r.stdout.strip())
     return int(m.group(1)) if m else None
+
+
+def puerto_del_gateway() -> int | None:
+    return puerto_publicado("gateway", 8080)
 
 
 def get_json(url: str) -> tuple[int, dict | None]:
@@ -176,6 +186,22 @@ def main() -> int:
             ok = codigo == 200 and (cuerpo or {}).get("servicio") == s and (cuerpo or {}).get("estado") == "UP"
             detalle = "" if ok else (f"HTTP {codigo}" if codigo != 200 else f"respondio {cuerpo}")
             anotar(f"{s} por el gateway", ok, detalle)
+
+    # 3b. El Core, directo: no va detras del gateway.
+    if "core" in esperados:
+        puerto_core = puerto_publicado("core", 8090)
+        if puerto_core is None:
+            anotar("core publicado", False, "no hay puerto publicado para el core")
+        else:
+            base_core = f"http://localhost:{puerto_core}"
+            codigo, cuerpo = get_json(f"{base_core}/health")
+            anotar("core /health", codigo == 200 and (cuerpo or {}).get("servicio") == "core",
+                   "" if codigo == 200 else f"HTTP {codigo}")
+            for modulo in MODULOS_DEL_CORE:
+                codigo, cuerpo = get_json(f"{base_core}/api/v1/{modulo}/health")
+                ok = codigo == 200 and (cuerpo or {}).get("modulo") == modulo
+                anotar(f"core, modulo {modulo}", ok,
+                       "" if ok else (f"HTTP {codigo}" if codigo != 200 else f"respondio {cuerpo}"))
 
     # 4. Trazas. El collector agrupa en lotes de unos 5 s, asi que hay que dar tiempo.
     time.sleep(8)

@@ -1,0 +1,47 @@
+{
+  "esquema": 1,
+  "seudonimo": "P3",
+  "luz": "LEDC",
+  "repeticion": "R1",
+  "tarjeta_gris": true,
+  "fecha_hora": "2026-10-15T15:42:07-05:00",
+  "celular": {
+    "codigo": "D2",
+    "modelo": "Modelo de prueba",
+    "sistema": "Android 14",
+    "build_app": "0.1.0+1"
+  },
+  "pantalla": {
+    "true_tone_o_night_shift": false
+  },
+  "camara": {
+    "lente": "frontal",
+    "flash": "apagado",
+    "parametros": {
+      "exposicion": 0.5,
+      "iso": 400,
+      "balance_blancos": null
+    }
+  },
+  "rostro": {
+    "bbox": [
+      100,
+      100,
+      250,
+      270
+    ],
+    "ancho_px": 150
+  },
+  "perfil_color": {
+    "foto": "Display P3",
+    "recorte": "sRGB (convertido por la app)"
+  },
+  "archivos": {
+    "foto": "P3_LEDC_D2_R1_G_foto.jpg",
+    "recorte": "P3_LEDC_D2_R1_G_recorte.png",
+    "sha256": {
+      "foto": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "recorte": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  }
+}
