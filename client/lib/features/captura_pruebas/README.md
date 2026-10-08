@@ -148,12 +148,23 @@ archivos:
   primeros aunque la app no graba audio ni escribe en almacenamiento compartido, y el
   fusionador agrega el tercero como "implicito". Quedan `CAMERA`, `INTERNET` y
   `ACCESS_NETWORK_STATE` (estos dos por bibliotecas, ver arriba).
+- El mismo manifiesto declara `android:allowBackup="false"`. Sin eso, **por defecto Android
+  sube los datos privados de la app a la cuenta de Google de la persona**, y ahi estan las
+  fotos de rostros. La cuota de la copia automatica es de 25 MB por app, asi que un lote
+  completo no cabria, pero uno parcial (unas ocho fotos) si. Afecta a toda la app, no solo
+  a este modo: si el producto llegara a querer copia de seguridad, se haria con reglas que
+  excluyan `captura_pruebas`, no quitando esta linea. Lo vigila `captura_pruebas_reglas_test`.
 - `ios/Runner/Info.plist`: `NSCameraUsageDescription`. Sin ella iOS cierra la app al abrir
   la camara.
 
 **iOS no se ha compilado nunca** (no hay un Mac). Falta, al menos: ML Kit exige iOS 15.5
 o mas y excluir `armv7` en el `Podfile`, que no esta en el repositorio porque Flutter lo
 genera en la primera build de iOS. Hay que revisarlo cuando se compile en un Mac.
+
+**iOS tampoco esta resuelto en copias de seguridad.** Lo que hay en `Documents` de una app
+de iOS entra por defecto en las copias de iCloud y de iTunes. Excluir la carpeta
+`captura_pruebas` pide codigo nativo (`NSURLIsExcludedFromBackupKey`) y no se ha hecho.
+Hasta que se haga, no usar iOS para fotos reales de calibracion.
 
 ## Compilar en una maquina con poca memoria
 

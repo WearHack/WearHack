@@ -11,7 +11,13 @@
          esta app no debe hacer. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
 
+    <!-- Sin copia de seguridad automatica: por defecto Android sube los datos
+         privados de la app a la cuenta de Google de la persona, y ahi estan las
+         fotos de rostros del modo de captura de pruebas (cuota de 25 MB por app,
+         asi que un lote parcial si cabria). Ver
+         client/lib/features/captura_pruebas/README.md. -->
     <application
+        android:allowBackup="false"
         android:label="wearhack"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

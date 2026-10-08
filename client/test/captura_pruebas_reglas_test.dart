@@ -198,6 +198,46 @@ void main() {
     });
   });
 
+  group('configuracion de plataforma', () {
+    final String manifiesto = File(
+      p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+    ).readAsStringSync();
+
+    test(
+      'Android no hace copia de seguridad automatica de los datos de la app',
+      () {
+        // Por defecto Android sube los datos privados (y con ellos las fotos de
+        // rostros) a la cuenta de Google de la persona.
+        expect(manifiesto, contains('android:allowBackup="false"'));
+      },
+    );
+
+    for (final String permiso in <String>[
+      'RECORD_AUDIO',
+      'WRITE_EXTERNAL_STORAGE',
+      'READ_EXTERNAL_STORAGE',
+    ]) {
+      test(
+        'Android quita el permiso $permiso que trae el plugin de camara',
+        () {
+          expect(
+            manifiesto,
+            matches(
+              RegExp('android\\.permission\\.$permiso"\\s+tools:node="remove"'),
+            ),
+          );
+        },
+      );
+    }
+
+    test('iOS explica para que usa la camara', () {
+      final String plist = File(p.join('ios', 'Runner', 'Info.plist'))
+          .readAsStringSync();
+
+      expect(plist, contains('NSCameraUsageDescription'));
+    });
+  });
+
   group('solo en builds internas', () {
     /// Archivos fuera de [carpeta] cuyo codigo (sin comentarios) contiene [texto].
     List<String> importadores(String texto, {required List<String> excluir}) =>

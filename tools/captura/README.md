@@ -60,6 +60,29 @@ escribir en una boveda que lo este.
 | 1 | El lote no paso la verificacion, o la copia fallo. **No se copio nada** |
 | 2 | Uso o configuracion incorrectos |
 
+## `inspeccionar_lote.py`
+
+El equivalente de `exiftool` para este lote, sin instalar nada. Acepta el `.zip` o la
+carpeta ya importada, y solo lee:
+
+```bash
+python tools/captura/inspeccionar_lote.py RUTA/lote_ab12cd34.zip
+python tools/captura/inspeccionar_lote.py RUTA/boveda/sesion1 --silencioso
+```
+
+Para cada toma muestra las dimensiones de la foto, su orientacion EXIF, ISO, exposicion,
+balance de blancos y el **perfil ICC con su nombre**. Senala (salida 1) cuando:
+
+- `perfil_color.foto` del JSON no dice lo mismo que el perfil real de la foto;
+- el recorte lleva un perfil incrustado, o no es RGB de 8 bits, o `perfil_color.recorte`
+  no es el esperado;
+- el recuadro del rostro no cabe en la foto ya orientada (la orientacion se manejo mal
+  en algun paso).
+
+Al final resume cuantas fotos traen perfil, ISO, exposicion y balance de blancos, y los
+valores de orientacion que aparecieron. Un HEIC no se inspecciona. Es la herramienta de la
+lista de pruebas en telefono (`docs/prueba-captura-en-telefono.md`).
+
 ## Formato (lo que hay que mantener de acuerdo con la app)
 
 El script y la app son dos programas en dos lenguajes que leen el mismo formato. Para que
