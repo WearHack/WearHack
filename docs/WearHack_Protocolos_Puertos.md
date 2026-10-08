@@ -145,8 +145,9 @@ Cada colección tiene un único dueño. Leer la de otro se permite solo por su A
 | Outfits y selecciones | Módulo Outfits | Job de ajuste de preferencias: solo lectura |
 | Catálogos de marcas aliadas | Módulo Publicidad | Job de ranking de prenda puente: solo lectura |
 | Centroides, pesos por usuario y coocurrencia de texturas | Servicios de IA y jobs | Colorimetría y Motor leen las suyas en línea; el Core no las lee |
+| `recalibraciones` (marca de qué correcciones consumió cada corrida) | Job de recalibración de centroides de temporada | Módulo Usuarios: solo lectura, contrato declarado, para desvincular las correcciones consumidas |
 | Ranking de prenda puente | Jobs batch (Recomendación) | Módulo Publicidad: solo lectura, contrato declarado |
-| Centroides de color de prenda | Módulo Clóset (recalibración por tarea programada del Core) | Nadie más |
+| Centroides de color de prenda (ISCC-NBS, fijos) y tabla de traducción a categorías | Módulo Clóset (la tabla se ajusta por tarea programada del Core) | Nadie más |
 | `configuracion` (umbrales, dress codes, pesos) | Un documento por dueño: `outfits`, `colorimetria`, `closet`, `recomendacion` | Cada componente lee y escribe solo su documento |
 
 - **Ruta en línea**: el Core consulta las prendas (índice ESR `usuario_id + slot_outfit + atributos.clima_apto`, que queda en la colección de Clóset) y las envía en la petición. El motor no tiene credenciales sobre colecciones del Core.
@@ -179,7 +180,7 @@ Ejemplo ilustrativo del cuerpo de `POST /v1/recomendacion/generar` (los nombres 
       "tipo": "…",
       "textura": "…",
       "patron": "LISO",
-      "formalidad": "CASUAL",
+      "formalidad": { "min": "CASUAL", "max": "CASUAL" },
       "clima_apto": ["…"],
       "version_esquema": 1
     }

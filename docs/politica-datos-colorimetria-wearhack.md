@@ -79,7 +79,7 @@ Lectura basada en la Ley 1581 de 2012 y en criterios recientes de la Superintend
 - Endpoints propuestos (módulo Usuarios): consultar el perfil de color, borrarlo y revocar el consentimiento. Rutas exactas por definir.
 - Al **revocar o borrar el perfil de color**: se elimina el perfil derivado.
 - Al **eliminar la cuenta**: se elimina el perfil derivado, la cuenta en Cognito y los datos asociados.
-- **Correcciones**: se desvinculan del usuario tras su uso en la recalibración, de modo que quedan como datos agregados. El mecanismo (quién las desvincula y cuándo) está por definir, porque el job de recalibración solo tiene lectura sobre esa colección.
+- **Correcciones** (mecanismo decidido el 2026-10-01): el job de recalibración marca hasta qué corrección consumió; una tarea del módulo Usuarios elimina el `usuario_id` de las consumidas y reduce la fecha a mes y año. Ninguna corrección permanece vinculada más de 30 días. Si el usuario revoca antes de la desvinculación, sus correcciones se borran; después quedan como datos agregados. Pendiente de validación legal.
 - **Copias de seguridad**: los backups de Atlas contienen los valores derivados; la política de conservación de backups debe alinearse con estos plazos.
 - **Plazos de respuesta** a consultas y reclamos: los fija la ley; confirmarlos con el abogado.
 
@@ -122,7 +122,7 @@ Es un tratamiento **distinto del producto**. En el producto el recorte no se per
 | Qué se guarda | Imágenes capturadas con la app, metadatos de captura (luz, dispositivo) y los valores derivados |
 | Almacenamiento | **Decidido (2026-10-01)**: bóveda cifrada con Cryptomator sobre una carpeta institucional de la universidad (Drive u OneDrive), **fuera del repositorio**. El proveedor solo recibe archivos cifrados, que pueden quedar fuera de Colombia (se informa en el consentimiento). Acceso limitado a quienes tienen la contraseña de la bóveda |
 | Conservación | Hasta el cierre de la fase del proyecto o hasta que la persona pida el borrado, lo que ocurra primero |
-| Datasets públicos | **Deep Armocromia**: centroides y evaluación, solo en la fase académica (licencia de investigación; derivado de CelebA, sin uso comercial de datos derivados). **MST-E** y **Casual Conversations v2**: solo evaluación de robustez y equidad, según sus términos (por leer). Se almacenan con las mismas reglas que el resto del conjunto y se borran cuando su licencia lo exija. Detalle en `investigacion-fuentes-colorimetria.md` |
+| Datasets públicos | MVP exclusivamente académico (decidido 2026-10-01). **Deep Armocromia**: centroides y evaluación, solo en la fase académica (licencia de investigación; derivado de CelebA). **MST-E**: solo evaluación; prohíbe entrenar; imágenes con copyright de TONL, sin redistribución (términos revisados el 2026-10-01). **Casual Conversations v2**: evaluación de robustez y equidad según su acuerdo. Todos se guardan en la bóveda, nunca en el repositorio, y se registran en `procedencia-datos-wearhack.md` |
 | Comité de ética | Preguntar a la universidad si las pruebas con los propios integrantes lo requieren |
 
 ## 13. Antes de un lanzamiento comercial
@@ -138,7 +138,6 @@ Es un tratamiento **distinto del producto**. En el producto el recorte no se per
 
 ## 14. Pendientes abiertos
 
-- Mecanismo de desvinculación de las correcciones (quién y cuándo).
 - Rutas y contrato de los endpoints de consulta, borrado y revocación.
 - Texto definitivo del consentimiento y canal de contacto.
 - Política de conservación de backups en Atlas.
