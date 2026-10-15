@@ -7,6 +7,10 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
+  # Registro e inicio de sesion contra Cognito (issue #10). Versiones fijas: los
+  # paquetes de Amplify se publican juntos y tienen que coincidir entre si.
+  amplify_auth_cognito: 2.15.1
+  amplify_flutter: 2.15.0
   archive: ^4.3.0
   camera: ^0.12.1
   crypto: ^3.0.7
@@ -14,6 +18,7 @@ dependencies:
   flutter:
     sdk: flutter
   google_mlkit_face_detection: ^0.15.1
+  http: ^1.6.0
   image: ^4.10.1
   package_info_plus: ^10.2.2
   path: ^1.9.1
