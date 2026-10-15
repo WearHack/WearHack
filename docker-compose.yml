@@ -215,6 +215,10 @@ services:
       <<: *entorno-negocio
       OTEL_SERVICE_NAME: core
       SERVER_PORT: 8090
+      # Sin USER_POOL_ID el Core arranca pero rechaza todo token: solo responde /health.
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_CLIENT_IDS: ${COGNITO_CLIENT_IDS:-}
     ports:
       - "${CORE_PORT:-8090}:8090"
     depends_on:

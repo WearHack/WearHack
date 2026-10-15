@@ -1,6 +1,10 @@
 spring:
   application:
     name: core
+  mongodb:
+    # Compose la pasa con la base incluida (/wearhack). En AWS sale de SSM o de un .env
+    # fuera del repo, nunca de aqui.
+    uri: ${MONGO_URI:mongodb://localhost:27017/wearhack}
 
 server:
   port: ${SERVER_PORT:8090}
@@ -11,6 +15,19 @@ server:
 
 wearhack:
   version: '@project.version@'
+  # El User Pool que emite los tokens. Sin USER_POOL_ID el Core arranca pero rechaza todo
+  # token: solo responden los health checks.
+  cognito:
+    region: ${COGNITO_REGION:us-east-1}
+    user-pool-id: ${COGNITO_USER_POOL_ID:}
+    # App clients aceptados, separados por coma. Obligatorio si hay User Pool.
+    client-ids: ${COGNITO_CLIENT_IDS:}
+  usuarios:
+    correcciones:
+      # Desvincula las correcciones de colorimetria consumidas o con mas de 30 dias.
+      # Una vez al dia, de madrugada en Colombia. "-" la desactiva.
+      cron: ${CORRECCIONES_DESVINCULACION_CRON:0 30 8 * * *}
+      dias-maximos: 30
 
 management:
   endpoints:
