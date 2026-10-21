@@ -18,6 +18,16 @@ public class MongoDePrueba {
     @Bean
     @ServiceConnection
     MongoDBContainer contenedorMongo() {
-        return new MongoDBContainer("mongo:8.0");
+        MongoDBContainer mongo = new MongoDBContainer("mongo:8.0");
+        // Se arranca aqui y no se deja a Spring: si mongod muere al arrancar, Testcontainers
+        // no lo detecta y el error llega despues como "MongoDBContainer should be started
+        // first", sin los logs que dicen por que.
+        mongo.start();
+        if (!mongo.isRunning()) {
+            String logs = mongo.getLogs();
+            mongo.stop();
+            throw new IllegalStateException("mongod se detuvo al arrancar. Logs:\n" + logs);
+        }
+        return mongo;
     }
 }
