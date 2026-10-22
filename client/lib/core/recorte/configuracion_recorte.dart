@@ -1,20 +1,16 @@
 /// Parametros del recorte facial y de sus controles de calidad.
 ///
-/// **Ninguno de estos valores esta definido todavia**, asi que ninguno trae un
-/// valor por defecto. `docs/respuestas-claude-code.md` (A.8 y A.9) los deja
-/// "para fijar con los datos del protocolo", y inventarlos aqui los volveria una
-/// decision silenciosa. Se pasan al compilar:
+/// **Los margenes son PROVISIONALES.** `docs/respuestas-claude-code.md` (A.8 y
+/// A.9) los dejaba "para fijar con los datos del protocolo"; hasta entonces se
+/// usan los de [margenSuperiorProvisional], [margenInferiorProvisional] y
+/// [margenLateralProvisional] (fracciones del tamano del rostro detectado),
+/// fijados por el responsable de la spec el 2026-10 para la fase de captura. No
+/// salen de ninguna medicion: se cambian al compilar sin tocar codigo.
 ///
-///   flutter run \
-///     --dart-define=RECORTE_MARGEN_SUPERIOR=0.4 \
-///     --dart-define=RECORTE_MARGEN_INFERIOR=0.1 \
-///     --dart-define=RECORTE_MARGEN_LATERAL=0.15
+///   flutter run ///     --dart-define=RECORTE_MARGEN_SUPERIOR=0.6 ///     --dart-define=RECORTE_MARGEN_INFERIOR=0.15 ///     --dart-define=RECORTE_MARGEN_LATERAL=0.3
 ///
-/// (esos numeros son solo un ejemplo de formato, no una recomendacion.)
-///
-/// Los margenes son obligatorios: sin ellos no hay recorte. Los umbrales de
-/// calidad son opcionales: sin umbral, el control se mide y se reporta, pero
-/// nunca se marca como fallido.
+/// Los umbrales de calidad siguen **sin definirse** y no traen valor: sin
+/// umbral, el control se mide y se reporta, pero nunca se marca como fallido.
 library;
 
 /// La configuracion del recorte falta o tiene un valor invalido.
@@ -29,6 +25,11 @@ class ConfiguracionRecorteInvalida implements Exception {
       'ConfiguracionRecorteInvalida: ${problemas.join('; ')}. '
       'Se pasan con --dart-define=NOMBRE=valor al compilar.';
 }
+
+/// Margenes provisionales. Ver la cabecera del archivo.
+const double margenSuperiorProvisional = 0.6;
+const double margenInferiorProvisional = 0.15;
+const double margenLateralProvisional = 0.3;
 
 class ConfiguracionRecorte {
   const ConfiguracionRecorte({
@@ -67,17 +68,21 @@ class ConfiguracionRecorte {
   /// 12 megapixeles, y el recorte se hace siempre sobre la foto completa.
   final int ladoMaximoDeteccion;
 
-  /// Lee la configuracion de los `--dart-define` del build.
+  /// Lee la configuracion de los `--dart-define` del build. Los margenes que no
+  /// se pasen valen los provisionales.
   factory ConfiguracionRecorte.desdeEntorno() =>
       ConfiguracionRecorte.desdeTextos(const <String, String>{
         'RECORTE_MARGEN_SUPERIOR': String.fromEnvironment(
           'RECORTE_MARGEN_SUPERIOR',
+          defaultValue: '$margenSuperiorProvisional',
         ),
         'RECORTE_MARGEN_INFERIOR': String.fromEnvironment(
           'RECORTE_MARGEN_INFERIOR',
+          defaultValue: '$margenInferiorProvisional',
         ),
         'RECORTE_MARGEN_LATERAL': String.fromEnvironment(
           'RECORTE_MARGEN_LATERAL',
+          defaultValue: '$margenLateralProvisional',
         ),
         'RECORTE_ANCHO_MINIMO_ROSTRO_PX': String.fromEnvironment(
           'RECORTE_ANCHO_MINIMO_ROSTRO_PX',
