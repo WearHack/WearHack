@@ -1,31 +1,50 @@
 /// Cliente de WearHack.
 ///
-/// Esqueleto. Arranca y muestra de que plataforma se trata y si la captura
-/// on-device esta disponible. Sin UI real.
+/// Las pantallas de closet, outfits y semana estan maquetadas sobre un
+/// repositorio falso en memoria (`lib/mock/`). Todavia no hablan con el
+/// gateway.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
+import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/outfits/repositorio_outfits.dart';
+import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura_pruebas.dart';
 
 void main() {
-  runApp(const AplicacionWearHack());
+  final RepositorioFalso datos = RepositorioFalso();
+  runApp(AplicacionWearHack(closet: datos, outfits: datos));
 }
 
 class AplicacionWearHack extends StatelessWidget {
-  const AplicacionWearHack({super.key});
+  const AplicacionWearHack({
+    super.key,
+    required this.closet,
+    required this.outfits,
+  });
+
+  final RepositorioCloset closet;
+  final RepositorioOutfits outfits;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'WearHack',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: const PantallaEsqueleto(),
+      home: PantallaPrincipal(
+        closet: closet,
+        outfits: outfits,
+        diagnostico: (_) => const PantallaEsqueleto(),
+      ),
     );
   }
 }
 
+/// Que plataforma es y que capacidades on-device resolvio. Se abre desde el
+/// icono de informacion de la barra superior.
 class PantallaEsqueleto extends StatelessWidget {
   const PantallaEsqueleto({super.key});
 

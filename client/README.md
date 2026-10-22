@@ -38,8 +38,11 @@ y en ningun otro sitio. Esa build en CI es la red de seguridad de esta frontera.
 
 | Ruta | Que hay |
 |---|---|
+| `lib/app/` | Navegacion principal: closet, outfits y semana |
 | `lib/core/` | Vocabulario compartido con el backend y configuracion |
+| `lib/core/ui/` | Textos, iconos y colores del vocabulario, y estados vacio y error |
 | `lib/features/` | Closet, outfits y colorimetria |
+| `lib/mock/` | Repositorio falso en memoria. Las pantallas lo usan hasta que exista el cliente HTTP |
 | `lib/platform/captura/` | Pipeline on-device y recorte de rostro |
 | `assets/models/` | Vacia en git. Ver su README |
 
