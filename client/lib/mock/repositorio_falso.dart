@@ -7,6 +7,8 @@ library;
 
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/colorimetria/consentimiento.dart';
+import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
@@ -21,11 +23,13 @@ class RepositorioFalso
         RepositorioCloset,
         RepositorioOutfits,
         RepositorioClima,
-        RepositorioPublicidad {
+        RepositorioPublicidad,
+        RepositorioConsentimiento {
   RepositorioFalso({
     DateTime? hoy,
     this.latencia = const Duration(milliseconds: 300),
     this.temperatura = 18,
+    this._consentimiento,
   }) : _hoy = _medianoche(hoy ?? DateTime.now()),
        _lunes = _lunesDe(hoy ?? DateTime.now());
 
@@ -39,6 +43,7 @@ class RepositorioFalso
   final DateTime _hoy;
   final DateTime _lunes;
   String? _elegidoHoy;
+  Consentimiento? _consentimiento;
 
   /// Los lotes generados hoy, por id, con los ids de sus opciones.
   final Map<String, List<String>> _lotes = <String, List<String>>{};
@@ -146,6 +151,25 @@ class RepositorioFalso
     required double latitud,
     required double longitud,
   }) => _responder(() => temperatura);
+
+  @override
+  Future<Consentimiento?> consentimientoColorimetria() =>
+      _responder(() => _consentimiento);
+
+  @override
+  Future<void> registrar(DecisionConsentimiento decision, int version) =>
+      _responder(() {
+        _consentimiento = Consentimiento(
+          decision: decision,
+          version: version,
+          fecha: DateTime.now(),
+        );
+      });
+
+  @override
+  Future<void> revocar() => _responder(() {
+    _consentimiento = null;
+  });
 
   @override
   Future<List<MarcaAliada>> marcas() =>

@@ -15,6 +15,7 @@ void main() {
         clima: datos,
         ubicacion: crearServicioUbicacion(),
         publicidad: datos,
+        consentimiento: datos,
       ),
     );
     await tester.pumpAndSettle();
@@ -34,6 +35,7 @@ void main() {
         clima: datos,
         ubicacion: crearServicioUbicacion(),
         publicidad: datos,
+        consentimiento: datos,
       ),
     );
     await tester.pumpAndSettle();

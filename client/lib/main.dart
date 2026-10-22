@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
@@ -26,6 +27,7 @@ void main() {
       clima: datos,
       ubicacion: crearServicioUbicacion(),
       publicidad: datos,
+      consentimiento: datos,
     ),
   );
 }
@@ -38,6 +40,7 @@ class AplicacionWearHack extends StatelessWidget {
     required this.clima,
     required this.ubicacion,
     required this.publicidad,
+    required this.consentimiento,
   });
 
   final RepositorioCloset closet;
@@ -45,6 +48,7 @@ class AplicacionWearHack extends StatelessWidget {
   final RepositorioClima clima;
   final ServicioUbicacion ubicacion;
   final RepositorioPublicidad publicidad;
+  final RepositorioConsentimiento consentimiento;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +61,9 @@ class AplicacionWearHack extends StatelessWidget {
         clima: clima,
         ubicacion: ubicacion,
         publicidad: publicidad,
+        consentimiento: consentimiento,
+        // Se resuelve con el import condicional: en web no hay ML Kit.
+        capturaRostroDisponible: crearFaceCropper().disponible,
         diagnostico: (_) => const PantallaEsqueleto(),
       ),
     );

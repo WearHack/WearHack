@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/ui/formato.dart';
 import 'package:wearhack/core/vocabulario.dart';
+import 'package:wearhack/features/colorimetria/consentimiento.dart';
 import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
@@ -61,6 +62,8 @@ Future<RepositorioFalso> _abrir(
   double ancho = 1200,
   ServicioUbicacion? ubicacion,
   RepositorioClima? clima,
+  Consentimiento? consentimiento,
+  bool capturaRostro = false,
 }) async {
   // Alto de sobra para que las hojas inferiores quepan enteras y ningun boton
   // quede fuera de la vista.
@@ -71,6 +74,7 @@ Future<RepositorioFalso> _abrir(
   final RepositorioFalso datos = RepositorioFalso(
     hoy: _hoy,
     latencia: Duration.zero,
+    consentimiento: consentimiento,
   );
   await tester.pumpWidget(
     MaterialApp(
@@ -80,6 +84,8 @@ Future<RepositorioFalso> _abrir(
         clima: clima ?? datos,
         ubicacion: ubicacion ?? _UbicacionFalsa(_bogota),
         publicidad: datos,
+        consentimiento: datos,
+        capturaRostroDisponible: capturaRostro,
       ),
     ),
   );
@@ -95,6 +101,16 @@ void main() {
       await _abrir(tester);
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
+    });
+
+    testWidgets('el boton Tu color abre la colorimetria', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await tester.tap(find.byTooltip('Tu color'));
+      await tester.pumpAndSettle();
+      expect(find.text('Tu temporada de color'), findsOneWidget);
+      expect(find.text('Calcular mi temporada'), findsOneWidget);
     });
 
     testWidgets('en ancho de telefono usa la barra inferior', (

@@ -7,6 +7,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/closet/ui/pantalla_closet.dart';
+import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
+import 'package:wearhack/features/colorimetria/ui/pantalla_colorimetria.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_outfits.dart';
@@ -23,6 +25,8 @@ class PantallaPrincipal extends StatefulWidget {
     required this.clima,
     required this.ubicacion,
     required this.publicidad,
+    required this.consentimiento,
+    required this.capturaRostroDisponible,
     this.diagnostico,
   });
 
@@ -30,6 +34,10 @@ class PantallaPrincipal extends StatefulWidget {
   final RepositorioOutfits outfits;
   final RepositorioClima clima;
   final RepositorioPublicidad publicidad;
+  final RepositorioConsentimiento consentimiento;
+
+  /// Si este target puede tomar la foto del rostro (en web no).
+  final bool capturaRostroDisponible;
   final ServicioUbicacion ubicacion;
 
   /// La pantalla de diagnostico, si la hay. Llega desde fuera porque vive en
@@ -82,6 +90,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     final PreferredSizeWidget barra = AppBar(
       title: Text(_secciones[_seccion].titulo),
       actions: <Widget>[
+        IconButton(
+          tooltip: 'Tu color',
+          icon: const Icon(Icons.palette_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => PantallaColorimetria(
+                repositorio: widget.consentimiento,
+                capturaDisponible: widget.capturaRostroDisponible,
+              ),
+            ),
+          ),
+        ),
         if (diagnostico != null)
           IconButton(
             tooltip: 'Diagnóstico',
