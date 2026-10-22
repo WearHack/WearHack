@@ -52,7 +52,8 @@ class ServicioCapturaPruebas {
   final AlmacenCapturas almacen;
   final FaceCropper cropper;
 
-  /// Recorta y guarda la toma.
+  /// Recorta y guarda la toma. [espejo] es lo que la camara sabe de si la foto
+  /// esta reflejada (`null` si no sabe); se registra tal cual, sin corregir.
   ///
   /// [autorizacionFirmada] es la casilla "Autorizacion de calibracion firmada"
   /// de la persona. Se exige aqui y no solo en la pantalla: sin ella no se
@@ -69,6 +70,7 @@ class ServicioCapturaPruebas {
     required DateTime momento,
     ParametrosDeCamara? parametrosCamara,
     String extensionFoto = 'jpg',
+    bool? espejo,
     bool reemplazar = false,
   }) async {
     if (!autorizacionFirmada) throw AutorizacionNoConfirmada(id.seudonimo);
@@ -84,6 +86,7 @@ class ServicioCapturaPruebas {
       celular: celular,
       parametrosCamara: parametrosCamara ?? leerParametrosDeCamara(foto),
       momento: momento,
+      espejo: espejo,
       reemplazar: reemplazar,
     );
     return ResultadoRegistro(

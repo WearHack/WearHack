@@ -14,10 +14,11 @@ toma mira:
 - el RECORTE (PNG): dimensiones, tipo de color, y que NO lleve perfil incrustado;
 - el JSON: que `perfil_color` diga lo mismo que el perfil real de la foto, y que el
   recuadro del rostro quepa en la foto ya orientada (si no cabe, la orientacion se
-  manejo mal en algun paso).
+  manejo mal en algun paso);
+- el espejo de la camara frontal (`camara.espejo`): solo se cuenta, no se juzga.
 
 Salida 0 si no hay nada que senalar; 1 si hay hallazgos; 2 si el uso es incorrecto.
-Un HEIC no se inspecciona (se dice).
+La foto es siempre JPEG: un .heic no es un nombre valido de toma.
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ from pathlib import Path
 
 NOMBRE_ARCHIVO = re.compile(
     r"(?P<base>P[1-6]_(?:VEN|LEDC|LEDF|MIX|BAJ)_D[1-3]_R[1-3]_[GN])"
-    r"(?P<resto>\.json|_foto\.(?:jpg|heic)|_recorte\.png)"
+    r"(?P<resto>\.json|_foto\.jpg|_recorte\.png)"
 )
 PERFIL_SUPUESTO = "sin perfil (se asume sRGB)"
 PERFIL_SIN_NOMBRE = "perfil ICC sin nombre"
@@ -267,6 +268,7 @@ def inspeccionar(origen: Path) -> Informe:
     orientaciones: Counter = Counter()
     perfiles: Counter = Counter()
     con = {"icc": 0, "iso": 0, "exposicion": 0, "wb": 0}
+    espejos: Counter = Counter()
     jpegs = 0
     dims_recorte: list[tuple[int, int]] = []
 
@@ -285,50 +287,50 @@ def inspeccionar(origen: Path) -> Informe:
             hallazgo("faltan archivos de la toma")
             continue
 
+        espejo = (meta.get("camara") or {}).get("espejo")
+        espejos["null" if espejo is None else str(espejo).lower()] += 1
+
         # --- foto ---
-        if t.foto.endswith(".heic"):
-            inf.lineas.append(f"{base}: foto HEIC (no se inspecciona)")
+        jpegs += 1
+        j = leer_jpeg(archivos[t.foto])
+        for p in j.problemas:
+            hallazgo(f"foto: {p}")
+        orientaciones[j.orientacion] += 1
+        if j.iso is not None:
+            con["iso"] += 1
+        if j.exposicion is not None:
+            con["exposicion"] += 1
+        if j.balance_blancos is not None:
+            con["wb"] += 1
+
+        nombre_icc = descripcion_de_perfil(j.perfil) if j.perfil else None
+        if j.perfil:
+            con["icc"] += 1
+            esperado = nombre_icc or PERFIL_SIN_NOMBRE
         else:
-            jpegs += 1
-            j = leer_jpeg(archivos[t.foto])
-            for p in j.problemas:
-                hallazgo(f"foto: {p}")
-            orientaciones[j.orientacion] += 1
-            if j.iso is not None:
-                con["iso"] += 1
-            if j.exposicion is not None:
-                con["exposicion"] += 1
-            if j.balance_blancos is not None:
-                con["wb"] += 1
-
-            nombre_icc = descripcion_de_perfil(j.perfil) if j.perfil else None
-            if j.perfil:
-                con["icc"] += 1
-                esperado = nombre_icc or PERFIL_SIN_NOMBRE
-            else:
-                esperado = PERFIL_SUPUESTO
-            perfiles[nombre_icc if j.perfil else "(sin perfil)"] += 1
-            declarado = (meta.get("perfil_color") or {}).get("foto")
-            if declarado != esperado:
-                hallazgo(
-                    f"perfil_color.foto dice {declarado!r} pero el perfil real de la foto "
-                    f"es {esperado!r}"
-                )
-
-            if j.ancho and j.alto:
-                ancho, alto = _dimensiones_orientadas(j.ancho, j.alto, j.orientacion)
-                bbox = (meta.get("rostro") or {}).get("bbox")
-                if isinstance(bbox, list) and len(bbox) == 4:
-                    izq, arr, der, aba = bbox
-                    if izq < 0 or arr < 0 or der > ancho + 1 or aba > alto + 1 or der <= izq or aba <= arr:
-                        hallazgo(
-                            f"el recuadro del rostro {bbox} no cabe en la foto orientada "
-                            f"{ancho}x{alto} (EXIF {j.orientacion}): revisar la orientacion"
-                        )
-            inf.lineas.append(
-                f"{base}: foto {j.ancho}x{j.alto} EXIF={j.orientacion} ISO={j.iso} "
-                f"exp={j.exposicion} WB={j.balance_blancos} ICC={nombre_icc if j.perfil else 'no'}"
+            esperado = PERFIL_SUPUESTO
+        perfiles[nombre_icc if j.perfil else "(sin perfil)"] += 1
+        declarado = (meta.get("perfil_color") or {}).get("foto")
+        if declarado != esperado:
+            hallazgo(
+                f"perfil_color.foto dice {declarado!r} pero el perfil real de la foto "
+                f"es {esperado!r}"
             )
+
+        if j.ancho and j.alto:
+            ancho, alto = _dimensiones_orientadas(j.ancho, j.alto, j.orientacion)
+            bbox = (meta.get("rostro") or {}).get("bbox")
+            if isinstance(bbox, list) and len(bbox) == 4:
+                izq, arr, der, aba = bbox
+                if izq < 0 or arr < 0 or der > ancho + 1 or aba > alto + 1 or der <= izq or aba <= arr:
+                    hallazgo(
+                        f"el recuadro del rostro {bbox} no cabe en la foto orientada "
+                        f"{ancho}x{alto} (EXIF {j.orientacion}): revisar la orientacion"
+                    )
+        inf.lineas.append(
+            f"{base}: foto {j.ancho}x{j.alto} EXIF={j.orientacion} ISO={j.iso} "
+            f"exp={j.exposicion} WB={j.balance_blancos} ICC={nombre_icc if j.perfil else 'no'}"
+        )
 
         # --- recorte ---
         p = leer_png(archivos[t.recorte])
@@ -357,6 +359,7 @@ def inspeccionar(origen: Path) -> Informe:
         "con_exposicion": con["exposicion"],
         "con_balance_blancos": con["wb"],
         "orientaciones_exif": dict(orientaciones),
+        "espejo_camara": dict(espejos),
         "perfiles": dict(perfiles),
         "recorte_ancho_min_max": (
             (min(d[0] for d in dims_recorte), max(d[0] for d in dims_recorte))
@@ -397,6 +400,7 @@ def principal(argv: list[str] | None = None, salida=None) -> int:
         file=salida,
     )
     print(f"Orientaciones EXIF de las fotos: {r['orientaciones_exif']}", file=salida)
+    print(f"Espejo de la camara frontal (camara.espejo): {r['espejo_camara']}", file=salida)
     print(f"Ancho de los recortes (min, max): {r['recorte_ancho_min_max']}", file=salida)
     if inf.hallazgos:
         print(f"\nHALLAZGOS ({len(inf.hallazgos)}):", file=salida)

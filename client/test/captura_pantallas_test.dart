@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wearhack/core/color/perfil_icc.dart';
@@ -256,7 +257,7 @@ void main() {
     });
 
     testWidgets(
-      'las tomas de otra persona no marcan casillas pero si cuentan en el lote',
+      'las tomas de otra persona no marcan casillas ni entran en este lote',
       (tester) async {
         final Montaje m = await montar(tester);
         final CropperDePrueba cropper = CropperDePrueba();
@@ -279,7 +280,7 @@ void main() {
         await llegarALaCuadricula(tester, m);
 
         expect(find.textContaining('0/15'), findsOneWidget);
-        expect(find.textContaining('1 en todo el lote'), findsOneWidget);
+        expect(find.textContaining('0 en el lote de P3'), findsOneWidget);
         expect(find.text('hecha'), findsNothing);
       },
     );
@@ -309,7 +310,7 @@ void main() {
         await llegarALaCuadricula(tester, m);
 
         expect(find.textContaining('0/15'), findsOneWidget);
-        expect(find.textContaining('1 en todo el lote'), findsOneWidget);
+        expect(find.textContaining('1 en el lote de P3'), findsOneWidget);
         expect(find.text('hecha'), findsNothing);
       },
     );
@@ -455,7 +456,7 @@ void main() {
       await tester.tap(find.byKey(const Key('confirmar_borrado')));
       await esperarHasta(
         tester,
-        () => find.textContaining('Lote borrado').evaluate().isNotEmpty,
+        () => find.textContaining('Lote de P3 borrado').evaluate().isNotEmpty,
       );
 
       await asentar(tester, rondas: 20);
@@ -882,6 +883,270 @@ void main() {
         await asentar(tester, rondas: 3);
         expect(find.text('No se ve un rostro'), findsOneWidget);
       });
+    });
+  });
+
+  group('espejo de la camara en la pantalla de captura', () {
+    for (final bool? valor in <bool?>[true, false, null]) {
+      testWidgets('lo que la camara dice ($valor) queda en el JSON', (
+        tester,
+      ) async {
+        final Montaje m = await montar(
+          tester,
+          camara: CamaraFalsa(espejo: valor),
+        );
+        await llegarALaCuadricula(tester, m);
+        await capturarCasilla(tester, 'LEDC', 'R1');
+
+        final Map<String, Object?> json = (await tester.runAsync(
+          () => m.almacen.leerMetadatos(idDe()),
+        ))!;
+        final Map<String, Object?> camara =
+            json['camara']! as Map<String, Object?>;
+        expect(camara['espejo'], valor);
+      });
+    }
+  });
+
+  group('un lote por persona', () {
+    testWidgets('los botones dicen de quien es el lote', (tester) async {
+      final Montaje m = await montar(tester);
+      await llegarALaCuadricula(tester, m, persona: 'P5');
+
+      expect(find.text('Exportar lote P5'), findsOneWidget);
+      expect(find.text('Borrar lote P5'), findsOneWidget);
+    });
+
+    testWidgets('exportar comparte solo el zip de esa persona', (tester) async {
+      final Montaje m = await montar(tester);
+      await tester.runAsync(() => agregarTomas(m.almacen, 2, seudonimo: 'P4'));
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+
+      await tester.tap(find.byKey(const Key('boton_exportar')));
+      await esperarHasta(
+        tester,
+        () => find.textContaining('Lote exportado').evaluate().isNotEmpty,
+      );
+
+      final File zip = m.compartidos.single;
+      expect(zip.uri.pathSegments.last, startsWith('lote_P3_'));
+      final Archive contenido = (await tester.runAsync(
+        () async => ZipDecoder().decodeBytes(await zip.readAsBytes()),
+      ))!;
+      final List<String> nombres = <String>[
+        for (final ArchiveFile f in contenido.files)
+          if (f.name != nombreManifiesto) f.name,
+      ];
+      expect(nombres, hasLength(3));
+      expect(nombres, everyElement(startsWith('P3_')));
+    });
+
+    testWidgets('el resumen cuenta solo el lote de esa persona', (
+      tester,
+    ) async {
+      final Montaje m = await montar(tester);
+      await tester.runAsync(() => agregarTomas(m.almacen, 4, seudonimo: 'P4'));
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+
+      expect(find.textContaining('1/15'), findsOneWidget);
+      expect(find.textContaining('1 en el lote de P3'), findsOneWidget);
+    });
+
+    testWidgets('despues de borrar limpia la copia temporal del zip', (
+      tester,
+    ) async {
+      int limpiezas = 0;
+      final Montaje m = await montar(
+        tester,
+        limpiarTemporales: () async => limpiezas++,
+      );
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+      final Manifiesto manifiesto = (await tester.runAsync(
+        () => calcularManifiesto(m.almacen, persona: Seudonimo('P3')),
+      ))!;
+      expect(limpiezas, 0, reason: 'no se limpia antes de borrar');
+
+      await tester.tap(find.byKey(const Key('boton_borrar')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('campo_confirmacion')),
+        manifiesto.prefijoDeConfirmacion,
+      );
+      await tester.tap(find.byKey(const Key('confirmar_borrado')));
+      await esperarHasta(
+        tester,
+        () => find.textContaining('Lote de P3 borrado').evaluate().isNotEmpty,
+      );
+
+      expect(limpiezas, 1);
+    });
+
+    testWidgets('con un texto equivocado no limpia nada', (tester) async {
+      int limpiezas = 0;
+      final Montaje m = await montar(
+        tester,
+        limpiarTemporales: () async => limpiezas++,
+      );
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+
+      await tester.tap(find.byKey(const Key('boton_borrar')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('campo_confirmacion')),
+        '00000000',
+      );
+      await tester.tap(find.byKey(const Key('confirmar_borrado')));
+      await esperarHasta(
+        tester,
+        () => find.byKey(const Key('error_borrado')).evaluate().isNotEmpty,
+      );
+
+      expect(limpiezas, 0);
+    });
+
+    testWidgets('si la limpieza falla, el lote ya esta borrado y se avisa', (
+      tester,
+    ) async {
+      final Montaje m = await montar(
+        tester,
+        limpiarTemporales: () async => throw const FileSystemException('x'),
+      );
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+      final Manifiesto manifiesto = (await tester.runAsync(
+        () => calcularManifiesto(m.almacen, persona: Seudonimo('P3')),
+      ))!;
+
+      await tester.tap(find.byKey(const Key('boton_borrar')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('campo_confirmacion')),
+        manifiesto.prefijoDeConfirmacion,
+      );
+      await tester.tap(find.byKey(const Key('confirmar_borrado')));
+      await esperarHasta(
+        tester,
+        () => find.textContaining('copia temporal').evaluate().isNotEmpty,
+      );
+
+      expect(await _archivos(tester, m), isEmpty);
+    });
+
+    testWidgets('borrar deja intactas las tomas de las demas personas', (
+      tester,
+    ) async {
+      final Montaje m = await montar(tester);
+      await tester.runAsync(() => agregarTomas(m.almacen, 2, seudonimo: 'P4'));
+      final List<String> deP4 = (await _archivos(
+        tester,
+        m,
+      )).where((String r) => r.startsWith('P4_')).toList();
+      await llegarALaCuadricula(tester, m);
+      await capturarCasilla(tester, 'LEDC', 'R1');
+      final Manifiesto manifiesto = (await tester.runAsync(
+        () => calcularManifiesto(m.almacen, persona: Seudonimo('P3')),
+      ))!;
+
+      await tester.tap(find.byKey(const Key('boton_borrar')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Borrar el lote de P3'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('campo_confirmacion')),
+        manifiesto.prefijoDeConfirmacion,
+      );
+      await tester.tap(find.byKey(const Key('confirmar_borrado')));
+      await esperarHasta(
+        tester,
+        () => find.textContaining('Lote de P3 borrado').evaluate().isNotEmpty,
+      );
+
+      expect(await _archivos(tester, m), deP4);
+    });
+  });
+
+  group('tomas incompletas al abrir el modo', () {
+    Future<void> dejarHuerfanos(WidgetTester tester, Montaje m) async {
+      await tester.runAsync(() async {
+        m.almacen.dirTomas.createSync(recursive: true);
+        File('${m.almacen.dirTomas.path}/P3_VEN_D2_R1_G_foto.jpg')
+            .writeAsBytesSync(<int>[1, 2, 3]);
+        File('${m.almacen.dirTomas.path}/P3_VEN_D2_R1_G_recorte.png.tmp')
+            .writeAsBytesSync(<int>[4]);
+      });
+    }
+
+    testWidgets('sin tomas incompletas no pregunta nada', (tester) async {
+      final Montaje m = await montar(tester);
+      await abrirInicio(tester, m);
+      await asentar(tester, rondas: 10);
+
+      expect(find.byKey(const Key('dialogo_incompletas')), findsNothing);
+    });
+
+    testWidgets('con tomas incompletas las nombra y pide confirmacion', (
+      tester,
+    ) async {
+      final Montaje m = await montar(tester);
+      await dejarHuerfanos(tester, m);
+
+      await abrirInicio(tester, m);
+      await esperarHasta(
+        tester,
+        () =>
+            find.byKey(const Key('dialogo_incompletas')).evaluate().isNotEmpty,
+      );
+
+      expect(find.textContaining('2 archivos'), findsOneWidget);
+      expect(find.textContaining('P3_VEN_D2_R1_G_foto.jpg'), findsOneWidget);
+      expect(
+        await _archivos(tester, m),
+        hasLength(2),
+        reason: 'no borra nada sin confirmar',
+      );
+    });
+
+    testWidgets('Conservar no borra nada', (tester) async {
+      final Montaje m = await montar(tester);
+      await dejarHuerfanos(tester, m);
+      await abrirInicio(tester, m);
+      await esperarHasta(
+        tester,
+        () =>
+            find.byKey(const Key('dialogo_incompletas')).evaluate().isNotEmpty,
+      );
+
+      await tester.tap(find.byKey(const Key('conservar_incompletas')));
+      await asentar(tester, rondas: 10);
+
+      expect(find.byKey(const Key('dialogo_incompletas')), findsNothing);
+      expect(await _archivos(tester, m), hasLength(2));
+    });
+
+    testWidgets('Borrar quita los sueltos y respeta las tomas completas', (
+      tester,
+    ) async {
+      final Montaje m = await montar(tester);
+      await tester.runAsync(() => agregarTomas(m.almacen, 2, seudonimo: 'P4'));
+      final List<String> completas = await _archivos(tester, m);
+      await dejarHuerfanos(tester, m);
+      await abrirInicio(tester, m);
+      await esperarHasta(
+        tester,
+        () =>
+            find.byKey(const Key('dialogo_incompletas')).evaluate().isNotEmpty,
+      );
+
+      await tester.tap(find.byKey(const Key('confirmar_borrar_incompletas')));
+      await esperarHasta(
+        tester,
+        () => find.textContaining('Borrados 2 archivos').evaluate().isNotEmpty,
+      );
+
+      expect(await _archivos(tester, m), completas);
     });
   });
 }

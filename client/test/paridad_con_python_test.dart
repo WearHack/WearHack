@@ -36,6 +36,7 @@ MetadatosToma _muestra() => MetadatosToma(
   fechaHora: DateTime.utc(2026, 10, 15, 20, 42, 7),
   celular: datosDelCelular(),
   parametrosCamara: const ParametrosDeCamara(exposicion: 0.5, iso: 400),
+  espejo: false,
   rostroBbox: const <num>[100, 100, 250, 270],
   anchoRostroPx: 150,
   perfilFoto: 'Display P3',

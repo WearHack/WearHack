@@ -17,6 +17,7 @@
   "camara": {
     "lente": "frontal",
     "flash": "apagado",
+    "espejo": false,
     "parametros": {
       "exposicion": 0.5,
       "iso": 400,

@@ -59,7 +59,7 @@ REPETICIONES = ("R1", "R2", "R3")
 SEUDONIMO = re.compile(r"P[1-6]")
 NOMBRE_ARCHIVO = re.compile(
     r"(?P<base>P[1-6]_(?:VEN|LEDC|LEDF|MIX|BAJ)_D[1-3]_R[1-3]_[GN])"
-    r"(?P<resto>\.json|_foto\.(?:jpg|heic)|_recorte\.png)"
+    r"(?P<resto>\.json|_foto\.jpg|_recorte\.png)"
 )
 FECHA = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}")
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -188,11 +188,13 @@ def validar_metadatos(json_toma: object) -> list[str]:
 
     camara = _objeto(p, "camara", j.get("camara"))
     if camara is not None:
-        _claves(p, "camara", camara, {"lente", "flash", "parametros"})
+        _claves(p, "camara", camara, {"lente", "flash", "espejo", "parametros"})
         if camara.get("lente") != "frontal":
             p.append('camara.lente debe ser "frontal"')
         if camara.get("flash") != "apagado":
             p.append('camara.flash debe ser "apagado"')
+        if camara.get("espejo") is not None and not isinstance(camara.get("espejo"), bool):
+            p.append("camara.espejo debe ser un booleano o null")
         par = _objeto(p, "camara.parametros", camara.get("parametros"))
         if par is not None:
             _claves(p, "camara.parametros", par, {"exposicion", "iso", "balance_blancos"})
@@ -231,10 +233,8 @@ def validar_metadatos(json_toma: object) -> list[str]:
             marca = "G" if repeticion == "R1" else "N"
             base = f"{seudonimo}_{luz}_{codigo_celular}_{repeticion}_{marca}"
             foto = archivos.get("foto")
-            if not isinstance(foto, str) or not re.fullmatch(
-                re.escape(base) + r"_foto\.(?:jpg|heic)", foto
-            ):
-                p.append(f"archivos.foto debe llamarse {base}_foto.jpg (o .heic)")
+            if foto != f"{base}_foto.jpg":
+                p.append(f"archivos.foto debe llamarse {base}_foto.jpg")
             if archivos.get("recorte") != f"{base}_recorte.png":
                 p.append(f"archivos.recorte debe llamarse {base}_recorte.png")
         sha = _objeto(p, "archivos.sha256", archivos.get("sha256"))
@@ -302,8 +302,6 @@ def _magia_valida(nombre: str, cabecera: bytes) -> bool:
         return cabecera.startswith(b"\x89PNG\r\n\x1a\n")
     if nombre.endswith("_foto.jpg"):
         return cabecera.startswith(b"\xff\xd8\xff")
-    if nombre.endswith("_foto.heic"):
-        return cabecera[4:8] == b"ftyp"
     return True
 
 

@@ -12,9 +12,13 @@ import 'package:path/path.dart' as p;
 import 'package:wearhack/features/captura_pruebas/almacen_capturas.dart';
 import 'package:wearhack/features/captura_pruebas/lote.dart';
 import 'package:wearhack/features/captura_pruebas/metadatos.dart';
+import 'package:wearhack/features/captura_pruebas/modelos.dart';
 import 'package:wearhack/features/captura_pruebas/servicio_captura.dart';
 
 import 'helpers/captura_helpers.dart';
+
+final Seudonimo _p3 = Seudonimo('P3');
+final Seudonimo _p4 = Seudonimo('P4');
 
 EntradaManifiesto _e(String ruta, String sha) =>
     EntradaManifiesto(ruta: ruta, sha256: sha, bytes: 1);
@@ -109,13 +113,13 @@ void main() {
     test('genera un zip plano con todas las tomas y el manifiesto', () async {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 3);
 
-      final ResultadoExportacion r = await exportarLote(almacen);
+      final ResultadoExportacion r = await exportarLote(almacen, persona: _p3);
 
       expect(r.zip.existsSync(), isTrue);
       expect(p.dirname(r.zip.path), almacen.dirExportaciones.path);
       expect(
         p.basename(r.zip.path),
-        'lote_${r.manifiesto.prefijoDeConfirmacion}.zip',
+        'lote_P3_${r.manifiesto.prefijoDeConfirmacion}.zip',
       );
 
       final Archive zip = ZipDecoder().decodeBytes(r.zip.readAsBytesSync());
@@ -134,7 +138,7 @@ void main() {
     test('cada archivo del zip es identico al del almacen', () async {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 3);
 
-      final ResultadoExportacion r = await exportarLote(almacen);
+      final ResultadoExportacion r = await exportarLote(almacen, persona: _p3);
 
       final Archive zip = ZipDecoder().decodeBytes(r.zip.readAsBytesSync());
       for (final ArchiveFile f in zip.files) {
@@ -152,7 +156,10 @@ void main() {
       () async {
         final AlmacenCapturas almacen = await almacenConTomas(raiz, 3);
 
-        final ResultadoExportacion r = await exportarLote(almacen);
+        final ResultadoExportacion r = await exportarLote(
+          almacen,
+          persona: _p3,
+        );
 
         final Archive zip = ZipDecoder().decodeBytes(r.zip.readAsBytesSync());
         final ArchiveFile manifiesto = zip.files.firstWhere(
@@ -201,6 +208,7 @@ void main() {
     test('el manifiesto no se lista a si mismo', () async {
       final ResultadoExportacion r = await exportarLote(
         await almacenConTomas(raiz, 1),
+        persona: _p3,
       );
 
       expect(
@@ -212,8 +220,8 @@ void main() {
     test('exportar dos veces el mismo lote da el mismo hash', () async {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
 
-      final ResultadoExportacion a = await exportarLote(almacen);
-      final ResultadoExportacion b = await exportarLote(almacen);
+      final ResultadoExportacion a = await exportarLote(almacen, persona: _p3);
+      final ResultadoExportacion b = await exportarLote(almacen, persona: _p3);
 
       expect(b.manifiesto.hashGlobal, a.manifiesto.hashGlobal);
       expect(b.zip.path, a.zip.path);
@@ -221,7 +229,7 @@ void main() {
 
     test('un lote vacio no se exporta', () async {
       await expectLater(
-        exportarLote(AlmacenCapturas(raiz)),
+        exportarLote(AlmacenCapturas(raiz), persona: _p3),
         throwsA(isA<LoteVacio>()),
       );
     });
@@ -236,7 +244,7 @@ void main() {
       f.writeAsBytesSync(bytes);
 
       await expectLater(
-        exportarLote(almacen),
+        exportarLote(almacen, persona: _p3),
         throwsA(isA<IntegridadFallida>()),
       );
       expect(
@@ -246,16 +254,18 @@ void main() {
       );
     });
 
-    test('al agregar una toma el hash global cambia', () async {
+    test('al agregar una toma de la persona el hash del lote cambia', () async {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
-      final String antes = (await calcularManifiesto(almacen)).hashGlobal;
+      final String antes = (await calcularManifiesto(
+        almacen,
+        persona: _p3,
+      )).hashGlobal;
 
-      final CropperDePrueba cropper = CropperDePrueba();
       await ServicioCapturaPruebas(
         almacen: almacen,
-        cropper: cropper,
+        cropper: CropperDePrueba(),
       ).registrarToma(
-        id: idDe(seudonimo: 'P5'),
+        id: idDe(luz: Luz.baj),
         autorizacionFirmada: true,
         foto: fotoDePrueba(semilla: 9),
         celular: datosDelCelular(),
@@ -263,22 +273,102 @@ void main() {
         momento: DateTime.utc(2026),
       );
 
+      expect(
+        (await calcularManifiesto(almacen, persona: _p3)).hashGlobal,
+        isNot(antes),
+      );
+    });
+  });
+
+  group('un lote por persona', () {
+    test('el zip lleva solo las tomas de esa persona', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 3);
+      await agregarTomas(almacen, 2, seudonimo: 'P4');
+
+      final ResultadoExportacion r = await exportarLote(almacen, persona: _p3);
+
+      final Archive zip = ZipDecoder().decodeBytes(r.zip.readAsBytesSync());
+      final List<String> nombres = zip.files
+          .map((ArchiveFile f) => f.name)
+          .toList();
+      expect(
+        nombres,
+        hasLength(10),
+        reason: '3 tomas x 3 archivos + manifiesto',
+      );
+      expect(
+        nombres.where((String n) => n != nombreManifiesto),
+        everyElement(startsWith('P3_')),
+      );
+    });
+
+    test('cada persona tiene su propio hash y su propio zip', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+      await agregarTomas(almacen, 2, seudonimo: 'P4');
+
+      final ResultadoExportacion a = await exportarLote(almacen, persona: _p3);
+      final ResultadoExportacion b = await exportarLote(almacen, persona: _p4);
+
+      expect(a.manifiesto.hashGlobal, isNot(b.manifiesto.hashGlobal));
+      expect(p.basename(a.zip.path), startsWith('lote_P3_'));
+      expect(p.basename(b.zip.path), startsWith('lote_P4_'));
+      expect(a.zip.existsSync() && b.zip.existsSync(), isTrue);
+    });
+
+    test('las tomas de otra persona no cambian el hash de este lote', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+      final String antes = (await calcularManifiesto(
+        almacen,
+        persona: _p3,
+      )).hashGlobal;
+
+      await agregarTomas(almacen, 1, seudonimo: 'P4');
+
+      expect(
+        (await calcularManifiesto(almacen, persona: _p3)).hashGlobal,
+        antes,
+      );
       expect((await calcularManifiesto(almacen)).hashGlobal, isNot(antes));
     });
+
+    test('una persona sin tomas no exporta aunque haya otras', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+
+      await expectLater(
+        exportarLote(almacen, persona: _p4),
+        throwsA(isA<LoteVacio>()),
+      );
+    });
+
+    test(
+      'un archivo suelto de otra persona no bloquea esta exportacion',
+      () async {
+        final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+        File(p.join(almacen.dirTomas.path, 'P4_VEN_D2_R1_G_foto.jpg'))
+            .writeAsBytesSync(<int>[1]);
+
+        await expectLater(exportarLote(almacen, persona: _p3), completes);
+        await expectLater(
+          exportarLote(almacen, persona: _p4),
+          throwsA(isA<IntegridadFallida>()),
+          reason: 'el suyo si lo bloquea',
+        );
+      },
+    );
   });
 
   group('borrar', () {
     test('con un texto que no es el prefijo no borra nada', () async {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
-      await exportarLote(almacen);
+      await exportarLote(almacen, persona: _p3);
       final List<String> antes = await archivosBajo(raiz);
 
       await expectLater(
-        borrarLote(almacen, confirmacion: '00000000'),
+        borrarLote(almacen, persona: _p3, confirmacion: '00000000'),
         throwsA(isA<ConfirmacionIncorrecta>()),
       );
       await expectLater(
-        borrarLote(almacen, confirmacion: ''),
+        borrarLote(almacen, persona: _p3, confirmacion: ''),
         throwsA(isA<ConfirmacionIncorrecta>()),
       );
 
@@ -289,10 +379,14 @@ void main() {
       'con el prefijo correcto borra las tomas y las exportaciones',
       () async {
         final AlmacenCapturas almacen = await almacenConTomas(raiz, 3);
-        final ResultadoExportacion r = await exportarLote(almacen);
+        final ResultadoExportacion r = await exportarLote(
+          almacen,
+          persona: _p3,
+        );
 
         await borrarLote(
           almacen,
+          persona: _p3,
           confirmacion: r.manifiesto.prefijoDeConfirmacion,
         );
 
@@ -311,6 +405,7 @@ void main() {
 
       await borrarLote(
         almacen,
+        persona: _p3,
         confirmacion: '  ${m.prefijoDeConfirmacion.toUpperCase()} ',
       );
 
@@ -322,7 +417,11 @@ void main() {
       final Manifiesto m = await calcularManifiesto(almacen);
 
       await expectLater(
-        borrarLote(almacen, confirmacion: m.hashGlobal.substring(0, 7)),
+        borrarLote(
+          almacen,
+          persona: _p3,
+          confirmacion: m.hashGlobal.substring(0, 7),
+        ),
         throwsA(isA<ConfirmacionIncorrecta>()),
       );
       expect(await archivosBajo(raiz), isNotEmpty);
@@ -332,14 +431,15 @@ void main() {
       'si se tomo una foto despues de exportar, el prefijo viejo ya no vale',
       () async {
         final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
-        final String prefijoViejo = (await exportarLote(almacen))
-            .manifiesto
-            .prefijoDeConfirmacion;
+        final String prefijoViejo = (await exportarLote(
+          almacen,
+          persona: _p3,
+        )).manifiesto.prefijoDeConfirmacion;
         await ServicioCapturaPruebas(
           almacen: almacen,
           cropper: CropperDePrueba(),
         ).registrarToma(
-          id: idDe(seudonimo: 'P6'),
+          id: idDe(luz: Luz.baj),
           autorizacionFirmada: true,
           foto: fotoDePrueba(semilla: 11),
           celular: datosDelCelular(),
@@ -348,7 +448,7 @@ void main() {
         );
 
         await expectLater(
-          borrarLote(almacen, confirmacion: prefijoViejo),
+          borrarLote(almacen, persona: _p3, confirmacion: prefijoViejo),
           throwsA(isA<ConfirmacionIncorrecta>()),
         );
 
@@ -362,7 +462,7 @@ void main() {
 
     test('con el lote vacio no hay nada que confirmar', () async {
       await expectLater(
-        borrarLote(AlmacenCapturas(raiz), confirmacion: ''),
+        borrarLote(AlmacenCapturas(raiz), persona: _p3, confirmacion: ''),
         completes,
       );
     });
@@ -374,8 +474,9 @@ void main() {
       await expectLater(
         borrarLote(
           almacen,
+          persona: _p3,
           confirmacion: m.prefijoDeConfirmacion,
-          borrarDirectorio: (Directory d) async {}, // un borrado que no borra
+          borrarArchivo: (File f) async {}, // un borrado que no borra
         ),
         throwsA(
           isA<BorradoIncompleto>().having(
@@ -388,18 +489,65 @@ void main() {
     });
 
     test(
-      'tambien quita lo que sobra fuera de tomas/ y exportaciones/',
+      'borra el lote de la persona y deja intacto el de las demas',
+      () async {
+        final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+        await agregarTomas(almacen, 2, seudonimo: 'P4');
+        final ResultadoExportacion de3 = await exportarLote(
+          almacen,
+          persona: _p3,
+        );
+        final ResultadoExportacion de4 = await exportarLote(
+          almacen,
+          persona: _p4,
+        );
+        final List<String> deP4 = (await archivosBajo(raiz))
+            .where((String r) => r.contains('P4_'))
+            .toList();
+
+        await borrarLote(
+          almacen,
+          persona: _p3,
+          confirmacion: de3.manifiesto.prefijoDeConfirmacion,
+        );
+
+        expect(await archivosBajo(raiz), deP4);
+        expect(de3.zip.existsSync(), isFalse);
+        expect(de4.zip.existsSync(), isTrue);
+        expect(await almacen.listarTomas(persona: _p4), hasLength(2));
+      },
+    );
+
+    test('el prefijo de otra persona no sirve para borrar este lote', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+      await agregarTomas(almacen, 2, seudonimo: 'P4');
+      final String deP4 = (await calcularManifiesto(
+        almacen,
+        persona: _p4,
+      )).prefijoDeConfirmacion;
+
+      await expectLater(
+        borrarLote(almacen, persona: _p3, confirmacion: deP4),
+        throwsA(isA<ConfirmacionIncorrecta>()),
+      );
+      expect(await almacen.listarTomas(persona: _p3), hasLength(2));
+    });
+
+    test(
+      'un archivo suelto de la persona entra en su hash y se borra',
       () async {
         final AlmacenCapturas almacen = await almacenConTomas(raiz, 1);
-        final Manifiesto m = await calcularManifiesto(almacen);
-        File(p.join(raiz.path, 'huerfano.bin'))
+        File(p.join(almacen.dirTomas.path, 'P3_VEN_D2_R1_G_foto.jpg.tmp'))
             .writeAsBytesSync(<int>[1, 2, 3]);
+        final Manifiesto m = await calcularManifiesto(almacen, persona: _p3);
 
-        await expectLater(
-          borrarLote(almacen, confirmacion: m.prefijoDeConfirmacion),
-          throwsA(isA<BorradoIncompleto>()),
-          reason: 'un archivo suelto en la raiz no se ignora en silencio',
+        await borrarLote(
+          almacen,
+          persona: _p3,
+          confirmacion: m.prefijoDeConfirmacion,
         );
+
+        expect(await archivosBajo(raiz), isEmpty);
       },
     );
 
@@ -407,7 +555,11 @@ void main() {
       final AlmacenCapturas almacen = await almacenConTomas(raiz, 1);
       await borrarLote(
         almacen,
-        confirmacion: (await calcularManifiesto(almacen)).prefijoDeConfirmacion,
+        persona: _p3,
+        confirmacion: (await calcularManifiesto(
+          almacen,
+          persona: _p3,
+        )).prefijoDeConfirmacion,
       );
 
       await ServicioCapturaPruebas(

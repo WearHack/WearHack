@@ -12,6 +12,7 @@ import 'helpers/captura_helpers.dart';
 MetadatosToma _muestra({
   IdToma? id,
   ParametrosDeCamara parametros = const ParametrosDeCamara(),
+  bool? espejo,
 }) {
   final IdToma idToma = id ?? idDe();
   return MetadatosToma(
@@ -19,6 +20,7 @@ MetadatosToma _muestra({
     fechaHora: DateTime.utc(2026, 10, 15, 20, 42, 7),
     celular: datosDelCelular(codigo: idToma.celular),
     parametrosCamara: parametros,
+    espejo: espejo,
     rostroBbox: const <num>[100, 100, 250, 270],
     anchoRostroPx: 150,
     perfilFoto: 'Display P3',
@@ -221,6 +223,17 @@ void main() {
       expect(cam['lente'], 'frontal');
       expect(cam['flash'], 'apagado');
     });
+
+    test('camara.espejo se registra como true, false o null, sin corregir', () {
+      for (final bool? valor in <bool?>[true, false, null]) {
+        final Map<String, Object?> j = _json(_muestra(espejo: valor));
+        final Map<String, Object?> cam = j['camara']! as Map<String, Object?>;
+
+        expect(cam.containsKey('espejo'), isTrue);
+        expect(cam['espejo'], valor);
+        expect(validarMetadatos(j), isEmpty, reason: '$valor');
+      }
+    });
   });
 
   group('validacion estricta', () {
@@ -279,6 +292,16 @@ void main() {
             (j) =>
                 (j['camara']! as Map<String, Object?>)['flash'] = 'encendido',
             'camara.flash',
+          ),
+          (
+            'espejo como texto',
+            (j) => (j['camara']! as Map<String, Object?>)['espejo'] = 'si',
+            'camara.espejo',
+          ),
+          (
+            'espejo ausente',
+            (j) => (j['camara']! as Map<String, Object?>).remove('espejo'),
+            'falta la clave "espejo"',
           ),
           (
             'iso como texto',
@@ -364,15 +387,19 @@ void main() {
       expect(validarMetadatos(null), isNotEmpty);
     });
 
-    test('un .heic es una foto valida; un .png no', () {
+    test('la foto es .jpg: ni .heic ni .png valen', () {
       final Map<String, Object?> j = _json();
-      (j['archivos']! as Map<String, Object?>)['foto'] =
-          'P3_LEDC_D2_R1_G_foto.heic';
       expect(validarMetadatos(j), isEmpty);
 
-      (j['archivos']! as Map<String, Object?>)['foto'] =
-          'P3_LEDC_D2_R1_G_foto.png';
-      expect(validarMetadatos(j), isNotEmpty);
+      for (final String ext in <String>['heic', 'png', 'jpeg']) {
+        (j['archivos']! as Map<String, Object?>)['foto'] =
+            'P3_LEDC_D2_R1_G_foto.$ext';
+        expect(
+          validarMetadatos(j).join(' | '),
+          contains('archivos.foto debe llamarse P3_LEDC_D2_R1_G_foto.jpg'),
+          reason: ext,
+        );
+      }
     });
   });
 }

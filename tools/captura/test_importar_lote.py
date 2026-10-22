@@ -62,7 +62,7 @@ def metadatos(seudonimo="P3", luz="LEDC", celular="D2", rep="R1", sha_foto="a" *
         "fecha_hora": "2026-10-15T15:42:07-05:00",
         "celular": {"codigo": celular, "modelo": "Modelo de prueba", "sistema": "Android 14", "build_app": "0.1.0+1"},
         "pantalla": {"true_tone_o_night_shift": False},
-        "camara": {"lente": "frontal", "flash": "apagado",
+        "camara": {"lente": "frontal", "flash": "apagado", "espejo": None,
                    "parametros": {"exposicion": None, "iso": None, "balance_blancos": None}},
         "rostro": {"bbox": [100, 100, 250, 270], "ancho_px": 150},
         "perfil_color": {"foto": "Display P3", "recorte": "sRGB (convertido por la app)"},
@@ -193,6 +193,9 @@ class EsquemaDeMetadatos(unittest.TestCase):
         ("true tone no booleano", lambda j: j["pantalla"].update(true_tone_o_night_shift="si"), "true_tone"),
         ("lente trasera", lambda j: j["camara"].update(lente="trasera"), "camara.lente"),
         ("flash encendido", lambda j: j["camara"].update(flash="encendido"), "camara.flash"),
+        ("espejo como texto", lambda j: j["camara"].update(espejo="si"), "camara.espejo"),
+        ("espejo como numero", lambda j: j["camara"].update(espejo=1), "camara.espejo"),
+        ("espejo ausente", lambda j: j["camara"].pop("espejo"), 'falta la clave "espejo"'),
         ("iso como texto", lambda j: j["camara"]["parametros"].update(iso="alto"), "iso"),
         ("iso booleano", lambda j: j["camara"]["parametros"].update(iso=True), "iso"),
         ("bbox corta", lambda j: j["rostro"].update(bbox=[1, 2, 3]), "bbox"),
@@ -213,12 +216,23 @@ class EsquemaDeMetadatos(unittest.TestCase):
                 mutar(j)
                 self.assertIn(esperado, " | ".join(il.validar_metadatos(j)))
 
-    def test_heic_es_valido_y_png_no(self):
+    def test_la_foto_es_jpg_ni_heic_ni_png_valen(self):
         j = metadatos()
-        j["archivos"]["foto"] = "P3_LEDC_D2_R1_G_foto.heic"
         self.assertEqual(il.validar_metadatos(j), [])
-        j["archivos"]["foto"] = "P3_LEDC_D2_R1_G_foto.png"
-        self.assertNotEqual(il.validar_metadatos(j), [])
+        for ext in ("heic", "png", "jpeg"):
+            with self.subTest(ext):
+                j["archivos"]["foto"] = f"P3_LEDC_D2_R1_G_foto.{ext}"
+                self.assertIn(
+                    "archivos.foto debe llamarse P3_LEDC_D2_R1_G_foto.jpg",
+                    " | ".join(il.validar_metadatos(j)),
+                )
+
+    def test_espejo_acepta_true_false_y_null(self):
+        for valor in (True, False, None):
+            with self.subTest(valor):
+                j = metadatos()
+                j["camara"]["espejo"] = valor
+                self.assertEqual(il.validar_metadatos(j), [])
 
     def test_lo_que_no_es_un_objeto(self):
         for malo in ([1, 2], "texto", None, 5):
@@ -362,16 +376,20 @@ class VerificarLote(Base):
 
         self.assertIn("no corresponde al nombre", self.problemas(ruta))
 
-    def test_heic_con_una_cabecera_que_no_es_heic(self):
+    def test_una_foto_heic_ya_no_es_una_toma_valida(self):
         base = nombre_base("P2", "BAJ", "D1", "R3")
-        foto = b"\x00\x00\x00\x18xxxx" + _relleno("heic")
+        foto = b"\x00\x00\x00\x18ftypheic" + _relleno("heic")
         recorte = _png("heic-recorte")
         meta = metadatos("P2", "BAJ", "D1", "R3", _sha(foto), _sha(recorte))
         meta["archivos"]["foto"] = f"{base}_foto.heic"
         archivos = {f"{base}_foto.heic": foto, f"{base}_recorte.png": recorte, f"{base}.json": _json_bytes(meta)}
         ruta = escribir_zip(self.dir / "x.zip", archivos, manifiesto_de(archivos))
 
-        self.assertIn("no es de la clase que indica el nombre", self.problemas(ruta))
+        r = il.verificar_lote(ruta)
+
+        self.assertFalse(r.ok)
+        texto = " | ".join(r.problemas)
+        self.assertIn("no sigue la convencion de nombres", texto)
 
     def test_foto_huerfana_sin_json(self):
         malos = dict(self.lote.archivos)
@@ -506,17 +524,6 @@ class VerificarLote(Base):
                 ruta = escribir_zip(self.dir / "x.zip", malos, manifiesto_de(malos))
 
                 self.assertIn("no es de la clase que indica el nombre", self.problemas(ruta))
-
-    def test_heic_con_su_cabecera_pasa(self):
-        base = nombre_base("P2", "BAJ", "D1", "R3")
-        foto = b"\x00\x00\x00\x18ftypheic" + _relleno("heic")
-        recorte = _png("heic-recorte")
-        meta = metadatos("P2", "BAJ", "D1", "R3", _sha(foto), _sha(recorte))
-        meta["archivos"]["foto"] = f"{base}_foto.heic"
-        archivos = {f"{base}_foto.heic": foto, f"{base}_recorte.png": recorte, f"{base}.json": _json_bytes(meta)}
-        ruta = escribir_zip(self.dir / "x.zip", archivos, manifiesto_de(archivos))
-
-        self.assertTrue(il.verificar_lote(ruta).ok)
 
     def test_tope_de_archivos(self):
         self.assertIn("demasiados archivos", self.problemas(self.lote.zip(), max_archivos=2))

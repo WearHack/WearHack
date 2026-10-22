@@ -17,6 +17,8 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
+import 'package:camera_platform_interface/camera_platform_interface.dart'
+    show CameraPlatform, ImageFileFormat;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +55,7 @@ Future<void> abrirCapturaPruebas(BuildContext context) async {
     crearCamara: CamaraFrontal.new,
     dispositivo: const LectorDeDispositivoReal(),
     compartir: _compartirZip,
+    limpiarTemporales: _borrarCopiasDelZip,
   );
   if (!context.mounted) return;
   await Navigator.of(context).push(
@@ -69,6 +72,15 @@ Future<void> _compartirZip(File zip) async {
       subject: 'Lote de calibracion',
     ),
   );
+}
+
+/// `share_plus` copia el zip al directorio temporal (`cache/share_plus/` en
+/// Android) para entregarlo a otra app, y ahi se queda. Contiene las fotos del
+/// lote, asi que Borrar lo quita.
+Future<void> _borrarCopiasDelZip() async {
+  final Directory temporal = await getTemporaryDirectory();
+  final Directory copias = Directory(p.join(temporal.path, 'share_plus'));
+  if (await copias.exists()) await copias.delete(recursive: true);
 }
 
 /// Modelo, sistema y version de la app, leidos de la plataforma.
@@ -143,6 +155,15 @@ class CamaraFrontal implements CamaraDeCaptura {
     _controlador = c;
     await c.initialize();
     await c.setFlashMode(FlashMode.off);
+    if (Platform.isIOS) {
+      // El plugin ya guarda JPEG por defecto en iOS; se pide de forma
+      // explicita para que no dependa de ese valor (el recorte solo decodifica
+      // JPEG). `camera` no lo expone en el controlador: va por la plataforma.
+      await CameraPlatform.instance.setImageFileFormat(
+        c.cameraId,
+        ImageFileFormat.jpeg,
+      );
+    }
 
     if (guiaDeDistanciaActiva) {
       _detector = FaceDetector(
@@ -248,16 +269,17 @@ class CamaraFrontal implements CamaraDeCaptura {
             .extension(archivo.path)
             .replaceFirst('.', '')
             .toLowerCase();
-        final String extension = switch (ext) {
-          'jpg' || 'jpeg' => 'jpg',
-          'heic' || 'heif' => 'heic',
-          _ => throw StateError(
-            'La camara entrego un formato inesperado: .$ext',
-          ),
-        };
+        if (ext != 'jpg' && ext != 'jpeg') {
+          throw StateError(
+            'La camara entrego un formato inesperado: .$ext (se esperaba JPEG)',
+          );
+        }
         return FotoTomada(
           bytes: await archivo.readAsBytes(),
-          extension: extension,
+          extension: 'jpg',
+          // El plugin no dice si la foto sale reflejada: se registra como
+          // desconocido y se mira en las fotos (docs/prueba-captura-en-telefono.md).
+          espejo: null,
         );
       } finally {
         // La foto solo debe existir en el almacen privado.
