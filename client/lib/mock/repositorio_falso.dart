@@ -11,10 +11,17 @@ import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
+import 'package:wearhack/features/publicidad/catalogo.dart';
+import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
 import 'package:wearhack/mock/datos_falsos.dart';
+import 'package:wearhack/mock/datos_publicidad.dart';
 
 class RepositorioFalso
-    implements RepositorioCloset, RepositorioOutfits, RepositorioClima {
+    implements
+        RepositorioCloset,
+        RepositorioOutfits,
+        RepositorioClima,
+        RepositorioPublicidad {
   RepositorioFalso({
     DateTime? hoy,
     this.latencia = const Duration(milliseconds: 300),
@@ -139,6 +146,44 @@ class RepositorioFalso
     required double latitud,
     required double longitud,
   }) => _responder(() => temperatura);
+
+  @override
+  Future<List<MarcaAliada>> marcas() =>
+      _responder(() => List<MarcaAliada>.unmodifiable(marcasDeEjemplo));
+
+  @override
+  Future<List<ProductoCatalogo>> catalogo(String marcaId) => _responder(
+    () => <ProductoCatalogo>[
+      for (final ProductoCatalogo p in catalogoDeEjemplo)
+        if (p.marca.id == marcaId) p,
+    ],
+  );
+
+  @override
+  Future<List<PrendaPuente>> prendasPuente() => _responder(() {
+    final Set<String> enCloset = <String>{
+      for (final Prenda p in _prendas) p.id,
+    };
+    return <PrendaPuente>[
+      for (final PrendaPuente puente in prendasPuenteDeEjemplo)
+        if (puente.combinacionesBuenas >= umbralPrendaPuente)
+          PrendaPuente(
+            producto: puente.producto,
+            combinacionesBuenas: puente.combinacionesBuenas,
+            ocasionesNuevas: puente.ocasionesNuevas,
+            // Sin las combinaciones que usan prendas ya eliminadas. El job
+            // nocturno recalcularia tambien el numero; el mock no.
+            ejemplos: <Outfit>[
+              for (final Outfit o in puente.ejemplos)
+                if (o.prendas.values.every(
+                  (Prenda p) =>
+                      p.id == puente.producto.id || enCloset.contains(p.id),
+                ))
+                  o,
+            ],
+          ),
+    ];
+  });
 
   Outfit? _buscar(String? id) =>
       id == null ? null : _outfits.where((Outfit o) => o.id == id).firstOrNull;

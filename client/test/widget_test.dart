@@ -14,6 +14,7 @@ void main() {
         outfits: datos,
         clima: datos,
         ubicacion: crearServicioUbicacion(),
+        publicidad: datos,
       ),
     );
     await tester.pumpAndSettle();
@@ -32,6 +33,7 @@ void main() {
         outfits: datos,
         clima: datos,
         ubicacion: crearServicioUbicacion(),
+        publicidad: datos,
       ),
     );
     await tester.pumpAndSettle();

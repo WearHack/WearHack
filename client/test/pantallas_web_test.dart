@@ -1,14 +1,17 @@
-/// Las pantallas de las issues #15, #16 y #17 sobre el repositorio falso:
-/// closet, outfits, plan semanal, elegir el mejor de N y el contexto de hoy.
+/// Las pantallas de las issues #15 a #18 sobre el repositorio falso: closet,
+/// outfits, plan semanal, elegir el mejor de N, el contexto de hoy y las
+/// marcas aliadas.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wearhack/app/pantalla_principal.dart';
+import 'package:wearhack/core/ui/formato.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
+import 'package:wearhack/features/publicidad/catalogo.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/ubicacion.dart';
 
@@ -76,6 +79,7 @@ Future<RepositorioFalso> _abrir(
         outfits: datos,
         clima: clima ?? datos,
         ubicacion: ubicacion ?? _UbicacionFalsa(_bogota),
+        publicidad: datos,
       ),
     ),
   );
@@ -492,6 +496,135 @@ void main() {
       expect(climaPara(14), Clima.templado);
       expect(climaPara(22), Clima.templado);
       expect(climaPara(22.1), Clima.calido);
+    });
+  });
+
+  group('marcas aliadas', () {
+    Future<void> irAMarcas(WidgetTester tester) async {
+      await tester.tap(find.text('Marcas'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('la navegacion tiene cuatro secciones', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      expect(
+        tester.widget<NavigationRail>(find.byType(NavigationRail)).destinations,
+        hasLength(4),
+      );
+    });
+
+    testWidgets('muestra el ranking en orden y sin las de menos de 5', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAMarcas(tester);
+
+      expect(find.text('Prendas puente para ti'), findsOneWidget);
+      expect(find.text('#1'), findsOneWidget);
+      expect(find.text('#4'), findsOneWidget);
+      expect(find.text('#5'), findsNothing);
+      expect(find.text('Abre 9 combinaciones'), findsOneWidget);
+      expect(find.text('Nuevo para ti: Formal'), findsOneWidget);
+      // Los mocasines solo abren 3: no llegan al umbral.
+      expect(find.text('Mocasines negros'), findsNothing);
+    });
+
+    testWidgets('en un telefono estrecho nada se desborda', (
+      WidgetTester tester,
+    ) async {
+      // Un desborde es un error en los tests: si algo no cupiera, esto falla.
+      await _abrir(tester, ancho: 360);
+      await irAMarcas(tester);
+      await tester.tap(find.text('Blazer negro de paño'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Norte Urbano'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Camisa blanca Oxford'), findsOneWidget);
+    });
+
+    testWidgets('el detalle explica que combinaciones abre', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAMarcas(tester);
+
+      await tester.tap(find.text('Blazer negro de paño'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Abre 9 combinaciones nuevas con lo que ya tienes'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(Chip, 'Formal'), findsOneWidget);
+      expect(
+        find.text('Camisa · Pantalón · Chaqueta · Zapatos'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('marca aliada'), findsOneWidget);
+    });
+
+    testWidgets('el catalogo de una marca marca sus prendas puente', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAMarcas(tester);
+
+      await tester.tap(find.text('Casa Lino'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pantalón de lino beige'), findsOneWidget);
+      expect(find.text('Vestido camisero verde'), findsOneWidget);
+      expect(find.text('Sandalias de cuero'), findsOneWidget);
+      expect(find.text('Prenda puente'), findsOneWidget);
+      expect(find.text('\$ 159.900'), findsOneWidget);
+
+      await tester.tap(find.text('Pantalón de lino beige'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Abre 7 combinaciones nuevas con lo que ya tienes'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('repositorio falso: prendas puente', () {
+    test('vienen ordenadas y todas llegan al umbral', () async {
+      final RepositorioFalso datos = RepositorioFalso(
+        hoy: _hoy,
+        latencia: Duration.zero,
+      );
+      final List<int> combinaciones = <int>[
+        for (final PrendaPuente p in await datos.prendasPuente())
+          p.combinacionesBuenas,
+      ];
+
+      expect(combinaciones, <int>[9, 7, 7, 5]);
+    });
+
+    test('las combinaciones de ejemplo no usan prendas eliminadas', () async {
+      final RepositorioFalso datos = RepositorioFalso(
+        hoy: _hoy,
+        latencia: Duration.zero,
+      );
+      // El pantalon negro esta en dos de las tres del blazer.
+      await datos.eliminarPrenda('p06');
+
+      final PrendaPuente blazer = (await datos.prendasPuente()).first;
+      expect(blazer.ejemplos.map((Outfit o) => o.id), <String>['pp-c01-3']);
+    });
+  });
+
+  group('formato de precios', () {
+    test('separa los miles con punto', () {
+      expect(formatoPesos(900), '\$ 900');
+      expect(formatoPesos(49900), '\$ 49.900');
+      expect(formatoPesos(289900), '\$ 289.900');
+      expect(formatoPesos(1000000), '\$ 1.000.000');
     });
   });
 }

@@ -11,6 +11,7 @@ import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
+import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura_pruebas.dart';
@@ -24,6 +25,7 @@ void main() {
       outfits: datos,
       clima: datos,
       ubicacion: crearServicioUbicacion(),
+      publicidad: datos,
     ),
   );
 }
@@ -35,12 +37,14 @@ class AplicacionWearHack extends StatelessWidget {
     required this.outfits,
     required this.clima,
     required this.ubicacion,
+    required this.publicidad,
   });
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
   final RepositorioClima clima;
   final ServicioUbicacion ubicacion;
+  final RepositorioPublicidad publicidad;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +56,7 @@ class AplicacionWearHack extends StatelessWidget {
         outfits: outfits,
         clima: clima,
         ubicacion: ubicacion,
+        publicidad: publicidad,
         diagnostico: (_) => const PantallaEsqueleto(),
       ),
     );

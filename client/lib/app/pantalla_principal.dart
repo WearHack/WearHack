@@ -1,4 +1,4 @@
-/// La estructura de la app: closet, outfits y semana.
+/// La estructura de la app: closet, outfits, semana y marcas.
 ///
 /// En pantallas estrechas (movil) la navegacion va abajo; en anchas (web,
 /// tablet) va en un riel a la izquierda, que es donde se busca en escritorio.
@@ -11,6 +11,8 @@ import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_semana.dart';
+import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
+import 'package:wearhack/features/publicidad/ui/pantalla_marcas.dart';
 import 'package:wearhack/platform/ubicacion.dart';
 
 class PantallaPrincipal extends StatefulWidget {
@@ -20,12 +22,14 @@ class PantallaPrincipal extends StatefulWidget {
     required this.outfits,
     required this.clima,
     required this.ubicacion,
+    required this.publicidad,
     this.diagnostico,
   });
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
   final RepositorioClima clima;
+  final RepositorioPublicidad publicidad;
   final ServicioUbicacion ubicacion;
 
   /// La pantalla de diagnostico, si la hay. Llega desde fuera porque vive en
@@ -49,6 +53,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     _Seccion('Clóset', Icons.checkroom_outlined, Icons.checkroom),
     _Seccion('Outfits', Icons.style_outlined, Icons.style),
     _Seccion('Semana', Icons.calendar_month_outlined, Icons.calendar_month),
+    _Seccion('Marcas', Icons.storefront_outlined, Icons.storefront),
   ];
 
   /// Por encima de este ancho la navegacion pasa a un riel lateral.
@@ -67,7 +72,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       clima: widget.clima,
       ubicacion: widget.ubicacion,
     ),
-    _ => PantallaSemana(repositorio: widget.outfits),
+    2 => PantallaSemana(repositorio: widget.outfits),
+    _ => PantallaMarcas(repositorio: widget.publicidad),
   };
 
   @override
