@@ -32,3 +32,4 @@ nuevo que sustituya al anterior y se marca el viejo como sustituido.
 | [0018](0018-mermaid-como-fuente-y-archify-para-presentar.md) | Mermaid como fuente y Archify para presentar | propuesto |
 | [0019](0019-core-modular-con-spring-modulith-en-lugar-de-cuatro.md) | Core modular con Spring Modulith en lugar de cuatro servicios | propuesto |
 | [0020](0020-spring-boot-4-1-y-spring-modulith-2-1-para-el-core.md) | Spring Boot 4.1 y Spring Modulith 2.1 para el Core | propuesto |
+| [0021](0021-android-sin-copia-de-seguridad-automatica-en-toda-la-app.md) | Android sin copia de seguridad automatica en toda la app | propuesto |
