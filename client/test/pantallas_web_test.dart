@@ -1,19 +1,63 @@
-/// Las pantallas de las issues #15 y #16 sobre el repositorio falso: closet,
-/// outfits, plan semanal y elegir el mejor de N.
+/// Las pantallas de las issues #15, #16 y #17 sobre el repositorio falso:
+/// closet, outfits, plan semanal, elegir el mejor de N y el contexto de hoy.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wearhack/app/pantalla_principal.dart';
+import 'package:wearhack/core/vocabulario.dart';
+import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
+import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
+import 'package:wearhack/platform/ubicacion.dart';
 
 /// Un miercoles. El plan de ejemplo deja libres el miercoles y el domingo.
 final DateTime _hoy = DateTime(2026, 10, 21);
 
+/// Una ubicacion que responde lo que se le diga, sin navegador.
+class _UbicacionFalsa implements ServicioUbicacion {
+  _UbicacionFalsa(this.resultado, {this.disponible = true});
+
+  final ResultadoUbicacion resultado;
+
+  @override
+  final bool disponible;
+
+  @override
+  Future<ResultadoUbicacion> obtener() async => resultado;
+}
+
+/// Un clima que anota desde donde se lo pidieron.
+class _ClimaQueAnota implements RepositorioClima {
+  _ClimaQueAnota(this.temperatura);
+
+  final double? temperatura;
+  double? latitud;
+  double? longitud;
+
+  @override
+  Future<double?> temperaturaEn({
+    required double latitud,
+    required double longitud,
+  }) async {
+    this.latitud = latitud;
+    this.longitud = longitud;
+    return temperatura;
+  }
+}
+
+/// Bogota, con mas decimales de los que deberian salir del dispositivo.
+const UbicacionObtenida _bogota = UbicacionObtenida(
+  latitud: 4.711234,
+  longitud: -74.072156,
+);
+
 Future<RepositorioFalso> _abrir(
   WidgetTester tester, {
   double ancho = 1200,
+  ServicioUbicacion? ubicacion,
+  RepositorioClima? clima,
 }) async {
   // Alto de sobra para que las hojas inferiores quepan enteras y ningun boton
   // quede fuera de la vista.
@@ -27,7 +71,12 @@ Future<RepositorioFalso> _abrir(
   );
   await tester.pumpWidget(
     MaterialApp(
-      home: PantallaPrincipal(closet: datos, outfits: datos),
+      home: PantallaPrincipal(
+        closet: datos,
+        outfits: datos,
+        clima: clima ?? datos,
+        ubicacion: ubicacion ?? _UbicacionFalsa(_bogota),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -208,7 +257,9 @@ void main() {
       await tester.pump();
       expect(botonUsar(tester).onPressed, isNotNull);
 
-      final LoteOpciones lote = (await tester.runAsync(datos.opcionesDeHoy))!;
+      final LoteOpciones lote = (await tester.runAsync(
+        () => datos.opcionesDeHoy(const ContextoOutfit()),
+      ))!;
       expect(lote.elegidoId, isNull);
     });
 
@@ -236,26 +287,211 @@ void main() {
   });
 
   group('repositorio falso', () {
-    test('un lote no admite una segunda eleccion', () async {
-      final RepositorioFalso datos = RepositorioFalso(
-        hoy: _hoy,
-        latencia: Duration.zero,
-      );
-      final LoteOpciones lote = await datos.opcionesDeHoy();
+    test(
+      'un dia no admite una segunda eleccion, ni con otro contexto',
+      () async {
+        final RepositorioFalso datos = RepositorioFalso(
+          hoy: _hoy,
+          latencia: Duration.zero,
+        );
+        final LoteOpciones lote = await datos.opcionesDeHoy(
+          const ContextoOutfit(),
+        );
+        await datos.elegir(lote.id, 'o1');
 
-      await datos.elegir(lote.id, 'o1');
+        final LoteOpciones otro = await datos.opcionesDeHoy(
+          const ContextoOutfit(ocasion: Ocasion.oficina),
+        );
+        expect(otro.elegidoId, 'o1');
+        expect(datos.elegir(otro.id, 'o2'), throwsStateError);
+      },
+    );
 
-      expect(datos.elegir(lote.id, 'o3'), throwsStateError);
-    });
+    test(
+      'las opciones respetan la formalidad de la ocasion y el clima',
+      () async {
+        final RepositorioFalso datos = RepositorioFalso(
+          hoy: _hoy,
+          latencia: Duration.zero,
+        );
+        final LoteOpciones lote = await datos.opcionesDeHoy(
+          const ContextoOutfit(ocasion: Ocasion.oficina, clima: Clima.templado),
+        );
+
+        expect(lote.opciones.map((Outfit o) => o.id), <String>['o2']);
+      },
+    );
 
     test('no se puede elegir un outfit que no esta en el lote', () async {
       final RepositorioFalso datos = RepositorioFalso(
         hoy: _hoy,
         latencia: Duration.zero,
       );
-      final LoteOpciones lote = await datos.opcionesDeHoy();
+      final LoteOpciones lote = await datos.opcionesDeHoy(
+        const ContextoOutfit(),
+      );
 
       expect(datos.elegir(lote.id, 'o2'), throwsArgumentError);
+    });
+  });
+
+  group('contexto de hoy', () {
+    Future<void> irAOutfits(WidgetTester tester) async {
+      await tester.tap(find.text('Outfits'));
+      await tester.pumpAndSettle();
+    }
+
+    ChoiceChip chip(WidgetTester tester, String texto) =>
+        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, texto));
+
+    testWidgets('arranca en dia a dia, sin mood y sin clima', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAOutfits(tester);
+
+      expect(chip(tester, 'Día a día').selected, isTrue);
+      for (final Mood m in Mood.values) {
+        expect(chip(tester, m.etiqueta).selected, isFalse);
+      }
+      expect(find.text('Usar mi ubicación'), findsOneWidget);
+      expect(
+        find.text('Elige entre 3 opciones pensadas para ti.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('cambiar la ocasion cambia las opciones', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAOutfits(tester);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Oficina'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Elige entre 2 opciones pensadas para ti.'),
+        findsOneWidget,
+      );
+
+      // Ningun outfit de ejemplo es formal.
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Formal'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('No hay suficientes outfits'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Elegir'), findsNothing);
+    });
+
+    testWidgets('el mood se marca y se desmarca', (WidgetTester tester) async {
+      await _abrir(tester);
+      await irAOutfits(tester);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Relajado'));
+      await tester.pumpAndSettle();
+      expect(chip(tester, 'Relajado').selected, isTrue);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Relajado'));
+      await tester.pumpAndSettle();
+      expect(chip(tester, 'Relajado').selected, isFalse);
+    });
+
+    testWidgets('con permiso usa el clima de la zona', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAOutfits(tester);
+
+      await tester.tap(find.text('Usar mi ubicación'));
+      await tester.pumpAndSettle();
+
+      // 18 grados es templado: de dia a dia solo quedan o1 y o2.
+      expect(find.text('Templado · 18 °C en tu zona'), findsOneWidget);
+      expect(
+        find.text('Elige entre 2 opciones pensadas para ti.'),
+        findsOneWidget,
+      );
+      expect(find.text('Actualizar'), findsOneWidget);
+    });
+
+    testWidgets('la posicion sale redondeada a dos decimales', (
+      WidgetTester tester,
+    ) async {
+      final _ClimaQueAnota clima = _ClimaQueAnota(30);
+      await _abrir(tester, clima: clima);
+      await irAOutfits(tester);
+
+      await tester.tap(find.text('Usar mi ubicación'));
+      await tester.pumpAndSettle();
+
+      expect(clima.latitud, 4.71);
+      expect(clima.longitud, -74.07);
+      expect(find.text('Cálido · 30 °C en tu zona'), findsOneWidget);
+    });
+
+    testWidgets('sin permiso genera sin clima', (WidgetTester tester) async {
+      await _abrir(
+        tester,
+        ubicacion: _UbicacionFalsa(const UbicacionDenegada()),
+      );
+      await irAOutfits(tester);
+
+      await tester.tap(find.text('Usar mi ubicación'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('No diste permiso de ubicación'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Elige entre 3 opciones pensadas para ti.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('si el clima no responde, genera sin clima', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester, clima: _ClimaQueAnota(null));
+      await irAOutfits(tester);
+
+      await tester.tap(find.text('Usar mi ubicación'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('No se pudo obtener el clima'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Elige entre 3 opciones pensadas para ti.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sin ubicacion en el dispositivo ni se ofrece', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(
+        tester,
+        ubicacion: _UbicacionFalsa(
+          const UbicacionNoDisponible(),
+          disponible: false,
+        ),
+      );
+      await irAOutfits(tester);
+
+      expect(
+        find.textContaining('no permite usar tu ubicación'),
+        findsOneWidget,
+      );
+      expect(find.text('Usar mi ubicación'), findsNothing);
+    });
+  });
+
+  group('bandas de clima', () {
+    test('frio por debajo de 14, calido por encima de 22', () {
+      expect(climaPara(13.9), Clima.frio);
+      expect(climaPara(14), Clima.templado);
+      expect(climaPara(22), Clima.templado);
+      expect(climaPara(22.1), Clima.calido);
     });
   });
 }

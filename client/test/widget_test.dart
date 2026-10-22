@@ -1,13 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wearhack/main.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
+import 'package:wearhack/platform/ubicacion.dart';
 
 void main() {
   testWidgets('la aplicacion arranca en el closet', (
     WidgetTester tester,
   ) async {
     final RepositorioFalso datos = RepositorioFalso(latencia: Duration.zero);
-    await tester.pumpWidget(AplicacionWearHack(closet: datos, outfits: datos));
+    await tester.pumpWidget(
+      AplicacionWearHack(
+        closet: datos,
+        outfits: datos,
+        clima: datos,
+        ubicacion: crearServicioUbicacion(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Clóset'), findsWidgets);
@@ -18,7 +26,14 @@ void main() {
     WidgetTester tester,
   ) async {
     final RepositorioFalso datos = RepositorioFalso(latencia: Duration.zero);
-    await tester.pumpWidget(AplicacionWearHack(closet: datos, outfits: datos));
+    await tester.pumpWidget(
+      AplicacionWearHack(
+        closet: datos,
+        outfits: datos,
+        clima: datos,
+        ubicacion: crearServicioUbicacion(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Diagnóstico'));

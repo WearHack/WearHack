@@ -3,6 +3,7 @@ library;
 
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
+import 'package:wearhack/features/outfits/contexto.dart';
 
 class Outfit {
   const Outfit({
@@ -38,8 +39,10 @@ class LoteOpciones {
   const LoteOpciones({
     required this.id,
     required this.fecha,
+    required this.contexto,
     required this.opciones,
     this.elegidoId,
+    this.elegido,
   });
 
   final String id;
@@ -47,14 +50,18 @@ class LoteOpciones {
   /// Medianoche local del dia para el que se proponen.
   final DateTime fecha;
 
+  /// Con que ocasion, mood y clima se generaron las opciones.
+  final ContextoOutfit contexto;
+
   final List<Outfit> opciones;
 
-  /// Lo que ya se eligio de este lote. Un lote da una sola seleccion: elegir
-  /// dos veces contaria doble la misma comparacion.
+  /// Lo que ya se eligio hoy. Un dia da una sola seleccion: elegir dos veces
+  /// contaria doble la misma comparacion, aunque se cambie el contexto.
   final String? elegidoId;
 
-  Outfit? get elegido =>
-      opciones.where((Outfit o) => o.id == elegidoId).firstOrNull;
+  /// El outfit de [elegidoId]. Puede faltar aunque haya eleccion, si despues
+  /// se elimino una de sus prendas.
+  final Outfit? elegido;
 }
 
 /// Un dia del plan semanal. Sin outfit es un dia libre.

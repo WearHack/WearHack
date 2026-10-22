@@ -7,25 +7,34 @@ library;
 
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
+import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/mock/datos_falsos.dart';
 
-class RepositorioFalso implements RepositorioCloset, RepositorioOutfits {
+class RepositorioFalso
+    implements RepositorioCloset, RepositorioOutfits, RepositorioClima {
   RepositorioFalso({
     DateTime? hoy,
     this.latencia = const Duration(milliseconds: 300),
+    this.temperatura = 18,
   }) : _hoy = _medianoche(hoy ?? DateTime.now()),
        _lunes = _lunesDe(hoy ?? DateTime.now());
 
   /// Lo que tarda cada respuesta. En los tests va a cero.
   final Duration latencia;
 
+  /// La que devuelve [temperaturaEn] para cualquier lugar. 18 grados, como un
+  /// dia normal en Bogota, cae en templado.
+  final double? temperatura;
+
   final DateTime _hoy;
   final DateTime _lunes;
   String? _elegidoHoy;
 
-  String get _loteDeHoy => 'lote-${_hoy.year}-${_hoy.month}-${_hoy.day}';
+  /// Los lotes generados hoy, por id, con los ids de sus opciones.
+  final Map<String, List<String>> _lotes = <String, List<String>>{};
 
   static DateTime _medianoche(DateTime dia) =>
       DateTime(dia.year, dia.month, dia.day);
@@ -85,34 +94,51 @@ class RepositorioFalso implements RepositorioCloset, RepositorioOutfits {
   });
 
   @override
-  Future<LoteOpciones> opcionesDeHoy() => _responder(
-    () => LoteOpciones(
-      id: _loteDeHoy,
+  Future<LoteOpciones> opcionesDeHoy(ContextoOutfit contexto) => _responder(() {
+    final String id =
+        'lote-${_hoy.year}-${_hoy.month}-${_hoy.day}-${contexto.clave}';
+    // Filtros duros, como los aplicaria el Core: la formalidad que admite la
+    // ocasion y, si hay dato, el clima. El mood no se simula: es un termino del
+    // score, y aqui no hay score.
+    final List<Outfit> opciones = <Outfit>[
+      for (final String candidata in candidatasDeEjemplo)
+        if (_buscar(candidata) case final Outfit o)
+          if (contexto.ocasion.admite(o.formalidad) &&
+              (contexto.clima == null || o.clima == contexto.clima))
+            o,
+    ].take(3).toList();
+    _lotes[id] = <String>[for (final Outfit o in opciones) o.id];
+    return LoteOpciones(
+      id: id,
       fecha: _hoy,
-      // Si se elimino una prenda, sus outfits ya no estan y el lote se queda
-      // con menos opciones. El backend generaria otras; aqui basta con eso.
-      opciones: <Outfit>[
-        for (final String id in opcionesDeEjemplo)
-          if (_buscar(id) case final Outfit o) o,
-      ],
+      contexto: contexto,
+      opciones: opciones,
       elegidoId: _elegidoHoy,
-    ),
-  );
+      elegido: _buscar(_elegidoHoy),
+    );
+  });
 
   @override
   Future<void> elegir(String loteId, String outfitId) => _responder(() {
-    if (loteId != _loteDeHoy) {
+    final List<String>? lote = _lotes[loteId];
+    if (lote == null) {
       throw ArgumentError.value(loteId, 'loteId', 'no existe');
     }
-    if (!opcionesDeEjemplo.contains(outfitId) || _buscar(outfitId) == null) {
+    if (!lote.contains(outfitId)) {
       throw ArgumentError.value(outfitId, 'outfitId', 'no esta en el lote');
     }
     if (_elegidoHoy != null) {
-      throw StateError('el lote $loteId ya tiene una eleccion');
+      throw StateError('hoy ya se eligio $_elegidoHoy');
     }
     _elegidoHoy = outfitId;
     _plan[_indiceDe(_hoy)] = outfitId;
   });
+
+  @override
+  Future<double?> temperaturaEn({
+    required double latitud,
+    required double longitud,
+  }) => _responder(() => temperatura);
 
   Outfit? _buscar(String? id) =>
       id == null ? null : _outfits.where((Outfit o) => o.id == id).firstOrNull;

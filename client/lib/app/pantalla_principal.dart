@@ -7,20 +7,26 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/closet/ui/pantalla_closet.dart';
+import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_semana.dart';
+import 'package:wearhack/platform/ubicacion.dart';
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({
     super.key,
     required this.closet,
     required this.outfits,
+    required this.clima,
+    required this.ubicacion,
     this.diagnostico,
   });
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
+  final RepositorioClima clima;
+  final ServicioUbicacion ubicacion;
 
   /// La pantalla de diagnostico, si la hay. Llega desde fuera porque vive en
   /// `main.dart`: es la unica que puede abrir el modo de captura de pruebas.
@@ -56,7 +62,11 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   // eliminara una prenda en el closet, outfits y semana ya lo reflejan.
   Widget _contenido() => switch (_seccion) {
     0 => PantallaCloset(repositorio: widget.closet),
-    1 => PantallaOutfits(repositorio: widget.outfits),
+    1 => PantallaOutfits(
+      repositorio: widget.outfits,
+      clima: widget.clima,
+      ubicacion: widget.ubicacion,
+    ),
     _ => PantallaSemana(repositorio: widget.outfits),
   };
 

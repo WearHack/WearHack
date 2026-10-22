@@ -4,6 +4,7 @@
 /// llamara al gateway (`/api/v1/outfits/...`).
 library;
 
+import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 
 abstract interface class RepositorioOutfits {
@@ -16,12 +17,13 @@ abstract interface class RepositorioOutfits {
   /// Asigna [outfitId] a [dia]. Con `null` el dia queda libre.
   Future<void> asignarOutfit(DateTime dia, String? outfitId);
 
-  /// Las opciones de hoy para elegir el mejor de N.
-  Future<LoteOpciones> opcionesDeHoy();
+  /// Las opciones de hoy para elegir el mejor de N, generadas para
+  /// [contexto]. Otro contexto da otro lote.
+  Future<LoteOpciones> opcionesDeHoy(ContextoOutfit contexto);
 
   /// Registra que de [loteId] se eligio [outfitId] y lo deja como el outfit
   /// del dia. Los descartados son el resto del lote; el backend ya los conoce.
   ///
-  /// Falla con [StateError] si el lote ya tenia una eleccion.
+  /// Falla con [StateError] si ya se eligio hoy.
   Future<void> elegir(String loteId, String outfitId);
 }

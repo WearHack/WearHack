@@ -9,14 +9,23 @@ import 'package:flutter/material.dart';
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura_pruebas.dart';
+import 'package:wearhack/platform/ubicacion.dart';
 
 void main() {
   final RepositorioFalso datos = RepositorioFalso();
-  runApp(AplicacionWearHack(closet: datos, outfits: datos));
+  runApp(
+    AplicacionWearHack(
+      closet: datos,
+      outfits: datos,
+      clima: datos,
+      ubicacion: crearServicioUbicacion(),
+    ),
+  );
 }
 
 class AplicacionWearHack extends StatelessWidget {
@@ -24,10 +33,14 @@ class AplicacionWearHack extends StatelessWidget {
     super.key,
     required this.closet,
     required this.outfits,
+    required this.clima,
+    required this.ubicacion,
   });
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
+  final RepositorioClima clima;
+  final ServicioUbicacion ubicacion;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +50,8 @@ class AplicacionWearHack extends StatelessWidget {
       home: PantallaPrincipal(
         closet: closet,
         outfits: outfits,
+        clima: clima,
+        ubicacion: ubicacion,
         diagnostico: (_) => const PantallaEsqueleto(),
       ),
     );
