@@ -45,11 +45,16 @@ class TarjetaOutfit extends StatelessWidget {
                 children: <Widget>[
                   Icon(outfit.clima.icono, size: 18),
                   const SizedBox(width: 6),
-                  Text(
-                    '${outfit.formalidad.etiqueta} · ${outfit.clima.etiqueta}',
-                    style: Theme.of(context).textTheme.labelLarge,
+                  // Expanded y no Spacer: con tres tarjetas lado a lado el
+                  // texto no siempre cabe, y sin limite desborda la fila.
+                  Expanded(
+                    child: Text(
+                      '${outfit.formalidad.etiqueta} · ${outfit.clima.etiqueta}',
+                      style: Theme.of(context).textTheme.labelLarge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  const Spacer(),
                   if (seleccionado)
                     Icon(Icons.check_circle, color: colores.primary),
                 ],

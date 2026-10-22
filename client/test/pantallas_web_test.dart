@@ -1,5 +1,5 @@
-/// Las pantallas de la issue #15 sobre el repositorio falso: closet, outfits y
-/// plan semanal.
+/// Las pantallas de las issues #15 y #16 sobre el repositorio falso: closet,
+/// outfits, plan semanal y elegir el mejor de N.
 library;
 
 import 'package:flutter/material.dart';
@@ -170,6 +170,92 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Sin outfit'), findsOneWidget);
+    });
+  });
+
+  group('elegir el mejor de N', () {
+    Future<void> irAElegir(WidgetTester tester) async {
+      await tester.tap(find.text('Outfits'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Elegir'));
+      await tester.pumpAndSettle();
+    }
+
+    FilledButton botonUsar(WidgetTester tester) => tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Usar este outfit'),
+    );
+
+    testWidgets('muestra las tres opciones y no deja confirmar sin marcar', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAElegir(tester);
+
+      expect(find.text('Elige tu outfit de hoy'), findsOneWidget);
+      expect(find.text('Camiseta · Jean · Tenis'), findsOneWidget);
+      expect(find.text('Vestido · Tenis'), findsOneWidget);
+      expect(find.text('Blusa · Falda · Zapatos'), findsOneWidget);
+      expect(botonUsar(tester).onPressed, isNull);
+    });
+
+    testWidgets('marcar no registra nada hasta confirmar', (
+      WidgetTester tester,
+    ) async {
+      final RepositorioFalso datos = await _abrir(tester);
+      await irAElegir(tester);
+
+      await tester.tap(find.text('Vestido · Tenis'));
+      await tester.pump();
+      expect(botonUsar(tester).onPressed, isNotNull);
+
+      final LoteOpciones lote = (await tester.runAsync(datos.opcionesDeHoy))!;
+      expect(lote.elegidoId, isNull);
+    });
+
+    testWidgets('confirmar registra la eleccion y la pone como outfit de hoy', (
+      WidgetTester tester,
+    ) async {
+      await _abrir(tester);
+      await irAElegir(tester);
+
+      await tester.tap(find.text('Vestido · Tenis'));
+      await tester.pump();
+      await tester.tap(find.text('Usar este outfit'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Listo, ese es tu outfit de hoy'), findsOneWidget);
+      expect(find.text('Ya elegiste el outfit de hoy.'), findsOneWidget);
+      // Ya no se puede volver a elegir: un lote da una sola seleccion.
+      expect(find.widgetWithText(FilledButton, 'Elegir'), findsNothing);
+
+      // El miercoles estaba libre; ahora solo queda el domingo.
+      await tester.tap(find.text('Semana'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Sin outfit'), findsOneWidget);
+    });
+  });
+
+  group('repositorio falso', () {
+    test('un lote no admite una segunda eleccion', () async {
+      final RepositorioFalso datos = RepositorioFalso(
+        hoy: _hoy,
+        latencia: Duration.zero,
+      );
+      final LoteOpciones lote = await datos.opcionesDeHoy();
+
+      await datos.elegir(lote.id, 'o1');
+
+      expect(datos.elegir(lote.id, 'o3'), throwsStateError);
+    });
+
+    test('no se puede elegir un outfit que no esta en el lote', () async {
+      final RepositorioFalso datos = RepositorioFalso(
+        hoy: _hoy,
+        latencia: Duration.zero,
+      );
+      final LoteOpciones lote = await datos.opcionesDeHoy();
+
+      expect(datos.elegir(lote.id, 'o2'), throwsArgumentError);
     });
   });
 }

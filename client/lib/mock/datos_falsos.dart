@@ -261,6 +261,10 @@ const List<Outfit> outfitsDeEjemplo = <Outfit>[
   ),
 ];
 
+/// Las tres opciones de hoy para elegir el mejor de N. Cada par se diferencia
+/// en al menos dos prendas principales, como exige el motor (respuestas D.27).
+const List<String> opcionesDeEjemplo = <String>['o1', 'o3', 'o5'];
+
 /// El outfit de cada dia, de lunes a domingo. `null` es un dia libre.
 const List<String?> planDeEjemplo = <String?>[
   'o1',

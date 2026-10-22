@@ -15,12 +15,20 @@ class RepositorioFalso implements RepositorioCloset, RepositorioOutfits {
   RepositorioFalso({
     DateTime? hoy,
     this.latencia = const Duration(milliseconds: 300),
-  }) : _lunes = _lunesDe(hoy ?? DateTime.now());
+  }) : _hoy = _medianoche(hoy ?? DateTime.now()),
+       _lunes = _lunesDe(hoy ?? DateTime.now());
 
   /// Lo que tarda cada respuesta. En los tests va a cero.
   final Duration latencia;
 
+  final DateTime _hoy;
   final DateTime _lunes;
+  String? _elegidoHoy;
+
+  String get _loteDeHoy => 'lote-${_hoy.year}-${_hoy.month}-${_hoy.day}';
+
+  static DateTime _medianoche(DateTime dia) =>
+      DateTime(dia.year, dia.month, dia.day);
   final List<Prenda> _prendas = List<Prenda>.of(prendasDeEjemplo);
   final List<Outfit> _outfits = List<Outfit>.of(outfitsDeEjemplo);
   final List<String?> _plan = List<String?>.of(planDeEjemplo);
@@ -74,6 +82,36 @@ class RepositorioFalso implements RepositorioCloset, RepositorioOutfits {
       throw ArgumentError.value(outfitId, 'outfitId', 'no existe');
     }
     _plan[indice] = outfitId;
+  });
+
+  @override
+  Future<LoteOpciones> opcionesDeHoy() => _responder(
+    () => LoteOpciones(
+      id: _loteDeHoy,
+      fecha: _hoy,
+      // Si se elimino una prenda, sus outfits ya no estan y el lote se queda
+      // con menos opciones. El backend generaria otras; aqui basta con eso.
+      opciones: <Outfit>[
+        for (final String id in opcionesDeEjemplo)
+          if (_buscar(id) case final Outfit o) o,
+      ],
+      elegidoId: _elegidoHoy,
+    ),
+  );
+
+  @override
+  Future<void> elegir(String loteId, String outfitId) => _responder(() {
+    if (loteId != _loteDeHoy) {
+      throw ArgumentError.value(loteId, 'loteId', 'no existe');
+    }
+    if (!opcionesDeEjemplo.contains(outfitId) || _buscar(outfitId) == null) {
+      throw ArgumentError.value(outfitId, 'outfitId', 'no esta en el lote');
+    }
+    if (_elegidoHoy != null) {
+      throw StateError('el lote $loteId ya tiene una eleccion');
+    }
+    _elegidoHoy = outfitId;
+    _plan[_indiceDe(_hoy)] = outfitId;
   });
 
   Outfit? _buscar(String? id) =>

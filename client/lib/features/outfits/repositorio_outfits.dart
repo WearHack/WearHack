@@ -15,4 +15,13 @@ abstract interface class RepositorioOutfits {
 
   /// Asigna [outfitId] a [dia]. Con `null` el dia queda libre.
   Future<void> asignarOutfit(DateTime dia, String? outfitId);
+
+  /// Las opciones de hoy para elegir el mejor de N.
+  Future<LoteOpciones> opcionesDeHoy();
+
+  /// Registra que de [loteId] se eligio [outfitId] y lo deja como el outfit
+  /// del dia. Los descartados son el resto del lote; el backend ya los conoce.
+  ///
+  /// Falla con [StateError] si el lote ya tenia una eleccion.
+  Future<void> elegir(String loteId, String outfitId);
 }
