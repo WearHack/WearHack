@@ -32,5 +32,34 @@ class Configuracion {
     'CAPTURA_GUIA_EN_VIVO',
   );
 
+  /// Raiz del Core (perfil, consentimientos). El Core no va detras del gateway:
+  /// en el docker compose se le pega directo, y la ruta /api/v1/usuarios del
+  /// gateway todavia apunta al servicio viejo, que solo tiene /health.
+  static const String coreBase = String.fromEnvironment(
+    'CORE_BASE',
+    defaultValue: 'http://10.0.2.2:8090',
+  );
+
+  /// El User Pool de Cognito. Sin pool ni app client la app arranca sin
+  /// pantalla de acceso, como hasta ahora. Ver infra/cognito/README.md.
+  static const String cognitoRegion = String.fromEnvironment(
+    'COGNITO_REGION',
+    defaultValue: 'us-east-1',
+  );
+  static const String cognitoUserPoolId = String.fromEnvironment(
+    'COGNITO_USER_POOL_ID',
+  );
+  static const String cognitoClientId = String.fromEnvironment(
+    'COGNITO_CLIENT_ID',
+  );
+
+  /// Dominio de la Hosted UI, sin https://. Hace falta para entrar con Google.
+  static const String cognitoDominio = String.fromEnvironment(
+    'COGNITO_DOMINIO',
+  );
+
+  static const bool cognitoConfigurado =
+      cognitoUserPoolId != '' && cognitoClientId != '';
+
   static const String version = '0.1.0';
 }

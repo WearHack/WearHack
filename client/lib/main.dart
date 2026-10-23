@@ -5,23 +5,66 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:wearhack/core/configuracion.dart';
+import 'package:wearhack/features/cuenta/autenticacion.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
+import 'package:wearhack/features/cuenta/ui/puerta_de_acceso.dart';
 import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura_pruebas.dart';
 
-void main() {
-  runApp(const AplicacionWearHack());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Sin User Pool en --dart-define la app arranca como antes, sin acceso. Ver
+  // infra/cognito/README.md.
+  Cuenta? cuenta;
+  if (Configuracion.cognitoConfigurado) {
+    final Autenticacion autenticacion = await AutenticacionAmplify.configurar(
+      region: Configuracion.cognitoRegion,
+      userPoolId: Configuracion.cognitoUserPoolId,
+      clientId: Configuracion.cognitoClientId,
+      dominio: Configuracion.cognitoDominio,
+    );
+    cuenta = Cuenta(
+      autenticacion: autenticacion,
+      usuarios: ClienteUsuarios(
+        cliente: http.Client(),
+        base: Configuracion.coreBase,
+        token: autenticacion.tokenDeAcceso,
+      ),
+    );
+  }
+  runApp(AplicacionWearHack(cuenta: cuenta));
+}
+
+/// Lo necesario para el registro y el inicio de sesion.
+class Cuenta {
+  const Cuenta({required this.autenticacion, required this.usuarios});
+
+  final Autenticacion autenticacion;
+  final ClienteUsuarios usuarios;
 }
 
 class AplicacionWearHack extends StatelessWidget {
-  const AplicacionWearHack({super.key});
+  const AplicacionWearHack({super.key, this.cuenta});
+
+  /// `null` cuando no hay User Pool configurado.
+  final Cuenta? cuenta;
 
   @override
   Widget build(BuildContext context) {
+    final Cuenta? cuenta = this.cuenta;
     return MaterialApp(
       title: 'WearHack',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: const PantallaEsqueleto(),
+      home: cuenta == null
+          ? const PantallaEsqueleto()
+          : PuertaDeAcceso(
+              autenticacion: cuenta.autenticacion,
+              usuarios: cuenta.usuarios,
+              app: const PantallaEsqueleto(),
+            ),
     );
   }
 }
