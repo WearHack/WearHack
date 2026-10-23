@@ -27,15 +27,14 @@ Paquete de la app en Android: `app.wearhack.wearhack`. Los comandos `run-as` sol
 
 ### Comandos que se repiten
 
-Compilar e instalar (sustituye los `...` por tus márgenes, ver bloque B):
+Compilar e instalar (los márgenes del recorte van **provisionales**: 0.6, 0.15 y 0.3; para probar otros, ver el bloque B):
 
 ```bash
 cd client
-flutter run -d <id-del-celular> --dart-define=CAPTURA_PRUEBAS=true \
-  --dart-define=RECORTE_MARGEN_SUPERIOR=... \
-  --dart-define=RECORTE_MARGEN_INFERIOR=... \
-  --dart-define=RECORTE_MARGEN_LATERAL=...
+flutter run -d <id-del-celular> --dart-define=CAPTURA_PRUEBAS=true
 ```
+
+Para otros márgenes, añade `--dart-define=RECORTE_MARGEN_SUPERIOR=...` (y `_INFERIOR`, `_LATERAL`).
 
 Ver lo que hay guardado, sin salir del celular:
 
@@ -63,14 +62,15 @@ Si `app_flutter/captura_pruebas` no existe, la carpeta está en otro sitio: `adb
 | A4 | Concede el permiso desde Ajustes y vuelve | La cámara se abre | | ☐ |
 | A5 | **Permisos que pidió**: en Ajustes → Apps → permisos | Solo **Cámara**. Ni micrófono, ni fotos, ni almacenamiento | Los que aparezcan | ☐ |
 | A6 | `adb shell dumpsys package app.wearhack.wearhack \| grep -E "permission\|allowBackup\|ALLOW_BACKUP"` | Declarados: `CAMERA`, `INTERNET`, `ACCESS_NETWORK_STATE` (los dos últimos por bibliotecas). Sin `RECORD_AUDIO`, sin `*_EXTERNAL_STORAGE`. Sin el indicador `ALLOW_BACKUP` | Lo que sobre | ☐ |
-| A7 | Una build **sin** los `RECORTE_MARGEN_*`: abre una toma y pulsa capturar | Mensaje "Falta configurar el recorte: falta RECORTE_MARGEN_SUPERIOR; …" y **nada guardado** | Si guarda algo, o el mensaje no nombra el parámetro | ☐ |
+| A7 | Una build **sin** ningún `RECORTE_MARGEN_*`: toma una foto y mira el tamaño del recorte | Se recorta con los márgenes **provisionales** 0.6 / 0.15 / 0.3 (salvo en los bordes de la foto, el recorte mide 1.6 veces el ancho del rostro de ancho y 1.75 veces su alto de alto; compáralo con `rostro.bbox` y `rostro.ancho_px` del JSON) | Si no recorta, o el recorte no coincide con esas proporciones | ☐ |
 | A8 | En el inicio, prueba las 8 combinaciones de persona, celular y autorización | "Continuar" solo se enciende con las **tres** | La combinación que lo enciende de más | ☐ |
+| A9 | `adb shell dumpsys package app.wearhack.wearhack \| grep -i minSdk` | `minSdk=26` (respuestas, C.20) | El valor que salga | ☐ |
 
 ---
 
 ## B. Elegir los márgenes del recorte
 
-Es la decisión que falta (A.8). La foto completa se guarda siempre, así que un margen malo se corrige **regenerando** el recorte; no se pierde nada. Pero conviene fijarlos antes de la sesión de 270 fotos.
+Los valores por defecto (0.6 / 0.15 / 0.3) son **provisionales**, fijados para la fase de captura sin una medición detrás (A.8). Este bloque sirve para confirmarlos o cambiarlos. La foto completa se guarda siempre, así que un margen malo se corrige **regenerando** el recorte; no se pierde nada. Pero conviene fijarlos antes de la sesión de 270 fotos.
 
 1. Compila con un juego de márgenes, captura **3 tomas** con personas distintas (pelo corto, largo, con flequillo) y saca los recortes al PC (comando de arriba).
 2. Repite con otro juego. Como **punto de partida para mirar** (no son una recomendación; no tengo datos que la respalden), prueba algo como `0.35 / 0.10 / 0.15`, `0.50 / 0.15 / 0.25` y `0.70 / 0.20 / 0.35` (superior / inferior / lateral, fracciones del recuadro del rostro).
@@ -102,12 +102,12 @@ Es la decisión que falta (A.8). La foto completa se guarda siempre, así que un
 | C8 | Foto muy **oscura** (`BAJ`) y muy **brillante** (frente a una ventana) | Se guardan; si pusiste umbrales de calidad, sale el aviso con la razón concreta y "Conservar / Repetir" | Si no salta el aviso con umbrales puestos | ☐ |
 | C9 | Toca una casilla **ya hecha** | Pregunta "¿Reemplazar la toma?". Cancelar no abre la cámara; confirmar deja **una sola** toma con la foto nueva | Si quedan dos, o si cancelar la reemplaza | ☐ |
 | C10 | **Gira el teléfono** a horizontal durante la captura y toma una foto | La foto y el recorte salen **derechos**. El inspector (D1) no marca "no cabe en la foto orientada" | Cómo sale el recorte (girado 90°, de lado) | ☐ |
-| C11 | **Espejo:** sostén la hoja con texto junto a tu cara y toma una foto. Mira la foto y el recorte en el PC | Anota si el texto sale **legible o al revés**. No hay respuesta correcta: es un dato | Cuál de los dos. **No lo corrijas**: voltear o no es decisión del protocolo y se registra | ☐ |
+| C11 | **Espejo:** sostén la hoja con texto junto a tu cara y toma una foto. Mira la foto y el recorte en el PC | Anota si el texto sale **legible o al revés**. No hay respuesta correcta: es un dato | Cuál de los dos. **No lo corrijas**: voltear o no es decisión del protocolo. La app guarda `camara.espejo: null` (el plugin no lo informa): ese dato lo pones tú aquí, y `inspeccionar_lote.py` cuenta las tomas por `true`/`false`/`null` | ☐ |
 | C12 | Mientras estás en la cámara: bloquea la pantalla, o pasa a otra app, y vuelve | La cámara se recupera, sin cierre, y las tomas anteriores siguen | Si queda negra o se cierra | ☐ |
-| C13 | **Cierre brusco:** pulsa capturar y fuerza el cierre de la app (Ajustes → Forzar detención) casi a la vez. Reabre | La toma está completa o **no está**. Intenta **exportar** | Si exportar dice "El lote tiene problemas: sobra el archivo …" → **es lo esperado** si el cierre cayó a medias. Vuelve a tomar **esa misma toma**: la sobreescribe y exportar debe funcionar | ☐ |
+| C13 | **Cierre brusco:** pulsa capturar y fuerza el cierre de la app (Ajustes → Forzar detención) casi a la vez. Reabre el modo | La toma está completa o **no está**. Si quedaron archivos sueltos, al abrir el modo sale el diálogo **"Tomas incompletas"** con sus nombres. **Conservar** no borra nada; **Borrar** quita solo los sueltos. Después **exportar** funciona | Si exportar dice "El lote tiene problemas: sobra el archivo …" sin que haya salido el diálogo. Si borra una toma completa (no debe) | ☐ |
 | C14 | Revisa que **no** hay fotos en la galería ni en `DCIM` (F1) | | | ☐ |
 
-> **C13 es una hipótesis mía, no un hecho verificado.** Por cómo está escrito el guardado (el `.json` va el último), un cierre a medias deja archivos huérfanos, y exportar se niega nombrándolos. La salida es repetir esa toma. Si en la práctica aparece más de una vez, vale la pena una limpieza de huérfanos; eso es una decisión tuya y no está hecho.
+> **C13 es una hipótesis mía, no un hecho verificado:** que un cierre a medias deje archivos sueltos (el `.json` va el último). Lo que sí está probado en PC es la limpieza: detecta como incompleto todo archivo de `tomas/` que no sea la foto, el recorte o el `.json` de una toma con `.json`, la ofrece borrar con confirmación y no toca las tomas completas.
 
 ---
 
@@ -139,15 +139,16 @@ python tools/captura/inspeccionar_lote.py RUTA/lote_xxxxxxxx.zip
 
 | # | Qué hacer | Debería pasar | Si falla, anota | ✔ |
 |---|---|---|---|---|
-| E1 | En la cuadrícula, **Exportar lote** | Se abre la hoja de compartir del sistema y el aviso "Lote exportado: lote_xxxxxxxx.zip" | Si no abre la hoja, o si el zip no llega | ☐ |
-| E2 | Pásalo al PC (USB, AirDrop o `adb exec-out run-as … cat …/exportaciones/lote_….zip > lote.zip`) | Llega completo | | ☐ |
+| E1 | En la cuadrícula, **Exportar lote P3** (el botón dice de qué persona es el lote) | Se abre la hoja de compartir del sistema y el aviso "Lote exportado: lote_P3_xxxxxxxx.zip", con solo las tomas de P3 | Si no abre la hoja, o si el zip no llega | ☐ |
+| E2 | Pásalo al PC (USB, AirDrop o `adb exec-out run-as … cat …/exportaciones/lote_P3_….zip > lote.zip`) | Llega completo | | ☐ |
 | E3 | `importar_lote.py` a la bóveda | Sale con 0, copia **todas** las piezas más el manifiesto, y muestra "Para habilitar Borrar, escribe: XXXXXXXX" | Si falla en la bóveda real (spec: no verificado con Cryptomator) | ☐ |
 | E4 | Comprueba el contenido de la bóveda | Las piezas esperadas, sin carpeta `.…importando` colgada | Una carpeta oculta con ese nombre | ☐ |
-| E5 | **Borrar** con un texto equivocado | Mensaje "No coincide con el hash…", el diálogo sigue abierto, **no se borró nada** | | ☐ |
+| E5 | **Borrar lote P3** con un texto equivocado | Mensaje "No coincide con el hash…", el diálogo sigue abierto, **no se borró nada** | | ☐ |
 | E6 | Toma **una foto más** *después* de exportar. Intenta borrar con el prefijo de E3 | **Se rechaza**: el estado cambió y el prefijo viejo ya no vale | Si borra, se perdió una toma que nunca se importó | ☐ |
 | E7 | Exporta de nuevo, importa, y borra con el prefijo nuevo | La cuadrícula queda en `0/15` | | ☐ |
-| E8 | Tras borrar: `adb shell run-as app.wearhack.wearhack find app_flutter/captura_pruebas` y `ls cache` | **Sin ningún archivo** de fotos en ninguno de los dos | Lo que quede | ☐ |
-| E9 | Un lote **completo** (los 90 de un celular, o los que puedas): mide el tiempo de exportar y el tamaño del zip | Anota las dos cifras. Mi estimación en un PC es ~290 MB de lote y otro tanto de zip | El tiempo real en gama baja y si hay espacio | ☐ |
+| E7b | Con tomas de **dos personas** en el celular: borra el lote de una | Las tomas de la otra siguen ahí y su zip también | Si desaparece algo de la otra persona | ☐ |
+| E8 | Tras borrar: `adb shell run-as app.wearhack.wearhack find app_flutter/captura_pruebas cache -type f` (en el emulador salio una copia en `cache/share_plus/`; ya se borra) | **Sin ningún archivo** de fotos en ninguno de los dos | Lo que quede | ☐ |
+| E9 | Los **6 lotes** de un celular (90 tomas, 15 por persona), o los que puedas: mide el tiempo de exportar cada uno y el tamaño de su zip | Anota las cifras. Mi estimación en un PC es ~48 MB por lote de 15 tomas (~290 MB los seis) y otro tanto de zip por lote | El tiempo real en gama baja y si hay espacio | ☐ |
 
 ---
 
@@ -161,7 +162,7 @@ python tools/captura/inspeccionar_lote.py RUTA/lote_xxxxxxxx.zip
 | F4 | **Copia de seguridad** (Android): `adb shell dumpsys package app.wearhack.wearhack \| grep -i backup` | Sin `ALLOW_BACKUP` | | ☐ |
 | F5 | Ajustes → Cuentas → Copia de seguridad, y mira si la app aparece entre las que se respaldan | No aparece | | ☐ |
 
-**Sobre F3.** Mientras no se compruebe con una captura de red, la recomendación es **hacer las sesiones en modo avión**. Si F3 muestra conexiones, la decisión de qué hacer (quitar `INTERNET` solo para una variante de esta build, o aceptar las métricas de ML Kit) es tuya y hay que anotarla en `procedencia-datos-wearhack.md`.
+**Sobre F3.** Mientras no se compruebe con una captura de red, la recomendación es **hacer las sesiones en modo avión**. **Decisión ya tomada:** las sesiones de captura se hacen en modo avión y `datatransport` **no se excluye por ahora**; el riesgo está documentado en el README del módulo. Si F3 muestra conexiones, se anotan aquí y en `procedencia-datos-wearhack.md`, y se vuelve a decidir.
 
 ---
 
@@ -193,7 +194,7 @@ Las metas salen de `respuestas-claude-code.md` (A.20 y E.31). El D2 debería par
 | # | Qué comprobar | Debería pasar | Anota | ✔ |
 |---|---|---|---|---|
 | H1 | Pide el permiso de cámara con el texto de `NSCameraUsageDescription` | Aparece ese texto | Si la app se cierra al abrir la cámara, falta la clave | ☐ |
-| H2 | **Formato de la foto** | `.jpg` (el plugin usa JPEG por defecto; HEIC solo si se pide) | Si llega `.heic`, el inspector no lo analiza | ☐ |
+| H2 | **Formato de la foto** | `.jpg`: la app pide JPEG de forma explícita en iOS (`setImageFileFormat`) | Si llegara otro formato, la captura falla con "La cámara entregó un formato inesperado". Anota cuál | ☐ |
 | H3 | **Perfil ICC** del lote en el inspector | **`Display P3`** (spec 5, criterio 6) y `perfil_color.foto` coincide | Qué sale. Si sale sin perfil, el nivel 0 no se está cumpliendo en iPhone | ☐ |
 | H4 | La casilla **True Tone o Night Shift** | Queda en el JSON de las tomas | | ☐ |
 | H5 | EXIF (ISO, exposición, balance de blancos) | Presentes | Cuántas | ☐ |
@@ -227,7 +228,7 @@ Las metas salen de `respuestas-claude-code.md` (A.20 y E.31). El D2 debería par
 | Síntoma | Primer sitio donde mirar |
 |---|---|
 | El recorte sale mal | Los márgenes (B) y `adb logcat` |
-| Exportar se niega | El mensaje nombra el archivo huérfano o corrupto: repite esa toma |
+| Exportar se niega | El mensaje nombra el archivo huérfano o corrupto: reabre el modo (ofrece borrar los sueltos) y repite esa toma |
 | `importar_lote.py` rechaza el lote | Su salida lista todos los problemas, no solo el primero |
 | El inspector marca "no cabe en la foto orientada" | La orientación EXIF (D7) |
 | La build muere con "out of memory" | Reintenta; la máquina tiene 7,7 GB y Gradle pide 8 |

@@ -202,18 +202,6 @@ void main() {
       expect(await archivosBajo(almacen.dirTomas), hasLength(3));
     });
 
-    test('reemplazar con otra extension no deja la foto vieja', () async {
-      await guardar();
-
-      await guardar(reemplazar: true, ext: 'heic');
-
-      expect(await archivosBajo(almacen.dirTomas), <String>[
-        'P3_LEDC_D2_R1_G.json',
-        'P3_LEDC_D2_R1_G_foto.heic',
-        'P3_LEDC_D2_R1_G_recorte.png',
-      ]);
-    });
-
     test('reemplazar una toma no toca las demas', () async {
       await guardar();
       await guardar(id: idDe(luz: Luz.ven));
@@ -224,14 +212,13 @@ void main() {
       expect(await archivosBajo(almacen.dirTomas), hasLength(6));
     });
 
-    test(
-      'una extension que no es jpg ni heic se rechaza y no escribe nada',
-      () async {
-        await expectLater(guardar(ext: 'png'), throwsArgumentError);
+    test('una extension que no es jpg (heic incluida) se rechaza y no escribe nada', () async {
+      for (final String ext in <String>['png', 'heic', 'heif']) {
+        await expectLater(guardar(ext: ext), throwsArgumentError);
+      }
 
-        expect(await archivosBajo(raiz), isEmpty);
-      },
-    );
+      expect(await archivosBajo(raiz), isEmpty);
+    });
 
     test('la extension acepta mayusculas y punto', () async {
       await guardar(ext: '.JPG');
@@ -533,6 +520,183 @@ void main() {
       await registrar(reemplazar: true);
 
       expect(await almacen.listarTomas(), hasLength(1));
+    });
+  });
+
+  group('el espejo de la camara frontal', () {
+    Future<Map<String, Object?>> guardarConEspejo(bool? espejo) async {
+      final AlmacenCapturas almacen = AlmacenCapturas(raiz);
+      await ServicioCapturaPruebas(
+        almacen: almacen,
+        cropper: CropperDePrueba(),
+      ).registrarToma(
+        id: idDe(),
+        autorizacionFirmada: true,
+        foto: fotoDePrueba(),
+        celular: datosDelCelular(),
+        parametrosCamara: const ParametrosDeCamara(),
+        momento: DateTime.utc(2026, 10, 15, 20, 42, 7),
+        espejo: espejo,
+      );
+      return (await almacen.leerMetadatos(idDe()))['camara']!
+          as Map<String, Object?>;
+    }
+
+    test('se registra tal cual lo informa la camara', () async {
+      expect((await guardarConEspejo(true))['espejo'], isTrue);
+    });
+
+    test('si la camara no lo sabe queda en null, no en false', () async {
+      final Map<String, Object?> cam = await guardarConEspejo(null);
+
+      expect(cam.containsKey('espejo'), isTrue);
+      expect(cam['espejo'], isNull);
+    });
+
+    test('la foto guardada no se toca: el espejo no se corrige', () async {
+      final Uint8List foto = fotoDePrueba();
+      final AlmacenCapturas almacen = AlmacenCapturas(raiz);
+      await ServicioCapturaPruebas(
+        almacen: almacen,
+        cropper: CropperDePrueba(),
+      ).registrarToma(
+        id: idDe(),
+        autorizacionFirmada: true,
+        foto: foto,
+        celular: datosDelCelular(),
+        parametrosCamara: const ParametrosDeCamara(),
+        momento: DateTime.utc(2026),
+        espejo: true,
+      );
+
+      expect(
+        File(p.join(almacen.dirTomas.path, 'P3_LEDC_D2_R1_G_foto.jpg'))
+            .readAsBytesSync(),
+        foto,
+      );
+    });
+  });
+
+  group('tomas incompletas', () {
+    late AlmacenCapturas almacen;
+
+    setUp(() async => almacen = await almacenConTomas(raiz, 2));
+
+    File suelto(String nombre, [List<int> bytes = const <int>[1, 2, 3]]) =>
+        File(p.join(almacen.dirTomas.path, nombre))..writeAsBytesSync(bytes);
+
+    test('un lote sano no tiene ninguna', () async {
+      expect(await almacen.archivosIncompletos(), isEmpty);
+    });
+
+    test('sin carpeta de tomas tampoco', () async {
+      expect(
+        await AlmacenCapturas(await carpetaTemporal()).archivosIncompletos(),
+        isEmpty,
+      );
+    });
+
+    test('la foto o el recorte sin su json son incompletos', () async {
+      suelto('P3_LEDF_D2_R1_G_foto.jpg');
+      suelto('P3_MIX_D2_R2_N_recorte.png');
+
+      expect(
+        (await almacen.archivosIncompletos())
+            .map((File f) => p.basename(f.path))
+            .toList(),
+        <String>['P3_LEDF_D2_R1_G_foto.jpg', 'P3_MIX_D2_R2_N_recorte.png'],
+      );
+    });
+
+    test(
+      'un .tmp a medio escribir es incompleto, aunque su toma exista',
+      () async {
+        suelto('P3_VEN_D2_R1_G_foto.jpg.tmp');
+        suelto('P3_LEDC_D2_R1_G.json.tmp');
+
+        expect(
+          (await almacen.archivosIncompletos())
+              .map((File f) => p.basename(f.path))
+              .toList(),
+          <String>['P3_LEDC_D2_R1_G.json.tmp', 'P3_VEN_D2_R1_G_foto.jpg.tmp'],
+        );
+      },
+    );
+
+    test('un archivo que no es de ninguna toma tambien cuenta', () async {
+      suelto('notas.txt');
+
+      expect(await almacen.archivosIncompletos(), hasLength(1));
+    });
+
+    test(
+      'una toma completa nunca aparece, sea de la persona que sea',
+      () async {
+        await agregarTomas(almacen, 3, seudonimo: 'P6');
+        suelto('P6_BAJ_D2_R1_G_foto.jpg');
+
+        expect(
+          (await almacen.archivosIncompletos())
+              .map((File f) => p.basename(f.path))
+              .toList(),
+          <String>['P6_BAJ_D2_R1_G_foto.jpg'],
+        );
+      },
+    );
+
+    test('borrar los incompletos deja las tomas completas intactas', () async {
+      final List<String> antes = await archivosBajo(almacen.dirTomas);
+      suelto('P3_LEDF_D2_R1_G_foto.jpg');
+      suelto('P3_VEN_D2_R1_G_foto.jpg.tmp');
+      suelto('P3_BAJ_D2_R3_N_recorte.png');
+
+      final int n = await almacen.borrarIncompletos();
+
+      expect(n, 3);
+      expect(await archivosBajo(almacen.dirTomas), antes);
+      expect(await almacen.verificarIntegridad(), isEmpty);
+      expect(await almacen.borrarIncompletos(), 0);
+    });
+
+    test('despues de borrarlos el lote se puede exportar otra vez', () async {
+      suelto('P3_LEDF_D2_R1_G_foto.jpg');
+      expect(await almacen.verificarIntegridad(), isNotEmpty);
+
+      await almacen.borrarIncompletos();
+
+      expect(await almacen.verificarIntegridad(), isEmpty);
+    });
+
+    test('una toma a medio reemplazar deja huerfanos, y se limpian', () async {
+      // Reemplazar borra el json primero: si se corta ahi, quedan la foto y el
+      // recorte viejos sin json.
+      File(p.join(almacen.dirTomas.path, 'P3_VEN_D2_R1_G.json')).deleteSync();
+
+      expect(await almacen.listarTomas(), hasLength(1));
+      expect(await almacen.archivosIncompletos(), hasLength(2));
+      expect(await almacen.borrarIncompletos(), 2);
+    });
+  });
+
+  group('por persona', () {
+    test('listar, archivos e integridad se acotan a la persona', () async {
+      final AlmacenCapturas almacen = await almacenConTomas(raiz, 2);
+      await agregarTomas(almacen, 3, seudonimo: 'P4');
+      final Seudonimo p3 = Seudonimo('P3');
+      final Seudonimo p4 = Seudonimo('P4');
+
+      expect(await almacen.listarTomas(), hasLength(5));
+      expect(await almacen.listarTomas(persona: p3), hasLength(2));
+      expect(await almacen.listarTomas(persona: p4), hasLength(3));
+      expect(await almacen.archivosDelLote(persona: p3), hasLength(6));
+      expect(await almacen.archivosDelLote(persona: p4), hasLength(9));
+      expect(await almacen.archivosDelLote(persona: Seudonimo('P5')), isEmpty);
+
+      File(p.join(almacen.dirTomas.path, 'P4_BAJ_D2_R3_N_foto.jpg'))
+          .writeAsBytesSync(<int>[9]);
+      expect(await almacen.verificarIntegridad(persona: p3), isEmpty);
+      expect(await almacen.verificarIntegridad(persona: p4), isNotEmpty);
+      expect(await almacen.verificarIntegridad(), isNotEmpty);
     });
   });
 }

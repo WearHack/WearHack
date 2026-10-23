@@ -1,4 +1,4 @@
-/// La configuracion del recorte no inventa valores: lo que no se define, falta.
+/// La configuracion del recorte: margenes provisionales y umbrales sin definir.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -24,12 +24,20 @@ void main() {
     }
   });
 
-  test('el entorno de los tests no define nada, asi que falla', () {
-    // Es la prueba de que el codigo no trae valores por defecto escondidos.
-    expect(
-      ConfiguracionRecorte.desdeEntorno,
-      throwsA(isA<ConfiguracionRecorteInvalida>()),
-    );
+  test('sin --dart-define usa los margenes provisionales y nada mas', () {
+    final ConfiguracionRecorte c = ConfiguracionRecorte.desdeEntorno();
+
+    expect(c.margenSuperior, 0.6);
+    expect(c.margenInferior, 0.15);
+    expect(c.margenLateral, 0.3);
+    expect(margenSuperiorProvisional, 0.6);
+    expect(margenInferiorProvisional, 0.15);
+    expect(margenLateralProvisional, 0.3);
+    // Lo que sigue sin definirse no trae valor escondido.
+    expect(c.anchoMinimoRostroPx, isNull);
+    expect(c.maxQuemadosPct, isNull);
+    expect(c.maxNegrosPct, isNull);
+    expect(c.nitidezMinima, isNull);
   });
 
   test('con solo los margenes, los umbrales de calidad quedan sin definir', () {

@@ -33,6 +33,11 @@ abstract interface class LectorDeDispositivo {
 /// Comparte el zip por la hoja de compartir del sistema (AirDrop, USB, ...).
 typedef Compartir = Future<void> Function(File zip);
 
+/// Borra las copias del zip que la hoja de compartir deja fuera del almacen
+/// (en Android, `cache/share_plus/`). Se llama despues de Borrar: el zip lleva la
+/// foto y el recorte, asi que esa copia no puede sobrevivir al lote.
+typedef LimpiarTemporales = Future<void> Function();
+
 class DependenciasCaptura {
   const DependenciasCaptura({
     required this.almacen,
@@ -40,6 +45,7 @@ class DependenciasCaptura {
     required this.crearCamara,
     required this.dispositivo,
     required this.compartir,
+    this.limpiarTemporales = _nadaQueLimpiar,
     this.ahora = DateTime.now,
     this.rangoDeDistancia = rangoDeDistanciaDelEntorno,
   });
@@ -49,9 +55,12 @@ class DependenciasCaptura {
   final CamaraDeCaptura Function() crearCamara;
   final LectorDeDispositivo dispositivo;
   final Compartir compartir;
+  final LimpiarTemporales limpiarTemporales;
   final DateTime Function() ahora;
 
   /// Rango de distancia calibrado de un celular, o `null` si no lo esta. Por
   /// defecto, el de los `--dart-define`.
   final RangoDeAncho? Function(CodigoCelular celular) rangoDeDistancia;
 }
+
+Future<void> _nadaQueLimpiar() async {}

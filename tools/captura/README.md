@@ -14,7 +14,7 @@ aqui fabrican lotes sinteticos en el directorio temporal del sistema.
 Solo usa la libreria estandar de Python 3.
 
 ```bash
-python tools/captura/importar_lote.py RUTA/lote_ab12cd34.zip
+python tools/captura/importar_lote.py RUTA/lote_P3_ab12cd34.zip
 ```
 
 Que hace, en este orden:
@@ -23,7 +23,7 @@ Que hace, en este orden:
    la convencion `P3_LEDC_D2_R1_G_foto.jpg`), SHA-256 de cada archivo contra el
    manifiesto, el hash global, cada JSON contra el esquema 1, que cada JSON y sus dos
    archivos se correspondan, y que el contenido sea de la clase que dice el nombre
-   (cabecera de PNG, JPEG o HEIC).
+   (cabecera de PNG o de JPEG).
 2. **Si algo falla, no copia nada** y cuenta todos los problemas, no solo el primero.
 3. **Si todo cuadra**, copia a una carpeta temporal dentro de la boveda, vuelve a leer lo
    copiado para comprobarlo, y solo entonces la renombra. Nunca deja un destino a medias
@@ -66,7 +66,7 @@ El equivalente de `exiftool` para este lote, sin instalar nada. Acepta el `.zip`
 carpeta ya importada, y solo lee:
 
 ```bash
-python tools/captura/inspeccionar_lote.py RUTA/lote_ab12cd34.zip
+python tools/captura/inspeccionar_lote.py RUTA/lote_P3_ab12cd34.zip
 python tools/captura/inspeccionar_lote.py RUTA/boveda/sesion1 --silencioso
 ```
 
@@ -80,7 +80,8 @@ balance de blancos y el **perfil ICC con su nombre**. Senala (salida 1) cuando:
   en algun paso).
 
 Al final resume cuantas fotos traen perfil, ISO, exposicion y balance de blancos, y los
-valores de orientacion que aparecieron. Un HEIC no se inspecciona. Es la herramienta de la
+valores de orientacion que aparecieron, y cuantas tomas dicen `camara.espejo` true,
+false o null (la app lo registra, no lo corrige). Es la herramienta de la
 lista de pruebas en telefono (`docs/prueba-captura-en-telefono.md`).
 
 ## Formato (lo que hay que mantener de acuerdo con la app)
@@ -123,6 +124,6 @@ el script nunca muera con un traceback.
   se comporta el sistema de archivos virtual de Cryptomator con eso.
 - Un lote exportado por la app **en un telefono**: el cruce se probo con el codigo real de la
   app en el computador, no con un archivo salido de un celular.
-- El rendimiento con un lote completo de un celular (unos 290 MB). Con 15 tomas tarda
+- El rendimiento con los seis lotes de un celular (unos 290 MB; cada persona exporta el suyo, unos 48 MB). Con 15 tomas tarda
   fracciones de segundo.
 - Rutas con acentos, o de red (`\\servidor\...`), como destino de la boveda.

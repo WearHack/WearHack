@@ -107,8 +107,12 @@ Future<List<String>> archivosBajo(Directory dir) async {
   return rutas;
 }
 
-/// Guarda `n` tomas distintas y devuelve el almacen.
-Future<AlmacenCapturas> almacenConTomas(Directory raiz, int n) async {
+/// Guarda `n` tomas distintas (de la persona [seudonimo]) y devuelve el almacen.
+Future<AlmacenCapturas> almacenConTomas(
+  Directory raiz,
+  int n, {
+  String seudonimo = 'P3',
+}) async {
   final AlmacenCapturas almacen = AlmacenCapturas(raiz);
   final CropperDePrueba cropper = CropperDePrueba();
   const List<Luz> luces = Luz.values;
@@ -118,7 +122,7 @@ Future<AlmacenCapturas> almacenConTomas(Directory raiz, int n) async {
     final Uint8List foto = fotoDePrueba(semilla: i);
     final RecorteFacial recorte = (await cropper.recortar(foto))!;
     await almacen.guardarToma(
-      id: idDe(luz: luz, repeticion: rep),
+      id: idDe(seudonimo: seudonimo, luz: luz, repeticion: rep),
       foto: foto,
       extensionFoto: 'jpg',
       recorte: recorte,
@@ -128,4 +132,32 @@ Future<AlmacenCapturas> almacenConTomas(Directory raiz, int n) async {
     );
   }
   return almacen;
+}
+
+/// Agrega `n` tomas de [seudonimo] a un almacen que ya existe (las que ya
+/// tenga no se tocan). Las fotos salen distintas de las de otras personas.
+Future<void> agregarTomas(
+  AlmacenCapturas almacen,
+  int n, {
+  required String seudonimo,
+}) async {
+  final CropperDePrueba cropper = CropperDePrueba();
+  const List<Luz> luces = Luz.values;
+  for (int i = 0; i < n; i++) {
+    final Uint8List foto = fotoDePrueba(semilla: 50 + i);
+    final RecorteFacial recorte = (await cropper.recortar(foto))!;
+    await almacen.guardarToma(
+      id: idDe(
+        seudonimo: seudonimo,
+        luz: luces[i % luces.length],
+        repeticion: Repeticion.values[(i ~/ luces.length) % 3],
+      ),
+      foto: foto,
+      extensionFoto: 'jpg',
+      recorte: recorte,
+      celular: datosDelCelular(),
+      parametrosCamara: const ParametrosDeCamara(),
+      momento: DateTime.utc(2026, 10, 15, 20, 42, 7),
+    );
+  }
 }

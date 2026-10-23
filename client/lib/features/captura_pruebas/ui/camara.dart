@@ -12,12 +12,18 @@ import 'package:flutter/widgets.dart';
 
 /// Una foto recien tomada: los bytes del JPEG tal como los entrego la camara.
 class FotoTomada {
-  const FotoTomada({required this.bytes, required this.extension});
+  const FotoTomada({required this.bytes, required this.extension, this.espejo});
 
   final Uint8List bytes;
 
-  /// `jpg` o `heic`, sin punto.
+  /// Siempre `jpg`, sin punto: el recorte solo decodifica JPEG, asi que la
+  /// camara real se niega a entregar otro formato.
   final String extension;
+
+  /// Si la foto guardada esta reflejada en horizontal respecto a la escena (el
+  /// efecto "selfie"), o `null` si no se sabe. Solo se **registra** en los
+  /// metadatos: la app no la corrige.
+  final bool? espejo;
 }
 
 /// El celular no tiene camara frontal.

@@ -39,20 +39,6 @@ void main() {
   });
 
   group('recorte facial en movil', () {
-    test('sin margenes configurados falla diciendo cuales faltan', () async {
-      // Es la prueba de que el recorte no inventa los valores "no definidos".
-      await expectLater(
-        crearFaceCropper().recortar(jpegSintetico(300, 300)),
-        throwsA(
-          isA<ConfiguracionRecorteInvalida>().having(
-            (e) => e.toString(),
-            'mensaje',
-            contains('RECORTE_MARGEN_SUPERIOR'),
-          ),
-        ),
-      );
-    });
-
     test('de punta a punta, con el isolate que usa la app', () async {
       final FaceCropper cropper = FaceCropperMovil(
         detector: DetectorFalso(<CajaRostro>[

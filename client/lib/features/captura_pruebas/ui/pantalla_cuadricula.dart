@@ -1,9 +1,10 @@
-/// Pantalla 2: las 15 tomas de esta persona con este celular, y el lote.
+/// Pantalla 2: las 15 tomas de esta persona con este celular, y su lote.
 ///
 /// 5 luces x 3 repeticiones. Cada casilla es una toma pendiente o hecha. Tocar
 /// una pendiente abre la camara; tocar una hecha pregunta si se reemplaza. Abajo
-/// estan Exportar (zip por la hoja de compartir) y Borrar (pide los 8 primeros
-/// caracteres del hash que muestra `importar_lote.py`).
+/// estan Exportar (el zip del lote de esta persona, por la hoja de compartir) y
+/// Borrar (pide los 8 primeros caracteres del hash que muestra
+/// `importar_lote.py` para ese lote).
 library;
 
 import 'package:flutter/material.dart';
@@ -33,7 +34,7 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
   /// Nombres base de las tomas ya hechas de ESTA persona con ESTE celular.
   Set<String> _hechas = <String>{};
 
-  /// Todas las tomas del lote, de cualquier persona y celular: lo que se
+  /// Las tomas del lote de ESTA persona, con cualquier celular: lo que se
   /// exportaria o borraria.
   int _totalDelLote = 0;
 
@@ -57,14 +58,15 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
   }
 
   Future<void> _recargar() async {
-    final List<IdToma> tomas = await _d.almacen.listarTomas();
+    final List<IdToma> tomas = await _d.almacen.listarTomas(
+      persona: _s.seudonimo,
+    );
     if (!mounted) return;
     setState(() {
       _totalDelLote = tomas.length;
       _hechas = <String>{
         for (final IdToma t in tomas)
-          if (t.seudonimo == _s.seudonimo && t.celular == _s.celular)
-            t.nombreBase,
+          if (t.celular == _s.celular) t.nombreBase,
       };
       _cargando = false;
     });
@@ -119,7 +121,10 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
   Future<void> _exportar() async {
     setState(() => _ocupado = true);
     try {
-      final ResultadoExportacion r = await exportarLote(_d.almacen);
+      final ResultadoExportacion r = await exportarLote(
+        _d.almacen,
+        persona: _s.seudonimo,
+      );
       await _d.compartir(r.zip);
       _aviso('Lote exportado: ${p.basename(r.zip.path)}');
     } on LoteVacio {
@@ -136,10 +141,17 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
   Future<void> _borrar() async {
     final bool? borrado = await showDialog<bool>(
       context: context,
-      builder: (BuildContext c) => _DialogoDeBorrado(dependencias: _d),
+      builder: (BuildContext c) =>
+          _DialogoDeBorrado(dependencias: _d, persona: _s.seudonimo),
     );
     if (borrado == true) {
-      _aviso('Lote borrado');
+      String texto = 'Lote de ${_s.seudonimo} borrado';
+      try {
+        await _d.limpiarTemporales();
+      } on Object catch (e) {
+        texto = '$texto, pero no se pudo quitar la copia temporal del zip: $e';
+      }
+      _aviso(texto);
       await _recargar();
     }
   }
@@ -157,7 +169,7 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
                   padding: const EdgeInsets.all(12),
                   child: Text(
                     '$hechas/15 tomas de esta persona con este celular - '
-                    '$_totalDelLote en todo el lote',
+                    '$_totalDelLote en el lote de ${_s.seudonimo}',
                     key: const Key('resumen'),
                   ),
                 ),
@@ -188,7 +200,7 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
                           child: OutlinedButton(
                             key: const Key('boton_exportar'),
                             onPressed: _ocupado ? null : _exportar,
-                            child: const Text('Exportar lote'),
+                            child: Text('Exportar lote ${_s.seudonimo}'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -196,7 +208,7 @@ class _PantallaCuadriculaCapturaState extends State<PantallaCuadriculaCaptura> {
                           child: OutlinedButton(
                             key: const Key('boton_borrar'),
                             onPressed: _ocupado ? null : _borrar,
-                            child: const Text('Borrar lote'),
+                            child: Text('Borrar lote ${_s.seudonimo}'),
                           ),
                         ),
                       ],
@@ -251,15 +263,16 @@ class _Casilla extends StatelessWidget {
   }
 }
 
-/// Pide los 8 primeros caracteres del hash global y borra el lote.
+/// Pide los 8 primeros caracteres del hash global y borra el lote de la persona.
 ///
 /// El hash lo muestra `importar_lote.py` en el computador. Se compara contra el
 /// del estado actual: si se tomo una foto despues de exportar, el prefijo viejo
 /// ya no vale.
 class _DialogoDeBorrado extends StatefulWidget {
-  const _DialogoDeBorrado({required this.dependencias});
+  const _DialogoDeBorrado({required this.dependencias, required this.persona});
 
   final DependenciasCaptura dependencias;
+  final Seudonimo persona;
 
   @override
   State<_DialogoDeBorrado> createState() => _DialogoDeBorradoState();
@@ -282,7 +295,11 @@ class _DialogoDeBorradoState extends State<_DialogoDeBorrado> {
       _trabajando = true;
     });
     try {
-      await borrarLote(widget.dependencias.almacen, confirmacion: _texto.text);
+      await borrarLote(
+        widget.dependencias.almacen,
+        persona: widget.persona,
+        confirmacion: _texto.text,
+      );
       if (mounted) Navigator.of(context).pop(true);
     } on ConfirmacionIncorrecta {
       if (mounted) {
@@ -310,15 +327,16 @@ class _DialogoDeBorradoState extends State<_DialogoDeBorrado> {
   Widget build(BuildContext context) {
     return AlertDialog(
       key: const Key('dialogo_borrado'),
-      title: const Text('Borrar el lote'),
+      title: Text('Borrar el lote de ${widget.persona}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Borra TODAS las tomas y las exportaciones de este celular. Antes, '
-            'importa el lote en el computador y escribe aqui los 8 primeros '
-            'caracteres del hash global que muestra el script.',
+          Text(
+            'Borra las tomas y las exportaciones de ${widget.persona} en este '
+            'celular; las de las demas personas no se tocan. Antes, importa el '
+            'lote en el computador y escribe aqui los 8 primeros caracteres del '
+            'hash global que muestra el script.',
           ),
           const SizedBox(height: 12),
           TextField(

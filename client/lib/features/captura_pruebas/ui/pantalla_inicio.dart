@@ -6,7 +6,10 @@
 /// cambia el valor y vuelve a ejecutar `build`.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:wearhack/features/captura_pruebas/modelos.dart';
 import 'package:wearhack/features/captura_pruebas/ui/dependencias.dart';
 import 'package:wearhack/features/captura_pruebas/ui/pantalla_cuadricula.dart';
@@ -31,6 +34,70 @@ class _PantallaInicioCapturaState extends State<PantallaInicioCaptura> {
 
   late final Future<InfoDelDispositivo> _info = widget.dependencias.dispositivo
       .leer();
+
+  @override
+  void initState() {
+    super.initState();
+    // Al abrir el modo se revisa si un cierre a medias dejo tomas incompletas.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revisarIncompletas());
+  }
+
+  /// Una toma incompleta es la foto o el recorte sin su `.json` (o un `.tmp`):
+  /// lo que deja un cierre a medias. No cuenta como toma y bloquea Exportar, asi
+  /// que se ofrece borrarla. Nada se borra sin que la persona lo confirme.
+  Future<void> _revisarIncompletas() async {
+    final List<File> sobrantes;
+    try {
+      sobrantes = await widget.dependencias.almacen.archivosIncompletos();
+    } on Object catch (e) {
+      _aviso('No se pudo revisar si hay tomas incompletas: $e');
+      return;
+    }
+    if (!mounted || sobrantes.isEmpty) return;
+
+    final List<String> nombres = <String>[
+      for (final File f in sobrantes) p.basename(f.path),
+    ];
+    final bool? borrar = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext c) => AlertDialog(
+        key: const Key('dialogo_incompletas'),
+        title: const Text('Tomas incompletas'),
+        content: Text(
+          'Un cierre a medias dejo ${nombres.length} archivos sueltos, sin su '
+          'toma completa: ${nombres.take(5).join(', ')}'
+          '${nombres.length > 5 ? ', ...' : ''}. No cuentan como toma y '
+          'impiden exportar el lote. Borrarlos? Despues repite esas tomas.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            key: const Key('conservar_incompletas'),
+            onPressed: () => Navigator.of(c).pop(false),
+            child: const Text('Conservar'),
+          ),
+          FilledButton(
+            key: const Key('confirmar_borrar_incompletas'),
+            onPressed: () => Navigator.of(c).pop(true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (borrar != true) return;
+    try {
+      final int n = await widget.dependencias.almacen.borrarIncompletos();
+      _aviso('Borrados $n archivos de tomas incompletas');
+    } on Object catch (e) {
+      _aviso('No se pudo borrar: $e');
+    }
+  }
+
+  void _aviso(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(texto)));
+  }
 
   /// "Continuar" solo se habilita con las tres cosas. Sin la autorizacion
   /// firmada la captura queda deshabilitada (spec, 3.1).

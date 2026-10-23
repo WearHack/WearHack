@@ -4,7 +4,11 @@
 /// Disposicion bajo `raiz`:
 ///
 ///   tomas/            las tomas: `<base>_foto.jpg`, `<base>_recorte.png`, `<base>.json`
-///   exportaciones/    los zip generados, hasta que se borre el lote
+///   exportaciones/    los zip generados (`lote_<persona>_<hash>.zip`), hasta que
+///                     se borre el lote de esa persona
+///
+/// El lote es **por persona**: las 15 tomas de un seudonimo. Exportar, verificar
+/// y borrar trabajan con un lote a la vez.
 ///
 /// Una toma "existe" cuando existe su `.json`, que se escribe **el ultimo**: si
 /// la app se cierra a medias, los archivos huerfanos no cuentan como toma y la
@@ -58,7 +62,9 @@ class AlmacenCapturas {
   Directory get dirExportaciones =>
       Directory(p.join(raiz.path, 'exportaciones'));
 
-  static const Set<String> _extensionesDeFoto = <String>{'jpg', 'heic'};
+  /// Solo JPEG: es lo que decodifica el recorte, y en iOS la camara se fuerza a
+  /// JPEG. Una foto HEIC no pasaria del recorte, asi que ni se acepta guardarla.
+  static const Set<String> _extensionesDeFoto = <String>{'jpg'};
 
   /// Guarda una toma. La foto se escribe **tal como la entrego la camara**, sin
   /// recodificar, para que conserve su perfil de color. El recorte es el PNG
@@ -74,15 +80,12 @@ class AlmacenCapturas {
     required DatosDelCelular celular,
     required ParametrosDeCamara parametrosCamara,
     required DateTime momento,
+    bool? espejo,
     bool reemplazar = false,
   }) async {
     final String ext = extensionFoto.toLowerCase().replaceFirst('.', '');
     if (!_extensionesDeFoto.contains(ext)) {
-      throw ArgumentError.value(
-        extensionFoto,
-        'extensionFoto',
-        'Debe ser jpg o heic',
-      );
+      throw ArgumentError.value(extensionFoto, 'extensionFoto', 'Debe ser jpg');
     }
     if (celular.codigo != id.celular) {
       throw ArgumentError(
@@ -104,6 +107,7 @@ class AlmacenCapturas {
       fechaHora: momento,
       celular: celular,
       parametrosCamara: parametrosCamara,
+      espejo: espejo,
       rostroBbox: <num>[
         recorte.caja.left,
         recorte.caja.top,
@@ -133,8 +137,8 @@ class AlmacenCapturas {
     return metadatos;
   }
 
-  /// Las tomas guardadas, ordenadas por nombre.
-  Future<List<IdToma>> listarTomas() async {
+  /// Las tomas guardadas, ordenadas por nombre. Con [persona], solo las suyas.
+  Future<List<IdToma>> listarTomas({Seudonimo? persona}) async {
     if (!await dirTomas.exists()) return <IdToma>[];
     final List<IdToma> ids = <IdToma>[];
     await for (final FileSystemEntity e in dirTomas.list()) {
@@ -142,7 +146,9 @@ class AlmacenCapturas {
       final IdToma? id = IdToma.desdeNombreBase(
         p.basenameWithoutExtension(e.path),
       );
-      if (id != null) ids.add(id);
+      if (id != null && (persona == null || id.seudonimo == persona)) {
+        ids.add(id);
+      }
     }
     ids.sort((IdToma a, IdToma b) => a.nombreBase.compareTo(b.nombreBase));
     return ids;
@@ -152,12 +158,16 @@ class AlmacenCapturas {
       jsonDecode(await File(_rutaJson(id)).readAsString())
           as Map<String, Object?>;
 
-  /// Todos los archivos de `tomas/`, ordenados por nombre.
-  Future<List<File>> archivosDelLote() async {
+  /// Todos los archivos de `tomas/`, ordenados por nombre. Con [persona], solo
+  /// los de su lote: los que empiezan por `<persona>_`.
+  Future<List<File>> archivosDelLote({Seudonimo? persona}) async {
     if (!await dirTomas.exists()) return <File>[];
     final List<File> archivos = <File>[
       await for (final FileSystemEntity e in dirTomas.list())
-        if (e is File) e,
+        if (e is File &&
+            (persona == null ||
+                p.basename(e.path).startsWith('${persona.valor}_')))
+          e,
     ];
     archivos.sort(
       (File a, File b) => p.basename(a.path).compareTo(p.basename(b.path)),
@@ -167,12 +177,13 @@ class AlmacenCapturas {
 
   /// Revisa que el lote este sano: cada JSON valida contra el esquema, sus dos
   /// archivos existen y coinciden con el SHA-256 declarado, y no sobra ningun
-  /// archivo. Devuelve una frase por problema; vacio si esta sano.
-  Future<List<String>> verificarIntegridad() async {
+  /// archivo. Devuelve una frase por problema; vacio si esta sano. Con
+  /// [persona], revisa solo el lote de esa persona.
+  Future<List<String>> verificarIntegridad({Seudonimo? persona}) async {
     final List<String> problemas = <String>[];
     final Set<String> esperados = <String>{};
 
-    for (final IdToma id in await listarTomas()) {
+    for (final IdToma id in await listarTomas(persona: persona)) {
       final Map<String, Object?> json;
       try {
         json = await leerMetadatos(id);
@@ -203,12 +214,41 @@ class AlmacenCapturas {
       }
     }
 
-    for (final File f in await archivosDelLote()) {
+    for (final File f in await archivosDelLote(persona: persona)) {
       if (!esperados.contains(p.basename(f.path))) {
         problemas.add('sobra el archivo ${p.basename(f.path)}');
       }
     }
     return problemas;
+  }
+
+  /// Archivos de `tomas/` que no pertenecen a ninguna toma completa: lo que
+  /// deja un cierre a medias (la foto o el recorte sin su `.json`, un `.tmp`).
+  ///
+  /// Una toma existe cuando existe su `.json`, que se escribe el ultimo; todo
+  /// archivo que no sea uno de los tres de una toma asi es incompleto.
+  Future<List<File>> archivosIncompletos() async {
+    final Set<String> completos = <String>{
+      for (final IdToma id in await listarTomas()) ...<String>[
+        '${id.nombreBase}.json',
+        '${id.nombreBase}_foto.jpg',
+        '${id.nombreBase}_recorte.png',
+      ],
+    };
+    return <File>[
+      for (final File f in await archivosDelLote())
+        if (!completos.contains(p.basename(f.path))) f,
+    ];
+  }
+
+  /// Borra los [archivosIncompletos] y devuelve cuantos borro. No toca ninguna
+  /// toma completa.
+  Future<int> borrarIncompletos() async {
+    final List<File> sobrantes = await archivosIncompletos();
+    for (final File f in sobrantes) {
+      await f.delete();
+    }
+    return sobrantes.length;
   }
 
   String _rutaJson(IdToma id) => p.join(dirTomas.path, '${id.nombreBase}.json');
