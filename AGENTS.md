@@ -162,8 +162,8 @@ carpeta creada.
 | closet | 8082 |
 | outfits | 8083 |
 | publicidad | 8084 |
-| colorimetria | 8085 |
-| recomendador | 8086 |
+| colorimetria | 8091 |
+| recomendador | 8092 |
 | MongoDB | 27017 |
 | MinIO | 9000, consola 9001 |
 | OpenTelemetry Collector | 4317 gRPC, 4318 HTTP |
