@@ -16,13 +16,10 @@ from itertools import product
 from math import inf
 from statistics import mean, median
 
-from app.motor.modelos import Clima, Outfit, Prenda, RangoFormalidad, Slot
+from app.motor.filtros import pasa_dress_code
+from app.motor.modelos import SLOTS_PRINCIPALES, Clima, Outfit, Prenda, RangoFormalidad, Slot
 from app.motor.reglas_duras import cumple_reglas_duras
 
-# Los accesorios y la joyeria no cuentan para decidir si una prenda es puente.
-SLOTS_PRINCIPALES = frozenset(
-    {Slot.TORSO_SUPERIOR, Slot.TORSO_INFERIOR, Slot.CUERPO_COMPLETO, Slot.CALZADO, Slot.EXTERIOR}
-)
 UMBRAL_COMBINACIONES = 5
 
 CostoOutfit = Callable[[Outfit], float]
@@ -77,14 +74,6 @@ def generar_outfits(candidata: Prenda, closet: Iterable[Prenda]) -> Iterator[Out
         outfit = (*base, calzado, *((exterior,) if exterior else ()))
         if any(p.id == candidata.id for p in outfit):
             yield outfit
-
-
-def pasa_dress_code(prenda: Prenda, rango_evento: RangoFormalidad) -> bool:
-    """El rango de la prenda se cruza con el del evento; sin formalidad, siempre pasa."""
-    if prenda.formalidad is None:
-        return True
-    minimo, maximo = prenda.formalidad
-    return minimo <= rango_evento[1] and rango_evento[0] <= maximo
 
 
 def eventos_habilitados(outfit: Outfit, eventos: Eventos) -> frozenset[str]:
