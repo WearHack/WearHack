@@ -6,7 +6,9 @@ regla nueva anade los suyos.
 """
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import IntEnum, StrEnum
+
+from app.motor.color import ColorLCh
 
 
 class Slot(StrEnum):
@@ -54,12 +56,27 @@ class Clima(StrEnum):
     CALIDO = "CALIDO"
 
 
+class Formalidad(IntEnum):
+    """Niveles ordinales. En Mongo se guardan por nombre: `Formalidad[nombre]`."""
+
+    DEPORTIVO = 0
+    CASUAL = 1
+    SMART_CASUAL = 2
+    FORMAL = 3
+
+
+RangoFormalidad = tuple[Formalidad, Formalidad]
+
+
 @dataclass(frozen=True)
 class Prenda:
     id: str
     slot: Slot
     patron: Patron = Patron.LISO
     textura: Textura | None = None
+    # Rango (min, max); None en los accesorios neutros, que no cuentan.
+    formalidad: RangoFormalidad | None = None
+    color: ColorLCh | None = None
 
 
 Outfit = tuple[Prenda, ...]
