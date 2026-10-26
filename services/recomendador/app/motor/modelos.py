@@ -67,6 +67,12 @@ class Formalidad(IntEnum):
 
 RangoFormalidad = tuple[Formalidad, Formalidad]
 
+# Los que forman el outfit. Accesorios y joyeria acompanan, pero no cuentan ni
+# para la prenda puente ni para decidir si dos outfits son distintos.
+SLOTS_PRINCIPALES = frozenset(
+    {Slot.TORSO_SUPERIOR, Slot.TORSO_INFERIOR, Slot.CUERPO_COMPLETO, Slot.CALZADO, Slot.EXTERIOR}
+)
+
 
 @dataclass(frozen=True)
 class Prenda:
@@ -77,6 +83,7 @@ class Prenda:
     # Rango (min, max); None en los accesorios neutros, que no cuentan.
     formalidad: RangoFormalidad | None = None
     color: ColorLCh | None = None
+    clima_apto: frozenset[Clima] = frozenset(Clima)
 
 
 Outfit = tuple[Prenda, ...]
