@@ -11,18 +11,29 @@ import 'package:wearhack/core/ui/formato.dart';
 import 'package:wearhack/features/colorimetria/consentimiento.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_consentimiento.dart';
+import 'package:wearhack/features/colorimetria/ui/pantalla_foto_rostro.dart';
+import 'package:wearhack/platform/captura/camara.dart';
+import 'package:wearhack/platform/captura/contratos.dart';
 
 class PantallaColorimetria extends StatefulWidget {
   const PantallaColorimetria({
     super.key,
     required this.repositorio,
     required this.capturaDisponible,
+    this.crearCamara,
+    this.recortador,
   });
 
   final RepositorioConsentimiento repositorio;
 
   /// Si este target puede tomar la foto del rostro. En web no: no hay ML Kit.
   final bool capturaDisponible;
+
+  /// La camara y el recortador que usa la foto. Si falta alguno, el boton de
+  /// tomar la foto queda apagado: asi las pruebas de esta pantalla no
+  /// necesitan una camara.
+  final CamaraDeCaptura Function()? crearCamara;
+  final FaceCropper? recortador;
 
   @override
   State<PantallaColorimetria> createState() => _PantallaColorimetriaState();
@@ -51,6 +62,35 @@ class _PantallaColorimetriaState extends State<PantallaColorimetria> {
     await widget.repositorio.registrar(decision, versionTextoConsentimiento);
     if (!mounted) return;
     _recargar();
+  }
+
+  Future<void> _tomarFoto() async {
+    final CamaraDeCaptura Function()? crearCamara = widget.crearCamara;
+    final FaceCropper? recortador = widget.recortador;
+    if (crearCamara == null || recortador == null) return;
+
+    final RecorteFacial? recorte = await Navigator.of(context)
+        .push<RecorteFacial>(
+          MaterialPageRoute<RecorteFacial>(
+            builder: (_) => PantallaFotoRostro(
+              repositorio: widget.repositorio,
+              crearCamara: crearCamara,
+              recortador: recortador,
+            ),
+          ),
+        );
+    if (recorte == null || !mounted) return;
+
+    // El envio al servicio de colorimetria se conecta cuando exista el cliente
+    // HTTP. Hasta entonces el recorte se descarta aqui: no se guarda.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Foto lista. El análisis se conectará cuando el servicio esté '
+          'disponible.',
+        ),
+      ),
+    );
   }
 
   Future<void> _revocar() async {
@@ -111,6 +151,11 @@ class _PantallaColorimetriaState extends State<PantallaColorimetria> {
                         _Autorizado(
                           consentimiento: c,
                           capturaDisponible: widget.capturaDisponible,
+                          onTomarFoto:
+                              widget.crearCamara != null &&
+                                  widget.recortador != null
+                              ? _tomarFoto
+                              : null,
                           onRevocar: _revocar,
                         )
                       else
@@ -196,11 +241,15 @@ class _Autorizado extends StatelessWidget {
   const _Autorizado({
     required this.consentimiento,
     required this.capturaDisponible,
+    required this.onTomarFoto,
     required this.onRevocar,
   });
 
   final Consentimiento consentimiento;
   final bool capturaDisponible;
+
+  /// `null` si no hay camara conectada: el boton queda apagado.
+  final VoidCallback? onTomarFoto;
   final VoidCallback onRevocar;
 
   @override
@@ -238,11 +287,13 @@ class _Autorizado extends StatelessWidget {
             'cara sale del teléfono.',
           ),
           const SizedBox(height: 12),
-          // La camara del producto todavia no existe: el recorte si
-          // (`core/recorte/`), pero no la pantalla que lo usa.
-          const FilledButton(
-            onPressed: null,
-            child: Text('Tomar la foto (próximamente)'),
+          FilledButton(
+            onPressed: onTomarFoto,
+            child: Text(
+              onTomarFoto == null
+                  ? 'Tomar la foto (próximamente)'
+                  : 'Tomar la foto',
+            ),
           ),
         ] else
           const Text(

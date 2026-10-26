@@ -64,6 +64,9 @@ class AplicacionWearHack extends StatelessWidget {
         consentimiento: consentimiento,
         // Se resuelve con el import condicional: en web no hay ML Kit.
         capturaRostroDisponible: crearFaceCropper().disponible,
+        // En web no se llega a usar: el boton de la foto no se ofrece.
+        crearCamara: crearCamaraFrontal,
+        recortador: crearFaceCropper(),
         diagnostico: (_) => const PantallaEsqueleto(),
       ),
     );

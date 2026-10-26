@@ -15,6 +15,8 @@ import 'package:wearhack/features/outfits/ui/pantalla_outfits.dart';
 import 'package:wearhack/features/outfits/ui/pantalla_semana.dart';
 import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
 import 'package:wearhack/features/publicidad/ui/pantalla_marcas.dart';
+import 'package:wearhack/platform/captura/camara.dart';
+import 'package:wearhack/platform/captura/contratos.dart';
 import 'package:wearhack/platform/ubicacion.dart';
 
 class PantallaPrincipal extends StatefulWidget {
@@ -27,6 +29,8 @@ class PantallaPrincipal extends StatefulWidget {
     required this.publicidad,
     required this.consentimiento,
     required this.capturaRostroDisponible,
+    this.crearCamara,
+    this.recortador,
     this.diagnostico,
   });
 
@@ -38,6 +42,11 @@ class PantallaPrincipal extends StatefulWidget {
 
   /// Si este target puede tomar la foto del rostro (en web no).
   final bool capturaRostroDisponible;
+
+  /// La camara y el recortador de la foto del rostro. Sin ellos el boton de
+  /// tomar la foto queda apagado.
+  final CamaraDeCaptura Function()? crearCamara;
+  final FaceCropper? recortador;
   final ServicioUbicacion ubicacion;
 
   /// La pantalla de diagnostico, si la hay. Llega desde fuera porque vive en
@@ -98,6 +107,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               builder: (_) => PantallaColorimetria(
                 repositorio: widget.consentimiento,
                 capturaDisponible: widget.capturaRostroDisponible,
+                crearCamara: widget.crearCamara,
+                recortador: widget.recortador,
               ),
             ),
           ),

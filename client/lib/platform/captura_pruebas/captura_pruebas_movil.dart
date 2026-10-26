@@ -100,6 +100,11 @@ class LectorDeDispositivoReal implements LectorDeDispositivo {
   }
 }
 
+/// La camara frontal, lista para usarse. Es la que abre la foto del rostro de
+/// la colorimetria. Vive en este archivo porque la clase del plugin ya estaba
+/// aqui; mudarla a `platform/captura/` es un cambio mecanico para otro commit.
+CamaraDeCaptura crearCamaraFrontal() => CamaraFrontal();
+
 /// La camara frontal con el plugin `camera`.
 ///
 /// Resolucion maxima, flash apagado y sin audio. La foto se lee a bytes y el
