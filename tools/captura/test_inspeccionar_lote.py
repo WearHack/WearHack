@@ -119,11 +119,12 @@ def png(ancho=600, alto=700, tipo_de_color=2, profundidad=8, icc=False) -> bytes
 
 def escribir_toma(carpeta: Path, foto: bytes, recorte: bytes, perfil_foto: str,
                   perfil_recorte="sRGB (convertido por la app)", bbox=(100, 100, 400, 500),
-                  seudonimo="P3", luz="LEDC", celular="D2", rep="R1", ext="jpg") -> str:
+                  seudonimo="P3", luz="LEDC", celular="D2", rep="R1", ext="jpg", espejo=None) -> str:
     base = nombre_base(seudonimo, luz, celular, rep)
     meta = metadatos(seudonimo, luz, celular, rep)
     meta["perfil_color"] = {"foto": perfil_foto, "recorte": perfil_recorte}
     meta["rostro"]["bbox"] = list(bbox)
+    meta["camara"]["espejo"] = espejo
     meta["archivos"]["foto"] = f"{base}_foto.{ext}"
     (carpeta / f"{base}_foto.{ext}").write_bytes(foto)
     (carpeta / f"{base}_recorte.png").write_bytes(recorte)
@@ -353,13 +354,13 @@ class Inspeccion(Base):
 
         self.assertIn("el JSON no se puede leer", self.hallazgos())
 
-    def test_un_heic_no_se_inspecciona_y_se_dice(self):
+    def test_un_heic_no_es_una_foto_de_toma(self):
         escribir_toma(self.dir, b"\x00\x00\x00\x18ftypheic" + b"\0" * 50, png(), il.PERFIL_SUPUESTO, ext="heic")
 
         inf = il.inspeccionar(self.dir)
 
-        self.assertTrue(any("HEIC" in l for l in inf.lineas))
         self.assertEqual(inf.resumen["fotos_jpeg"], 0)
+        self.assertTrue(inf.hallazgos, "un .heic tiene que senalarse, no pasar en silencio")
 
     def test_varias_tomas_se_resumen_juntas(self):
         icc = perfil_icc("Display P3")
@@ -373,6 +374,17 @@ class Inspeccion(Base):
         self.assertEqual(r["con_perfil_icc"], 1)
         self.assertEqual(r["perfiles"], {"Display P3": 1, "(sin perfil)": 1})
         self.assertEqual(r["recorte_ancho_min_max"], (600, 800))
+
+    def test_cuenta_el_espejo_de_la_camara_sin_juzgarlo(self):
+        escribir_toma(self.dir, jpeg(4000, 3000), png(), il.PERFIL_SUPUESTO, rep="R1", espejo=True)
+        escribir_toma(self.dir, jpeg(4000, 3000), png(), il.PERFIL_SUPUESTO, rep="R2", espejo=False)
+        escribir_toma(self.dir, jpeg(4000, 3000), png(), il.PERFIL_SUPUESTO, rep="R3", espejo=None)
+        escribir_toma(self.dir, jpeg(4000, 3000), png(), il.PERFIL_SUPUESTO, luz="VEN", rep="R3")
+
+        inf = il.inspeccionar(self.dir)
+
+        self.assertEqual(inf.resumen["espejo_camara"], {"true": 1, "false": 1, "null": 2})
+        self.assertFalse(any("espejo" in h for h in inf.hallazgos))
 
     def test_un_zip_da_lo_mismo_que_la_carpeta(self):
         self.toma_iphone()

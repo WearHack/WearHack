@@ -113,6 +113,7 @@ class _PantallaCapturaState extends State<PantallaCaptura> {
         ),
         momento: d.ahora(),
         extensionFoto: foto.extension,
+        espejo: foto.espejo,
         reemplazar: _reemplazar,
       );
       if (!mounted) return;

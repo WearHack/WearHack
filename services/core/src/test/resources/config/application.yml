@@ -1,0 +1,19 @@
+# Se suma al application.yml principal y gana sobre el en las pruebas (Spring lee
+# config/ despues de la raiz del classpath).
+
+wearhack:
+  # Sin pool: el decodificador real rechaza todo. Las pruebas que necesitan un usuario
+  # autenticado usan jwt() de spring-security-test, que no pasa por el decodificador.
+  cognito:
+    user-pool-id: ""
+    client-ids: ""
+  usuarios:
+    correcciones:
+      # Las pruebas llaman a la tarea a mano, con su propio reloj.
+      cron: "-"
+
+management:
+  health:
+    # Sin esto /actuator/health saldria DOWN en las pruebas que no levantan Mongo.
+    mongodb:
+      enabled: false

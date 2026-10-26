@@ -57,6 +57,7 @@ const List<String> _importsDeLaPlataforma = <String>[
   'dart:io',
   'dart:math',
   'package:camera/camera.dart',
+  'package:camera_platform_interface/camera_platform_interface.dart',
   'package:device_info_plus/device_info_plus.dart',
   'package:flutter/',
   'package:google_mlkit_face_detection/google_mlkit_face_detection.dart',
@@ -217,6 +218,13 @@ void main() {
         expect(manifiesto, contains('android:allowBackup="false"'));
       },
     );
+
+    test('Android pide API 26 como minimo (respuestas, C.20)', () {
+      final String gradle = File(p.join('android', 'app', 'build.gradle.kts'))
+          .readAsStringSync();
+
+      expect(gradle, matches(RegExp(r'\n\s*minSdk = 26\n')));
+    });
 
     for (final String permiso in <String>[
       'RECORD_AUDIO',

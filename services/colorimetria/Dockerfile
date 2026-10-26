@@ -34,14 +34,14 @@ COPY --from=build /opt/venv /opt/venv
 COPY --chown=wearhack:wearhack app ./app
 
 USER wearhack
-EXPOSE 8085
+EXPOSE 8091
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     SERVICIO=colorimetria \
     OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
-    SERVER_PORT=8085
+    SERVER_PORT=8091
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
   CMD python -c "import urllib.request,os,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ['SERVER_PORT']+'/health').status==200 else 1)"

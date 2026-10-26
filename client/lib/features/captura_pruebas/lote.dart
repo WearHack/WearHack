@@ -1,6 +1,10 @@
 /// El lote: manifiesto con hash global, exportacion a zip y borrado con
 /// confirmacion.
 ///
+/// **El lote es por persona**: las 15 tomas de un seudonimo (cada celular lleva
+/// hasta 6 lotes, 90 tomas). Exportar y Borrar trabajan con el de la persona de
+/// la sesion; el zip, su hash y el borrado no tocan a las demas.
+///
 /// El flujo de la spec (3.5): **Exportar** genera un zip con las tomas y un
 /// `manifiesto.json`; en el computador `importar_lote.py` verifica los hashes y
 /// muestra el hash global; **Borrar** solo se habilita si el operador escribe en
@@ -74,10 +78,13 @@ String calcularHashGlobal(List<EntradaManifiesto> entradas) {
   return sha256.convert(utf8.encode(texto.toString())).toString();
 }
 
-/// Manifiesto del estado actual de `tomas/`.
-Future<Manifiesto> calcularManifiesto(AlmacenCapturas almacen) async {
+/// Manifiesto del estado actual de `tomas/`, o solo del lote de [persona].
+Future<Manifiesto> calcularManifiesto(
+  AlmacenCapturas almacen, {
+  Seudonimo? persona,
+}) async {
   final List<EntradaManifiesto> entradas = <EntradaManifiesto>[
-    for (final File f in await almacen.archivosDelLote())
+    for (final File f in await almacen.archivosDelLote(persona: persona))
       EntradaManifiesto(
         ruta: p.basename(f.path),
         sha256: (await sha256.bind(f.openRead()).first).toString(),
@@ -113,25 +120,34 @@ class ResultadoExportacion {
   final Manifiesto manifiesto;
 }
 
-/// Genera el zip del lote en `exportaciones/`.
+/// Genera el zip del lote de [persona] en `exportaciones/`, como
+/// `lote_<persona>_<8 del hash>.zip`.
 ///
 /// Se niega a exportar un lote vacio ([LoteVacio]) o dañado
 /// ([IntegridadFallida]). El zip se escribe sin compresion: JPEG y PNG ya estan
 /// comprimidos y comprimirlos de nuevo solo gasta tiempo.
-Future<ResultadoExportacion> exportarLote(AlmacenCapturas almacen) async {
-  final List<IdToma> tomas = await almacen.listarTomas();
-  final List<File> archivos = await almacen.archivosDelLote();
+Future<ResultadoExportacion> exportarLote(
+  AlmacenCapturas almacen, {
+  required Seudonimo persona,
+}) async {
+  final List<IdToma> tomas = await almacen.listarTomas(persona: persona);
+  final List<File> archivos = await almacen.archivosDelLote(persona: persona);
   if (tomas.isEmpty && archivos.isEmpty) throw const LoteVacio();
 
-  final List<String> problemas = await almacen.verificarIntegridad();
+  final List<String> problemas = await almacen.verificarIntegridad(
+    persona: persona,
+  );
   if (problemas.isNotEmpty) throw IntegridadFallida(problemas);
 
-  final Manifiesto manifiesto = await calcularManifiesto(almacen);
+  final Manifiesto manifiesto = await calcularManifiesto(
+    almacen,
+    persona: persona,
+  );
   await almacen.dirExportaciones.create(recursive: true);
   final File zip = File(
     p.join(
       almacen.dirExportaciones.path,
-      'lote_${manifiesto.prefijoDeConfirmacion}.zip',
+      'lote_${persona.valor}_${manifiesto.prefijoDeConfirmacion}.zip',
     ),
   );
   if (await zip.exists()) await zip.delete();
@@ -178,38 +194,55 @@ class BorradoIncompleto implements Exception {
       '${restantes.join(', ')}';
 }
 
-/// Borra todas las tomas y las exportaciones, y comprueba que no quede nada.
+/// Borra el lote de [persona] (sus tomas y sus exportaciones) y comprueba que no
+/// quede nada suyo. Las demas personas no se tocan.
 ///
 /// Exige que [confirmacion] sean los 8 primeros caracteres del hash global
-/// **actual** del lote (mayusculas y espacios no importan). Con el lote vacio no
-/// hay nada que confirmar y no hace nada.
+/// **actual** del lote de esa persona (mayusculas y espacios no importan). Con
+/// el lote vacio no hay nada que confirmar y no hace nada.
 ///
-/// [borrarDirectorio] existe para las pruebas.
+/// [borrarArchivo] existe para las pruebas.
 Future<void> borrarLote(
   AlmacenCapturas almacen, {
+  required Seudonimo persona,
   required String confirmacion,
-  Future<void> Function(Directory) borrarDirectorio = _borrarRecursivo,
+  Future<void> Function(File) borrarArchivo = _borrarUno,
 }) async {
-  if ((await almacen.archivosDelLote()).isNotEmpty) {
-    final Manifiesto manifiesto = await calcularManifiesto(almacen);
+  if ((await almacen.archivosDelLote(persona: persona)).isNotEmpty) {
+    final Manifiesto manifiesto = await calcularManifiesto(
+      almacen,
+      persona: persona,
+    );
     if (confirmacion.trim().toLowerCase() != manifiesto.prefijoDeConfirmacion) {
       throw const ConfirmacionIncorrecta();
     }
   }
 
-  for (final Directory d in <Directory>[
-    almacen.dirTomas,
-    almacen.dirExportaciones,
+  for (final File f in <File>[
+    ...await almacen.archivosDelLote(persona: persona),
+    ...await _zipsDe(almacen, persona),
   ]) {
-    if (await d.exists()) await borrarDirectorio(d);
+    await borrarArchivo(f);
   }
 
   final List<String> restantes = <String>[
-    if (await almacen.raiz.exists())
-      await for (final FileSystemEntity e in almacen.raiz.list(recursive: true))
-        if (e is File) p.relative(e.path, from: almacen.raiz.path),
+    for (final File f in <File>[
+      ...await almacen.archivosDelLote(persona: persona),
+      ...await _zipsDe(almacen, persona),
+    ])
+      p.relative(f.path, from: almacen.raiz.path),
   ];
   if (restantes.isNotEmpty) throw BorradoIncompleto(restantes);
 }
 
-Future<void> _borrarRecursivo(Directory d) => d.delete(recursive: true);
+/// Los zip de [persona] en `exportaciones/`: `lote_<persona>_<hash>.zip`.
+Future<List<File>> _zipsDe(AlmacenCapturas almacen, Seudonimo persona) async {
+  if (!await almacen.dirExportaciones.exists()) return <File>[];
+  return <File>[
+    await for (final FileSystemEntity e in almacen.dirExportaciones.list())
+      if (e is File && p.basename(e.path).startsWith('lote_${persona.valor}_'))
+        e,
+  ];
+}
+
+Future<void> _borrarUno(File f) => f.delete();

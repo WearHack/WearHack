@@ -37,6 +37,7 @@ jobs:
       java: ${{ steps.java.outputs.changes }}
       python: ${{ steps.python.outputs.changes }}
       gateway: ${{ steps.otros.outputs.gateway }}
+      core: ${{ steps.otros.outputs.core }}
       infra: ${{ steps.otros.outputs.infra }}
     steps:
       - uses: actions/checkout@v4
@@ -84,6 +85,9 @@ jobs:
           filters: |
             gateway:
               - 'gateway/**'
+              - '.github/workflows/ci.yml'
+            core:
+              - 'services/core/**'
               - '.github/workflows/ci.yml'
             infra:
               - 'docker-compose.yml'
@@ -152,6 +156,37 @@ jobs:
           push: false
           cache-from: type=gha,scope=gateway
           cache-to: type=gha,mode=max,scope=gateway
+
+  # Aparte de la matriz java: el Core no hereda de services/pom.xml y su imagen
+  # se construye con su propia carpeta como contexto.
+  core:
+    name: Core
+    needs: cambios
+    if: needs.cambios.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Incluye ModulithTest (fronteras entre modulos) y las pruebas contra
+      # Mongo, que usan Testcontainers con el Docker del runner.
+      - name: Compilar y probar
+        run: mvn -B -f services/core/pom.xml verify
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/core
+          push: false
+          cache-from: type=gha,scope=core
+          cache-to: type=gha,mode=max,scope=core
 
   python:
     name: Python (${{ matrix.servicio }})
@@ -224,7 +259,7 @@ jobs:
     # deja fusionar.
     name: CI
     if: always()
-    needs: [cambios, java, gateway, python, infra]
+    needs: [cambios, java, gateway, core, python, infra]
     runs-on: ubuntu-latest
     steps:
       - name: Comprobar que nada fallo

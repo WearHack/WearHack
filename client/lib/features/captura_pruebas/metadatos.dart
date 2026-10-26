@@ -51,6 +51,7 @@ class MetadatosToma {
     required this.fechaHora,
     required this.celular,
     required this.parametrosCamara,
+    required this.espejo,
     required this.rostroBbox,
     required this.anchoRostroPx,
     required this.perfilFoto,
@@ -65,6 +66,10 @@ class MetadatosToma {
   final DateTime fechaHora;
   final DatosDelCelular celular;
   final ParametrosDeCamara parametrosCamara;
+
+  /// `camara.espejo`: la foto guardada esta reflejada en horizontal (`true`), no
+  /// lo esta (`false`) o no se sabe (`null`). Solo se registra; no se corrige.
+  final bool? espejo;
 
   /// `[izquierda, arriba, derecha, abajo]`.
   final List<num> rostroBbox;
@@ -95,6 +100,7 @@ class MetadatosToma {
     'camara': <String, Object?>{
       'lente': 'frontal',
       'flash': 'apagado',
+      'espejo': espejo,
       'parametros': <String, Object?>{
         'exposicion': parametrosCamara.exposicion,
         'iso': parametrosCamara.iso,
@@ -225,10 +231,14 @@ List<String> validarMetadatos(Object? json) {
     _claves(p, 'camara', camara, const <String>{
       'lente',
       'flash',
+      'espejo',
       'parametros',
     });
     if (camara['lente'] != 'frontal') p.add('camara.lente debe ser "frontal"');
     if (camara['flash'] != 'apagado') p.add('camara.flash debe ser "apagado"');
+    if (camara['espejo'] != null && camara['espejo'] is! bool) {
+      p.add('camara.espejo debe ser un booleano o null');
+    }
     final Map<String, Object?>? par = _objeto(
       p,
       'camara.parametros',
@@ -302,10 +312,8 @@ List<String> validarMetadatos(Object? json) {
     if (id != null) {
       final String base = id.nombreBase;
       final Object? foto = archivos['foto'];
-      if (foto is! String ||
-          !RegExp('^${RegExp.escape(base)}_foto\\.(jpg|heic)\$')
-              .hasMatch(foto)) {
-        p.add('archivos.foto debe llamarse ${base}_foto.jpg (o .heic)');
+      if (foto != '${base}_foto.jpg') {
+        p.add('archivos.foto debe llamarse ${base}_foto.jpg');
       }
       if (archivos['recorte'] != '${base}_recorte.png') {
         p.add('archivos.recorte debe llamarse ${base}_recorte.png');

@@ -129,6 +129,12 @@ crear("selecciones");
 crear("correcciones_clasificacion");
 crear("configuracion");
 crear("catalogos");
+// Modulo usuarios: colorimetria. Solo valores derivados; el recorte facial nunca se guarda.
+crear("perfiles_colorimetria");
+crear("consentimientos");
+crear("correcciones_colorimetria");
+// Del job de recalibracion de centroides. El Core solo la lee.
+crear("recalibraciones");
 
 // Si prendas ya existia, el validador puede estar desactualizado.
 if (existentes.has("prendas")) {
@@ -158,5 +164,36 @@ base.prendas.createIndex(
   { name: "prendas_usuario_slot_clima" }
 );
 print("  + indice prendas_usuario_slot_clima");
+
+// "El consentimiento vigente de este usuario para esta finalidad", en cada
+// otorgamiento y cada revocacion. otorgado_en al final sirve al historial, que
+// se lista del mas reciente al mas antiguo.
+base.consentimientos.createIndex(
+  { usuario_id: 1, finalidad: 1, estado: 1, otorgado_en: -1 },
+  { name: "consentimientos_usuario_finalidad_estado" }
+);
+print("  + indice consentimientos_usuario_finalidad_estado");
+
+// La desvinculacion diaria busca vinculadas con creada_en hasta un corte. Es
+// parcial: una correccion desvinculada ya no tiene usuario_id y sale del indice,
+// asi que el indice no crece con el historico agregado.
+base.correcciones_colorimetria.createIndex(
+  { creada_en: 1, usuario_id: 1 },
+  {
+    name: "correcciones_vinculadas_por_fecha",
+    partialFilterExpression: { usuario_id: { $exists: true } },
+  }
+);
+print("  + indice correcciones_vinculadas_por_fecha");
+
+// Borrar las correcciones de un usuario al revocar o eliminar la cuenta.
+base.correcciones_colorimetria.createIndex(
+  { usuario_id: 1 },
+  {
+    name: "correcciones_por_usuario",
+    partialFilterExpression: { usuario_id: { $exists: true } },
+  }
+);
+print("  + indice correcciones_por_usuario");
 
 print("Listo.");

@@ -42,6 +42,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Vuelta de la Hosted UI de Cognito (entrar con Google, issue #22).
+                 Tiene que coincidir con las callback URLs del app client. Ver
+                 infra/cognito/README.md. Anadido a mano: si se regenera android/,
+                 hay que volver a ponerlo. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="wearhack" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -58,6 +68,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Amplify abre la Hosted UI en Custom Tabs; desde Android 11 hay que
+             declarar que se consulta el servicio. -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
     </queries>
 </manifest>

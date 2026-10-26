@@ -46,7 +46,7 @@ y sustituye en los archivos de texto:
 - Java: `closet` por el nombre, `Closet` por el nombre con mayuscula inicial, y
   `8082` por el puerto. Renombra las tres clases (`...Application`,
   `...ApplicationTest`) y la carpeta del paquete `com/wearhack/<nombre>/`.
-- Python: `colorimetria` por el nombre y `8085` por el puerto. Renombra
+- Python: `colorimetria` por el nombre y `8091` por el puerto. Renombra
   `app/api/v1/colorimetria.py`. Borra `app/jobs/recalibrar_centroides.py`, que es
   especifico de colorimetria; deja `_runner.py` y `__init__.py`.
 

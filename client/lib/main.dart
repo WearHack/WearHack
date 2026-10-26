@@ -6,10 +6,14 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
+import 'package:wearhack/features/cuenta/autenticacion.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
+import 'package:wearhack/features/cuenta/ui/puerta_de_acceso.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
@@ -18,7 +22,29 @@ import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura_pruebas.dart';
 import 'package:wearhack/platform/ubicacion.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Sin User Pool en --dart-define la app arranca como antes, sin acceso. Ver
+  // infra/cognito/README.md.
+  Cuenta? cuenta;
+  if (Configuracion.cognitoConfigurado) {
+    final Autenticacion autenticacion = await AutenticacionAmplify.configurar(
+      region: Configuracion.cognitoRegion,
+      userPoolId: Configuracion.cognitoUserPoolId,
+      clientId: Configuracion.cognitoClientId,
+      dominio: Configuracion.cognitoDominio,
+    );
+    cuenta = Cuenta(
+      autenticacion: autenticacion,
+      usuarios: ClienteUsuarios(
+        cliente: http.Client(),
+        base: Configuracion.coreBase,
+        token: autenticacion.tokenDeAcceso,
+      ),
+    );
+  }
+
   final RepositorioFalso datos = RepositorioFalso();
   runApp(
     AplicacionWearHack(
@@ -28,8 +54,17 @@ void main() {
       ubicacion: crearServicioUbicacion(),
       publicidad: datos,
       consentimiento: datos,
+      cuenta: cuenta,
     ),
   );
+}
+
+/// Lo necesario para el registro y el inicio de sesion.
+class Cuenta {
+  const Cuenta({required this.autenticacion, required this.usuarios});
+
+  final Autenticacion autenticacion;
+  final ClienteUsuarios usuarios;
 }
 
 class AplicacionWearHack extends StatelessWidget {
@@ -41,6 +76,7 @@ class AplicacionWearHack extends StatelessWidget {
     required this.ubicacion,
     required this.publicidad,
     required this.consentimiento,
+    this.cuenta,
   });
 
   final RepositorioCloset closet;
@@ -50,25 +86,36 @@ class AplicacionWearHack extends StatelessWidget {
   final RepositorioPublicidad publicidad;
   final RepositorioConsentimiento consentimiento;
 
+  /// `null` cuando no hay User Pool configurado.
+  final Cuenta? cuenta;
+
   @override
   Widget build(BuildContext context) {
+    final Cuenta? cuenta = this.cuenta;
+    final Widget app = PantallaPrincipal(
+      closet: closet,
+      outfits: outfits,
+      clima: clima,
+      ubicacion: ubicacion,
+      publicidad: publicidad,
+      consentimiento: consentimiento,
+      // Se resuelve con el import condicional: en web no hay ML Kit.
+      capturaRostroDisponible: crearFaceCropper().disponible,
+      // En web no se llega a usar: el boton de la foto no se ofrece.
+      crearCamara: crearCamaraFrontal,
+      recortador: crearFaceCropper(),
+      diagnostico: (_) => const PantallaEsqueleto(),
+    );
     return MaterialApp(
       title: 'WearHack',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: PantallaPrincipal(
-        closet: closet,
-        outfits: outfits,
-        clima: clima,
-        ubicacion: ubicacion,
-        publicidad: publicidad,
-        consentimiento: consentimiento,
-        // Se resuelve con el import condicional: en web no hay ML Kit.
-        capturaRostroDisponible: crearFaceCropper().disponible,
-        // En web no se llega a usar: el boton de la foto no se ofrece.
-        crearCamara: crearCamaraFrontal,
-        recortador: crearFaceCropper(),
-        diagnostico: (_) => const PantallaEsqueleto(),
-      ),
+      home: cuenta == null
+          ? app
+          : PuertaDeAcceso(
+              autenticacion: cuenta.autenticacion,
+              usuarios: cuenta.usuarios,
+              app: app,
+            ),
     );
   }
 }

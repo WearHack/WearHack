@@ -30,6 +30,7 @@ class CamaraFalsa implements CamaraDeCaptura {
     this.guiaActiva = false,
     this.fotos,
     this.retener,
+    this.espejo,
   });
 
   /// Si se da, `inicializar` lanza esto.
@@ -42,6 +43,9 @@ class CamaraFalsa implements CamaraDeCaptura {
 
   /// Si se da, `tomarFoto` espera a que se complete: para probar el doble toque.
   final Completer<void>? retener;
+
+  /// Lo que la camara dice de si la foto sale reflejada (`null`: no lo sabe).
+  final bool? espejo;
 
   bool abierta = false;
   bool liberada = false;
@@ -71,7 +75,7 @@ class CamaraFalsa implements CamaraDeCaptura {
     final Uint8List bytes = (fotos != null && fotosTomadas <= fotos!.length)
         ? fotos![fotosTomadas - 1]
         : fotoDePrueba(semilla: fotosTomadas);
-    return FotoTomada(bytes: bytes, extension: 'jpg');
+    return FotoTomada(bytes: bytes, extension: 'jpg', espejo: espejo);
   }
 
   @override
@@ -141,6 +145,7 @@ Future<Montaje> montar(
   FaceCropper? cropper,
   RangoDeAncho? Function(CodigoCelular)? rango,
   Future<void> Function(File)? compartir,
+  Future<void> Function()? limpiarTemporales,
 }) async {
   final Directory raiz = (await tester.runAsync(carpetaTemporal))!;
   addTearDown(() async {
@@ -160,6 +165,7 @@ Future<Montaje> montar(
     crearCamara: () => cam,
     dispositivo: const LectorFalso(),
     compartir: compartir ?? (File f) async => compartidos.add(f),
+    limpiarTemporales: limpiarTemporales ?? () async {},
     ahora: () => DateTime.utc(2026, 10, 15, 20, 42, 7),
     rangoDeDistancia: rango ?? (CodigoCelular c) => null,
   );

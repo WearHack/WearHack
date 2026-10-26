@@ -215,6 +215,10 @@ services:
       <<: *entorno-negocio
       OTEL_SERVICE_NAME: core
       SERVER_PORT: 8090
+      # Sin USER_POOL_ID el Core arranca pero rechaza todo token: solo responde /health.
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_CLIENT_IDS: ${COGNITO_CLIENT_IDS:-}
     ports:
       - "${CORE_PORT:-8090}:8090"
     depends_on:
@@ -231,7 +235,7 @@ services:
     environment:
       <<: *otel
       SERVICIO: colorimetria
-      SERVER_PORT: 8085
+      SERVER_PORT: 8091
       ENTORNO: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
@@ -240,7 +244,7 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
       S3_BUCKET_ROSTROS: ${S3_BUCKET_ROSTROS:-wearhack-rostros}
     ports:
-      - "${COLORIMETRIA_PORT:-8085}:8085"
+      - "${COLORIMETRIA_PORT:-8091}:8091"
     depends_on:
       otel-collector:
         condition: service_started
@@ -256,12 +260,12 @@ services:
     environment:
       <<: *otel
       SERVICIO: recomendador
-      SERVER_PORT: 8086
+      SERVER_PORT: 8092
       ENTORNO: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
     ports:
-      - "${RECOMENDADOR_PORT:-8086}:8086"
+      - "${RECOMENDADOR_PORT:-8092}:8092"
     depends_on:
       otel-collector:
         condition: service_started

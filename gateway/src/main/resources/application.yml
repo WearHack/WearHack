@@ -27,11 +27,11 @@ spring:
               predicates:
                 - Path=/api/v1/publicidad/**
             - id: colorimetria
-              uri: ${URI_COLORIMETRIA:http://colorimetria:8085}
+              uri: ${URI_COLORIMETRIA:http://colorimetria:8091}
               predicates:
                 - Path=/api/v1/colorimetria/**
             - id: recomendador
-              uri: ${URI_RECOMENDADOR:http://recomendador:8086}
+              uri: ${URI_RECOMENDADOR:http://recomendador:8092}
               predicates:
                 - Path=/api/v1/recomendador/**
 
