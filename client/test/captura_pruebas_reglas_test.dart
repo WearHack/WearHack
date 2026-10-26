@@ -46,6 +46,10 @@ const List<String> _importsDeLasPantallas = <String>[
   'package:path/path.dart',
   'package:wearhack/core/',
   'package:wearhack/features/captura_pruebas/',
+  // La interfaz de la camara: solo tipos, ningun plugin. Vive en
+  // `platform/captura/` porque la usa tambien la colorimetria, y
+  // `ui/camara.dart` la re-exporta.
+  'package:wearhack/platform/captura/camara.dart',
 ];
 
 const List<String> _importsDeLaPlataforma = <String>[
@@ -63,6 +67,8 @@ const List<String> _importsDeLaPlataforma = <String>[
   'package:wearhack/core/configuracion.dart',
   'package:wearhack/features/captura_pruebas/',
   'package:wearhack/platform/captura.dart',
+  // La interfaz de la camara, que `crearCamaraFrontal` devuelve. Solo tipos.
+  'package:wearhack/platform/captura/camara.dart',
   'package:wearhack/platform/captura/contratos.dart',
 ];
 
