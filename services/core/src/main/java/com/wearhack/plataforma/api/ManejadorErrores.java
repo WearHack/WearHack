@@ -4,6 +4,7 @@ import com.wearhack.plataforma.ErrorApi;
 import com.wearhack.plataforma.ProveedorIdentidadException;
 import com.wearhack.plataforma.RecursoNoEncontradoException;
 import com.wearhack.plataforma.ReglaDeNegocioException;
+import com.wearhack.plataforma.ServicioIaNoDisponibleException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -72,6 +73,13 @@ class ManejadorErrores {
         }
         log.error("Error no controlado en {} {}", peticion.getMethod(), peticion.getRequestURI(), error);
         return responder(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno inesperado", peticion);
+    }
+
+    @ExceptionHandler(ServicioIaNoDisponibleException.class)
+    ResponseEntity<ErrorApi> iaNoDisponible(ServicioIaNoDisponibleException error, HttpServletRequest peticion) {
+        log.warn("IA no disponible en {} {}: {}", peticion.getMethod(), peticion.getRequestURI(), error.getMessage());
+        return responder(HttpStatus.SERVICE_UNAVAILABLE,
+                "El analisis no esta disponible ahora. Intentalo de nuevo en unos minutos", peticion);
     }
 
     private static ResponseEntity<ErrorApi> responder(

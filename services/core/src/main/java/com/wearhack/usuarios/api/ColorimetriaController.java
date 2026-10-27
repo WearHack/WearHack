@@ -5,6 +5,7 @@ import com.wearhack.usuarios.colorimetria.DerechosColorimetriaService;
 import com.wearhack.usuarios.colorimetria.Finalidad;
 import com.wearhack.usuarios.colorimetria.Lab;
 import com.wearhack.usuarios.colorimetria.PerfilColorimetria;
+import com.wearhack.usuarios.colorimetria.AnalisisColorimetriaService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -22,6 +23,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Derechos sobre el perfil de colorimetria: consultar, borrar y revocar el consentimiento
@@ -33,9 +39,14 @@ import org.springframework.web.bind.annotation.RestController;
 class ColorimetriaController {
 
     private final DerechosColorimetriaService derechos;
+    private final AnalisisColorimetriaService analisis;
+    private final int maxRecorteBytes;
 
-    ColorimetriaController(DerechosColorimetriaService derechos) {
+    ColorimetriaController(DerechosColorimetriaService derechos, AnalisisColorimetriaService analisis,
+            @Value("${wearhack.usuarios.colorimetria.max-recorte-bytes}") int maxRecorteBytes) {
         this.derechos = derechos;
+        this.analisis = analisis;
+        this.maxRecorteBytes = maxRecorteBytes;
     }
 
     @GetMapping("/colorimetria")
@@ -55,6 +66,20 @@ class ColorimetriaController {
         return derechos.consentimientos(token.getSubject()).stream()
                 .map(ConsentimientoRespuesta::de)
                 .toList();
+    }
+
+    /**
+     * Recibe el recorte facial (PNG, cuerpo crudo) y devuelve el perfil derivado.
+     * Cuerpo crudo y no multipart: multipart escribiria un archivo temporal, y el recorte no se persiste.
+     */
+    @PostMapping(path = "/colorimetria", consumes = MediaType.IMAGE_PNG_VALUE)
+    PerfilColorimetriaRespuesta analizar(@AuthenticationPrincipal Jwt token, InputStream cuerpo)
+            throws IOException {
+        byte[] recorte = cuerpo.readNBytes(maxRecorteBytes + 1);   // nunca lee mas del tope
+        if (recorte.length > maxRecorteBytes) {
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "El recorte es demasiado grande");
+        }
+        return PerfilColorimetriaRespuesta.de(analisis.analizar(token.getSubject(), recorte));
     }
 
     /** Lo llama el cliente cuando el usuario pulsa "Autorizo". 201 si es nuevo, 200 si ya estaba. */
