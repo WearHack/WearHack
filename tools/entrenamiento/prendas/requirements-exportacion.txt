@@ -1,0 +1,11 @@
+# WSL (Linux), Python 3.12: exportar a LiteRT y evaluar. litert-torch no publica
+# ruedas para Windows. En CPU basta:
+#   uv pip install -r requirements-exportacion.txt --torch-backend=cpu
+# litert-torch 0.10 exige torch < 2.15; se usa la misma version que en el entrenamiento.
+litert-torch==0.10.0
+ai-edge-litert==2.3.0
+ai-edge-quantizer==0.10.0
+torch==2.14.1
+timm==1.0.30
+pillow==13.0.0
+numpy  # la que resuelvan jax y scipy; exportar.py anota la version usada

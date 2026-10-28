@@ -1,0 +1,10 @@
+# Windows con GPU: descargar, construir el dataset y entrenar.
+# torch y torchvision van con CUDA 12.6 (driver <= 12.6 en el portatil del equipo):
+#   uv pip install -r requirements-entrenamiento.txt --torch-backend=cu126
+torch==2.14.1
+torchvision==0.29.1
+timm==1.0.30
+pycocotools==2.0.11
+ijson==3.6.0
+pillow==13.0.0
+numpy==2.5.4
