@@ -26,7 +26,7 @@ Cada artefacto que el producto usa (modelos, centroides, umbrales, parámetros) 
 |---|---|---|---|---|---|---|---|
 | Centroides de temporada (4 estaciones) | — | Deep Armocromia (entrenamiento) | Investigación; derivado de CelebA | CelebA prohíbe explotar comercialmente datos derivados | **No** | Reconstruir con el enfoque propio (puntuaciones normalizadas, drapeado virtual, correcciones de usuarios con consentimiento) | Planeado |
 | Centroides de temporada (12 subtipos) | — | Deep Armocromia | Igual | Igual | **No** | Igual | Planeado (etapa 2) |
-| Clasificador de prendas (MobileNetV3-Small, cabezas de tipo y patrón) | — | **Fashionpedia** (base) + **Clothing dataset** de Grigorev (dominio de prendas sueltas) + **Open Images V7** solo para las clases que falten (calzado, accesorios). DeepFashion2 retirado | Fashionpedia: anotaciones CC BY 4.0; imágenes según los términos de Flickr, Unsplash, Burst, Freestocks, Kaboompics y Pexels. Clothing dataset: uso libre, incluido comercial. Open Images: anotaciones CC BY 4.0, imágenes CC BY 2.0 sin garantía por imagen | Atribución. Revisar si los términos de Unsplash y Pexels dicen algo sobre entrenar modelos. No usar el ecosistema YOLO de Ultralytics (AGPL-3.0) | **Sí, con atribución** (sujeto a la revisión de Unsplash y Pexels) | Mantener con atribución | Planeado |
+| Clasificador de prendas (MobileNetV3-Small, cabezas de tipo y patrón) | `prendas-v1` (2026-10-27), FP16, SHA-256 `bb0ae7eb…3696` | **Fashionpedia** train2020 (33.281 recortes) + **Clothing dataset** de Grigorev, commit `7ed86a9` (4.435). Solo imágenes con licencia comercial: se excluyen las NonCommercial y las "all rights reserved/not found". Open Images no hizo falta. Pesos de ImageNet de timm (`mobilenetv3_small_100.lamb_in1k`). DeepFashion2 retirado. Métricas abajo | Fashionpedia: anotaciones CC BY 4.0; imágenes de los recortes usados: BY-ND 11.158, BY 9.871, BY-SA 8.799, Unsplash 2.309, Pexels 880, Burst 137, dominio público 78, Freestocks 49. Clothing dataset: CC0 1.0 | Atribución. **Las BY-ND entran por decisión del equipo (2026-10-27)**: falta confirmar que unos pesos entrenados no son obra derivada. Revisar los términos de Unsplash y Pexels sobre entrenar modelos. No usar el ecosistema YOLO de Ultralytics (AGPL-3.0) | **Sí, con atribución** (sujeto a las revisiones de BY-ND, Unsplash y Pexels) | Mantener con atribución, o reentrenar sin BY-ND si la revisión sale en contra (el filtro está en `mapeo.licencia_admitida`) | Construido. Pendiente de integrar en el cliente. Artefacto fuera del repositorio |
 | Cabeza de textura (futura) | — | Correcciones de textura de los usuarios, con consentimiento | Propias | — | Sí | Sin cambios | Planeado (después del MVP) |
 | Población de referencia de colorimetría (percentiles de subtono, contraste y valor) | — | **FairFace** | CC BY 4.0 (imágenes de Flickr con CC BY y CC BY-SA) | Atribución. Sus etiquetas de grupo racial son datos sensibles: solo para balancear la muestra, nunca como dato del producto. Baja resolución y luz variada: sirve para estadísticas de población, no para calibrar color fino | Sí, con atribución | Sin cambios | Planeado |
 | Anotaciones Monk de FairFace | — | Anotación propia con la escala Monk (CC BY 4.0) | Propias | Atribuir la escala | Sí | Sin cambios | Planeado |
@@ -55,3 +55,22 @@ Cada artefacto que el producto usa (modelos, centroides, umbrales, parámetros) 
 | Casual Conversations v2 | Acuerdo de licencia; orientado a evaluación; entrenamiento solo con ciertas etiquetas | Evaluación de robustez y equidad | Bóveda | Pendiente |
 | CelebAMask-HQ | Investigación no comercial | Opcional: validar la segmentación | Bóveda | No solicitado |
 | Fotos de calibración del equipo | Consentimiento específico de calibración | Estabilidad, normalización y umbrales | Bóveda | — |
+
+## Métricas por versión
+
+### Clasificador de prendas `prendas-v1` (2026-10-27, issue #69)
+
+Entrenado con `tools/entrenamiento/prendas/` (semilla 42, 15 épocas, la mejor es la 13). La prueba es val2020 de Fashionpedia (4.177 recortes) más el 10 % de personas de Grigorev (280), con todas las licencias: medir no mete esas imágenes en los pesos.
+
+| Variante | Tipo (prueba) | Patrón (prueba) | Tamaño | Latencia en PC, 1 hilo |
+|---|---|---|---|---|
+| PyTorch FP32 | 76,9 % | 77,6 % | — | — |
+| LiteRT FP32 | 76,9 % | 77,6 % | 6,0 MB | 1,9 ms |
+| **LiteRT FP16 (elegida)** | **77,0 %** | **77,6 %** | **3,1 MB** | **1,8 ms** |
+| LiteRT INT8 por canal (PTQ) | 47,8 % | 46,4 % | 1,8 MB | 3,0 ms |
+
+- **Por qué FP16 y no INT8**: el criterio era perder como mucho 1 punto por cabeza, y la cuantización INT8 tras el entrenamiento perdió unos 30. MobileNetV3 cuantiza mal sin QAT (hard-swish y bloques SE). FP16 no pierde nada y cabe de sobra en el presupuesto de 15 MB.
+- **Por fuente**: el tipo acierta el 90,0 % en las fotos de Grigorev, que son prendas sueltas como las de la app, y el 76,1 % en los recortes de Fashionpedia, que son prendas puestas.
+- **Recall medio por clase**: 70,0 % en tipo y 46,5 % en patrón. La exactitud de patrón está inflada por LISO (86,6 % de recall, dos tercios de los casos); ANIMAL (21 %), GEOMETRICO (27 %), PUNTOS (29 %) y OTRO_ESTAMPADO (32 %) son débiles. En tipo, las clases flojas son las de menos datos de entrenamiento: CARDIGAN, CHALECO, SUETER y ENTERIZO, entre 25 % y 48 %, con 12 a 22 casos de prueba cada una.
+- **Validación**: 82,8 % en tipo y 83,0 % en patrón, con las mismas licencias que el entrenamiento.
+- Los pesos, los tres `.tflite`, el manifiesto con la licencia y el origen de cada recorte, y `evaluacion.json` están fuera del repositorio. Los SHA-256 de las fuentes descargadas están en `fuentes.json`.
