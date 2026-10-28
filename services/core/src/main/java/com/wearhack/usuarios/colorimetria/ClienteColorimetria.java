@@ -5,6 +5,8 @@ public interface ClienteColorimetria {
     /**
      * Envia el recorte a Colorimetria y devuelve lo derivado.
      *
+     * @throws com.wearhack.plataforma.ReglaDeNegocioException si el recorte no sirve (sin rostro, sin
+     *     piel): el usuario puede repetir la foto
      * @throws com.wearhack.plataforma.ServicioIaNoDisponibleException si no responde o responde mal
      */
     ResultadoColorimetria analizar(byte[] recortePng);
