@@ -15,6 +15,8 @@ dependencies = [
   "opentelemetry-sdk==1.29.0",
   "opentelemetry-exporter-otlp-proto-grpc==1.29.0",
   "opentelemetry-instrumentation-fastapi==0.50b0",
+  # Muestreo de color y clasificador (app/extraccion, app/clasificador.py).
+  "numpy==2.5.4",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +25,14 @@ dev = [
   "pytest-asyncio==0.25.0",
   "httpx==0.28.1",
   "ruff==0.8.4",
+]
+# Calibracion de centroides (calibracion/). Fuera de la imagen: MediaPipe arrastra
+# OpenCV completo, que pide libGL y la imagen slim no la trae. Cuando el endpoint
+# (#29) segmente en el servidor, MediaPipe pasa a las dependencias del servicio
+# con OpenCV headless.
+calibracion = [
+  "mediapipe==1.1.1",
+  "pillow==13.0.0",
 ]
 
 [build-system]
