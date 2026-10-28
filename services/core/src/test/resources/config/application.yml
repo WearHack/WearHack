@@ -11,6 +11,13 @@ wearhack:
     correcciones:
       # Las pruebas llaman a la tarea a mano, con su propio reloj.
       cron: "-"
+    colorimetria:
+      max-recorte-bytes: 5242880
+  ia:
+    colorimetria:
+      url: ${COLORIMETRIA_URL:http://colorimetria:8091}
+      ruta: ${COLORIMETRIA_RUTA:/v1/colorimetria/analizar}
+      timeout-segundos: 10   # techo acordado en protocolos, seccion 4
 
 management:
   health:

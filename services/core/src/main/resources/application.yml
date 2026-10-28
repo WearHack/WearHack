@@ -22,12 +22,20 @@ wearhack:
     user-pool-id: ${COGNITO_USER_POOL_ID:}
     # App clients aceptados, separados por coma. Obligatorio si hay User Pool.
     client-ids: ${COGNITO_CLIENT_IDS:}
+
+  ia:
+    colorimetria:
+      url: ${COLORIMETRIA_URL:http://colorimetria:8091}
+      ruta: ${COLORIMETRIA_RUTA:/v1/colorimetria/analizar}
+      timeout-segundos: 10
   usuarios:
     correcciones:
       # Desvincula las correcciones de colorimetria consumidas o con mas de 30 dias.
       # Una vez al dia, de madrugada en Colombia. "-" la desactiva.
       cron: ${CORRECCIONES_DESVINCULACION_CRON:0 30 8 * * *}
       dias-maximos: 30
+    colorimetria:
+      max-recorte-bytes: 5242880
 
 management:
   endpoints:
