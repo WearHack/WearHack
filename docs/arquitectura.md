@@ -103,7 +103,8 @@ sequenceDiagram
 ## Colorimetria
 
 Es la unica parte de IA que corre en el backend. Aun asi, lo que viaja es solo
-el recorte. Ver [ADR 0016](adr/0016-solo-el-recorte-facial-sale-del-dispositivo.md).
+el recorte, y no se guarda: el Core lo reenvia y se queda solo con lo derivado.
+Ver [ADR 0016](adr/0016-solo-el-recorte-facial-sale-del-dispositivo.md).
 
 ```mermaid
 sequenceDiagram
@@ -111,23 +112,30 @@ sequenceDiagram
     actor U as Usuario
     participant D as Dispositivo
     participant G as gateway
+    participant C as core (usuarios)
     participant K as colorimetria
-    participant S as Object storage
     participant M as MongoDB
 
     U->>D: Selfie
     D->>D: ML Kit detecta el rostro
-    D->>D: Recorta y normaliza
-    D->>S: Sube SOLO el recorte
-    Note over D,S: La foto completa se queda en el telefono
+    D->>D: Recorta y normaliza (PNG, sRGB)
+    Note over D: La foto completa se queda en el telefono
 
-    D->>G: POST analisis (clave del recorte)
-    G->>K: Rutea
-    K->>S: Lee el recorte
-    K->>M: Lee los centroides vigentes
-    K->>K: Vecino mas cercano en Lab
-    K-->>U: Temporada de color
+    D->>G: POST /api/v1/usuarios/me/colorimetria (PNG)
+    G->>C: Rutea
+    C->>C: Exige el consentimiento vigente
+    C->>K: POST /v1/colorimetria/analizar (PNG)
+    K->>K: MediaPipe: piel, cabello, ojos
+    K->>K: Centroide mas cercano, por capas
+    K-->>C: Estacion, confianza y colores Lab
+    C->>M: Guarda solo el perfil derivado
+    C-->>U: Temporada de color
 ```
+
+Los centroides viven en la coleccion `centroides_colorimetria`, una version por
+documento. El servicio carga la vigente al arrancar y la recarga cuando cambia,
+sin leer Mongo en cada peticion. Se publican con
+`python -m app.jobs.publicar_centroides` (ver `services/colorimetria/calibracion/README.md`).
 
 ## Los jobs nocturnos
 
