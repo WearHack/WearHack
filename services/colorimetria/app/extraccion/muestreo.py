@@ -29,6 +29,14 @@ class Variante:
     def nombre(self) -> str:
         return f"{self.estadistico}_p{self.percentil_bajo:g}_{self.percentil_alto:g}"
 
+    @classmethod
+    def desde_nombre(cls, nombre: str) -> "Variante":
+        """La inversa de `nombre`: 'mediana_p20_80' -> Variante('mediana', 20, 80)."""
+        estadistico, bajo, alto = nombre.split("_")
+        if estadistico not in ("mediana", "media") or not bajo.startswith("p"):
+            raise ValueError(f"Variante de muestreo desconocida: {nombre!r}")
+        return cls(estadistico, float(bajo[1:]), float(alto))
+
 
 @dataclass(frozen=True)
 class Muestra:
@@ -81,3 +89,22 @@ def muestrear(
     L, a, b = (float(v) for v in resumir(lab[dentro], axis=0))
     S, V = (float(v) for v in resumir(hsv[dentro][:, 1:], axis=0))
     return Muestra(L=L, a=a, b=b, S=S, V=V, pixeles=int(dentro.sum()))
+
+
+def muestrear_regiones(
+    rgb: np.ndarray,
+    mascaras: dict[str, np.ndarray],
+    variantes: dict[str, Variante],
+    minimos: dict[str, int],
+) -> dict[str, Muestra | None]:
+    """Una muestra por region, con la variante y el minimo de cada una.
+
+    Es lo que hace la calibracion en dos pasos (extraer con minimo 1 y descartar
+    luego por debajo del minimo), en uno: `muestrear` comprueba el minimo
+    despues del recorte, igual que alli.
+    """
+    muestras = {}
+    for region, mascara in mascaras.items():
+        lab, hsv = pixeles_de_region(rgb, mascara)
+        muestras[region] = muestrear(lab, hsv, variantes[region], minimos[region])
+    return muestras

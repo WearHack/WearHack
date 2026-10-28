@@ -1,7 +1,7 @@
 [project]
 name = "colorimetria"
 version = "0.1.0"
-description = "Clasificacion de temporada de color a partir del recorte facial. Esqueleto."
+description = "Clasificacion de temporada de color a partir del recorte facial."
 requires-python = ">=3.12"
 
 dependencies = [
@@ -17,6 +17,12 @@ dependencies = [
   "opentelemetry-instrumentation-fastapi==0.50b0",
   # Muestreo de color y clasificador (app/extraccion, app/clasificador.py).
   "numpy==2.5.4",
+  # Segmentacion del recorte (app/extraccion/segmentacion.py) y lectura del PNG.
+  # MediaPipe arrastra OpenCV completo, que pide libGL: la imagen la instala.
+  "mediapipe==1.1.1",
+  "pillow==13.0.0",
+  # Centroides vigentes, en la coleccion propia del servicio (app/centroides.py).
+  "pymongo==4.10.1",
 ]
 
 [project.optional-dependencies]
@@ -25,14 +31,6 @@ dev = [
   "pytest-asyncio==0.25.0",
   "httpx==0.28.1",
   "ruff==0.8.4",
-]
-# Calibracion de centroides (calibracion/). Fuera de la imagen: MediaPipe arrastra
-# OpenCV completo, que pide libGL y la imagen slim no la trae. Cuando el endpoint
-# (#29) segmente en el servidor, MediaPipe pasa a las dependencias del servicio
-# con OpenCV headless.
-calibracion = [
-  "mediapipe==1.1.1",
-  "pillow==13.0.0",
 ]
 
 [build-system]

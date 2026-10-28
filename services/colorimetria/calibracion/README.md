@@ -17,7 +17,7 @@ Python 3.12 (MediaPipe no tiene ruedas para 3.14) y un venv fuera del repo:
 
 ```bash
 uv venv -p 3.12 ~/.wearhack/venvs/colorimetria
-VIRTUAL_ENV=~/.wearhack/venvs/colorimetria uv pip install -r services/colorimetria/pyproject.toml --extra dev --extra calibracion
+VIRTUAL_ENV=~/.wearhack/venvs/colorimetria uv pip install -r services/colorimetria/pyproject.toml --extra dev
 ```
 
 Modelos oficiales de MediaPipe (Apache 2.0) en una carpeta fuera del repo:
@@ -77,3 +77,23 @@ Cada proceso de MediaPipe ocupa unos 500 MB: con poca RAM libre, pocos procesos.
   del equipo.
 - **Diferencia con el producto**: aqui no hay normalizacion de luz (A.9 sin
   decidir), solo el nivel 0 (sRGB a Lab D65).
+
+## Publicar en el servicio
+
+El servicio lee los centroides de su coleccion `centroides_colorimetria` en
+Mongo, no de un archivo. El artefacto no entra en la imagen (es de Deep
+Armocromia, solo MVP academico): se monta solo para publicarlo. Desde la raiz
+del repo, con el compose levantado:
+
+```bash
+docker compose run --rm -v <carpeta del artefacto>:/artefactos:ro colorimetria python -m app.jobs.publicar_centroides publicar /artefactos/centroides-4-estaciones-v1.json --activar
+```
+
+- `publicar` sin `--activar` la guarda sin usarla. Una version publicada no se reescribe.
+- `activar <version>` hace vigente otra ya publicada; sirve para revertir.
+- `listar` muestra las versiones y cual es la vigente.
+
+El servicio recoge el cambio solo, en menos de `INTERVALO_RECARGA_CENTROIDES`
+segundos (60 por defecto). Si los modelos de MediaPipe de la imagen no tienen
+el hash que trae el artefacto, responde 503 en vez de clasificar con otra
+segmentacion.
