@@ -265,7 +265,7 @@ _2026-10-01 (actualizado con las decisiones del bloque G) · Fuente de verdad: s
 - **MST-E**: solo evaluación (prohíbe entrenar; copyright de TONL; sin redistribución). Nunca en el repositorio.
 - **FairFace** (CC BY 4.0; 108.501 rostros, 7 grupos incluido el latino): población de referencia de colorimetría (percentiles) y evaluación de equidad con anotación Monk propia. Sus etiquetas de grupo racial solo sirven para balancear la muestra, nunca como dato del producto.
 - **Escala Monk** (CC BY 4.0): esquema de tonos para equidad y metadatos.
-- **EasyPortrait** (variante de CC BY-SA 4.0): solo para validar la segmentación facial de MediaPipe, sin entrenar, **después de leer su licencia**.
+- **EasyPortrait** (variante de CC BY-SA 4.0; licencia revisada el 2026-10-29): solo para validar la segmentación facial de MediaPipe, sin entrenar y en bóveda. Sus máscaras no incluyen clase de cabello.
 - **Casual Conversations v2** y **CelebAMask-HQ**: ya no son necesarios.
 - **Descartados**: Roboflow "Color Analysis", Colorinsight y rostros sintéticos (SFHQ, Syn-Vis) para colorimetría. No usar modelos de visión-lenguaje como anotadores.
 
