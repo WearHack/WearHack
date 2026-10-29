@@ -92,6 +92,18 @@ class DesvinculacionCorreccionesTest {
         assertThat(correccion.temporadaConfirmada()).isEqualTo("otono_suave");
     }
 
+    @Test
+    void cuentaUsuariosDistintosParaElLogDeLaCorrida() {
+        guardar("ana-1", hace(31));
+        guardar("ana-2", hace(40));
+        mongo.save(new CorreccionColorimetria("beto", "sub-beto", new Lab(50, 10, 10), "verano", hace(35), null));
+        guardar("ana-reciente", hace(1));
+
+        assertThat(tarea.usuariosPorDesvincular(AHORA)).isEqualTo(2);
+        assertThat(tarea.desvincular(AHORA)).isEqualTo(3);
+        assertThat(tarea.usuariosPorDesvincular(AHORA)).isZero();
+    }
+
     private void guardar(String id, Instant creadaEn) {
         mongo.save(new CorreccionColorimetria(id, "sub-ana", new Lab(61, 13, 18), "otono_suave", creadaEn, null));
     }

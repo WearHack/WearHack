@@ -15,9 +15,23 @@ x-otel: &otel
   OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
   OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_always_on}
 
+# Logs en el host del lab, sin CloudWatch: json-file con rotacion para que un
+# servicio ruidoso no llene el disco de la EC2. Se leen con `docker compose logs`.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+# Mongo: con Atlas, cada componente entra con su propio usuario (infra/datos/README.md):
+# MONGODB_URI_CORE, _COLORIMETRIA, _RECOMENDACION y _JOBS en .env, cada una con la
+# base en la ruta (.../wearhack?...). Vacias, se usa MONGO_URI y, si tampoco esta,
+# el Mongo de este compose.
+
 x-servicio: &servicio
   restart: unless-stopped
   networks: [wearhack]
+  logging: *logging
   depends_on:
     otel-collector:
       condition: service_started
@@ -29,6 +43,7 @@ services:
     image: mongo:8.0
     restart: unless-stopped
     networks: [wearhack]
+    logging: *logging
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-wearhack}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-wearhack_local_dev}
@@ -53,6 +68,7 @@ services:
     image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     networks: [wearhack]
+    logging: *logging
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-wearhack}
@@ -91,6 +107,7 @@ services:
     image: otel/opentelemetry-collector-contrib:0.116.1
     restart: unless-stopped
     networks: [wearhack]
+    logging: *logging
     command: ["--config=/etc/otel/collector.yaml"]
     volumes:
       - ./infra/local/otel/collector.yaml:/etc/otel/collector.yaml:ro
@@ -215,6 +232,7 @@ services:
       <<: *entorno-negocio
       OTEL_SERVICE_NAME: core
       SERVER_PORT: 8090
+      MONGO_URI: ${MONGODB_URI_CORE:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
       # Sin USER_POOL_ID el Core arranca pero rechaza todo token: solo responde /health.
       COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
@@ -238,7 +256,7 @@ services:
       SERVER_PORT: 8091
       ENTORNO: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
+      MONGO_URI: ${MONGODB_URI_COLORIMETRIA:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
       S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
@@ -263,7 +281,7 @@ services:
       SERVER_PORT: 8092
       ENTORNO: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
+      MONGO_URI: ${MONGODB_URI_RECOMENDACION:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
     ports:
       - "${RECOMENDADOR_PORT:-8092}:8092"
     depends_on:
@@ -271,6 +289,51 @@ services:
         condition: service_started
       mongo:
         condition: service_healthy
+
+  # ------------------------------------------------------------- jobs batch ---
+  # La misma imagen que el servicio, pero con el usuario de Mongo de los jobs
+  # (MONGODB_URI_JOBS), que es el unico que escribe pesos, centroides y rankings.
+  # Sin puerto ni healthcheck. Solo con el profile `jobs`:
+  #   docker compose run --rm jobs-recomendador python -m app.jobs.ajuste_preferencias
+  jobs-colorimetria:
+    build:
+      context: ./services/colorimetria
+    profiles: [jobs]
+    networks: [wearhack]
+    logging: *logging
+    restart: "no"
+    healthcheck:
+      disable: true
+    environment:
+      <<: *otel
+      SERVICIO: colorimetria
+      ENTORNO: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MONGO_URI: ${MONGODB_URI_JOBS:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: ["python", "-c", "print('Uso: docker compose run --rm jobs-colorimetria python -m app.jobs.<nombre>')"]
+
+  jobs-recomendador:
+    build:
+      context: ./services/recomendador
+    profiles: [jobs]
+    networks: [wearhack]
+    logging: *logging
+    restart: "no"
+    healthcheck:
+      disable: true
+    environment:
+      <<: *otel
+      SERVICIO: recomendador
+      ENTORNO: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MONGO_URI: ${MONGODB_URI_JOBS:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: ["python", "-c", "print('Uso: docker compose run --rm jobs-recomendador python -m app.jobs.<nombre>')"]
 
 networks:
   wearhack:

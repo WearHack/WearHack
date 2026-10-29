@@ -1,5 +1,7 @@
 package com.wearhack.usuarios.colorimetria;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -58,8 +60,22 @@ class DesvinculacionCorrecciones {
 
     @Scheduled(cron = "${wearhack.usuarios.correcciones.cron:0 30 8 * * *}", zone = "UTC")
     void programada() {
-        long desvinculadas = desvincular(Instant.now(reloj));
-        log.info("Correcciones de colorimetria desvinculadas: {}", desvinculadas);
+        Instant ahora = Instant.now(reloj);
+        // Antes de desvincular: despues ya no queda usuario_id que contar.
+        int usuarios = usuariosPorDesvincular(ahora);
+        long desvinculadas = desvincular(ahora);
+        // La misma linea de corrida que los jobs de Python (#50): job, umbral_alcanzado,
+        // usuarios_afectados y timestamp, que el encoder pone como "momento".
+        log.info("Correcciones de colorimetria desvinculadas: {}", desvinculadas,
+                kv("job", "desvinculacion_correcciones"),
+                kv("estado", "termina"),
+                kv("umbral_alcanzado", desvinculadas > 0),
+                kv("usuarios_afectados", usuarios),
+                kv("timestamp", ahora.toString()));
+    }
+
+    int usuariosPorDesvincular(Instant ahora) {
+        return mongo.findDistinct(pendientes(ahora), "usuario_id", CORRECCIONES, String.class).size();
     }
 
     /**
@@ -69,6 +85,14 @@ class DesvinculacionCorrecciones {
      * @return cuantas correcciones se desvincularon
      */
     long desvincular(Instant ahora) {
+        AggregationUpdate desvincular = AggregationUpdate.update()
+                .set("mes").toValue(DateOperators.dateOf("creada_en").toString("%Y-%m"))
+                .unset("usuario_id", "creada_en");
+
+        return mongo.updateMulti(pendientes(ahora), desvincular, CORRECCIONES).getModifiedCount();
+    }
+
+    private Query pendientes(Instant ahora) {
         Instant corte = ahora.minus(plazoMaximo);
         Instant consumidasHasta = marcaDeRecalibracion();
         if (consumidasHasta != null && consumidasHasta.isAfter(corte)) {
@@ -78,13 +102,8 @@ class DesvinculacionCorrecciones {
 
         // exists y no ne(null): asi la consulta encaja con el indice parcial del init de Mongo.
         // Spring Data no escribe los campos null, asi que una vinculada siempre lo tiene.
-        Query vinculadasHastaElCorte = new Query(Criteria.where("usuario_id").exists(true)
+        return new Query(Criteria.where("usuario_id").exists(true)
                 .and("creada_en").lte(Date.from(corte)));
-        AggregationUpdate desvincular = AggregationUpdate.update()
-                .set("mes").toValue(DateOperators.dateOf("creada_en").toString("%Y-%m"))
-                .unset("usuario_id", "creada_en");
-
-        return mongo.updateMulti(vinculadasHastaElCorte, desvincular, CORRECCIONES).getModifiedCount();
     }
 
     private Instant marcaDeRecalibracion() {

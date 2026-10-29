@@ -16,6 +16,7 @@ from app.analisis import Analizador, ServicioColorimetria
 from app.api.v1 import colorimetria
 from app.centroides import CentroidesVigentes, RepositorioCentroides, abrir_coleccion
 from app.config import ajustes
+from app.errores import registrar_manejadores
 from app.health import router as router_health
 from app.logging_config import configurar_logs
 from app.telemetry import configurar_trazas
@@ -70,6 +71,8 @@ def crear_app() -> FastAPI:
     # gateway, y existe para que los seis servicios respondan igual: sin
     # el, el gateway tendria que reescribir la ruta solo para los dos
     # servicios de Python.
+    # Errores sin el cuerpo de la peticion (#51).
+    registrar_manejadores(app)
     app.include_router(router_health)
     app.include_router(router_health, prefix=f"/api/v1/{config.servicio}")
     app.include_router(colorimetria.router)
