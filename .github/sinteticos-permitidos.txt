@@ -1,0 +1,11 @@
+# Imagenes que pueden vivir en carpetas de pruebas (#46).
+#
+# Ningun test usa fotos reales: ni de usuarios ni de integrantes del equipo. Lo
+# normal es generar la imagen dentro del test. Si una imagen sintetica tiene que
+# ser un archivo, se anade aqui con su ruta exacta y el motivo:
+#
+#   services/colorimetria/tests/datos/parche_gris.png   # 4x4 gris plano, sin rostro
+#
+# El job "Sin fotos en las pruebas" de .github/workflows/ci.yml falla con
+# cualquier imagen en tests/, test/, src/test/, fixtures/ o test_data/ que no
+# este en esta lista.
