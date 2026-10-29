@@ -29,3 +29,4 @@ nuevo que sustituya al anterior y se marca el viejo como sustituido.
 | [0015](0015-despliegue-con-federacion-oidc.md) | Despliegue a ECS con federacion OIDC | aceptado |
 | [0016](0016-solo-el-recorte-facial-sale-del-dispositivo.md) | Solo el recorte facial sale del dispositivo | aceptado |
 | [0017](0017-dependencias-de-python-sin-lock.md) | Dependencias de Python sin lock | **pendiente** |
+| [0018](0018-validacion-de-segmentacion-facial-con-mediapipe-y-licencia-easyportrait.md) | Validacion de segmentacion facial con MediaPipe y licencia de EasyPortrait | aceptado |
