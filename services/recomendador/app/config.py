@@ -16,6 +16,11 @@ class Ajustes(BaseSettings):
     entorno: str = "local"
     log_level: str = "INFO"
 
+    # Pesos y reglas del motor, en Mongo (app/pesos.py).
+    mongo_uri: str = "mongodb://localhost:27017/wearhack"
+    # Cada cuanto se relee el documento `recomendacion` de `configuracion`, en segundos.
+    intervalo_recarga_configuracion: float = 60.0
+
     # Observabilidad
     otel_exporter_otlp_endpoint: str = "http://otel-collector:4317"
     otel_sdk_disabled: bool = False
