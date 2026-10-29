@@ -1,6 +1,7 @@
 """Servicio recomendador de WearHack.
 
-Esqueleto. Arranca, responde /health y emite trazas. Nada mas.
+Genera outfits con el motor combinatorio (`POST /v1/recomendacion/generar`), con
+los pesos y reglas de Mongo.
 """
 
 import logging
@@ -13,6 +14,7 @@ from app.api.v1 import recomendador
 from app.config import ajustes
 from app.health import router as router_health
 from app.logging_config import configurar_logs
+from app.pesos import RepositorioPesosMongo, abrir_colecciones
 from app.telemetry import configurar_trazas
 
 log = logging.getLogger(__name__)
@@ -29,9 +31,14 @@ async def ciclo_de_vida(app: FastAPI):
         endpoint=config.otel_exporter_otlp_endpoint,
         desactivado=config.otel_sdk_disabled,
     )
+    mongo, configuracion, pesos = abrir_colecciones(config.mongo_uri)
+    app.state.pesos = RepositorioPesosMongo(
+        configuracion, pesos, config.intervalo_recarga_configuracion
+    )
     log.info("Servicio %s %s listo (%s)", config.servicio, config.version, config.entorno)
     yield
     log.info("Servicio %s parando", config.servicio)
+    mongo.close()
 
 
 def crear_app() -> FastAPI:
