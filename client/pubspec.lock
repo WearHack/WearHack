@@ -805,6 +805,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.12"
+  thermal:
+    dependency: "direct main"
+    description:
+      name: thermal
+      sha256: "69ecc5d929dc06c3631605c7dc0733bb3916d2853d8d838779f7c39457962d18"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
   tuple:
     dependency: transitive
     description:

@@ -1,7 +1,8 @@
 /// El closet: todas las prendas, filtrables por slot.
 ///
 /// Solo consulta y gestion (issue #15). Agregar prendas pide la camara y el
-/// pipeline on-device, que en web no existen; esa entrada llega con la captura.
+/// pipeline on-device, que en web no existen: el boton lo pone
+/// `PantallaPrincipal` solo donde hay captura (#11).
 library;
 
 import 'package:flutter/material.dart';

@@ -5,8 +5,8 @@
 /// al almacenamiento compartido.
 ///
 /// Este archivo importa `dart:io`, asi que no debe alcanzarse desde la build de
-/// web. Hoy nadie lo importa desde `lib/`: se conecta con la pantalla de captura
-/// de prendas, detras del import condicional, cuando exista.
+/// web. Solo lo importa `captura_movil.dart`, que queda detras del import
+/// condicional de `platform/captura.dart`.
 library;
 
 import 'dart:convert';

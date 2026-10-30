@@ -5,7 +5,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/closet/ui/pantalla_captura_prendas.dart';
 import 'package:wearhack/features/closet/ui/pantalla_closet.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_colorimetria.dart';
@@ -32,6 +34,7 @@ class PantallaPrincipal extends StatefulWidget {
     this.crearCamara,
     this.recortador,
     this.diagnostico,
+    this.capturaPrendas,
   });
 
   final RepositorioCloset closet;
@@ -52,6 +55,11 @@ class PantallaPrincipal extends StatefulWidget {
   /// La pantalla de diagnostico, si la hay. Llega desde fuera porque vive en
   /// `main.dart`: es la unica que puede abrir el modo de captura de pruebas.
   final WidgetBuilder? diagnostico;
+
+  /// La captura de prendas en cola (#11), o `null` si no esta disponible: en
+  /// web, o sin `--dart-define=CAPTURA_PRENDAS=true`. Con ella, el closet
+  /// muestra el boton de agregar prendas.
+  final CapturaDePrendas? capturaPrendas;
 
   @override
   State<PantallaPrincipal> createState() => _PantallaPrincipalState();
@@ -93,6 +101,25 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     _ => PantallaMarcas(repositorio: widget.publicidad),
   };
 
+  Widget? _botonAgregarPrendas() {
+    final CapturaDePrendas? captura = widget.capturaPrendas;
+    if (captura == null || _seccion != 0) return null;
+    return FloatingActionButton.extended(
+      key: const Key('agregar_prendas'),
+      icon: const Icon(Icons.add_a_photo_outlined),
+      label: const Text('Agregar prendas'),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PantallaCapturaPrendas(
+            cola: captura.cola,
+            crearCamara: captura.crearCamara,
+            termico: captura.termico,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final WidgetBuilder? diagnostico = widget.diagnostico;
@@ -127,6 +154,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     if (MediaQuery.sizeOf(context).width >= _anchoRiel) {
       return Scaffold(
         appBar: barra,
+        floatingActionButton: _botonAgregarPrendas(),
         body: Row(
           children: <Widget>[
             NavigationRail(
@@ -152,6 +180,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     return Scaffold(
       appBar: barra,
       body: _contenido(),
+      floatingActionButton: _botonAgregarPrendas(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _seccion,
         onDestinationSelected: _ir,

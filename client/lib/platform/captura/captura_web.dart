@@ -12,6 +12,8 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
+import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
 class GarmentPipelineWeb implements GarmentPipeline {
@@ -47,3 +49,14 @@ class FaceCropperWeb implements FaceCropper {
 GarmentPipeline crearGarmentPipeline() => GarmentPipelineWeb();
 
 FaceCropper crearFaceCropper() => FaceCropperWeb();
+
+/// En web no hay captura de prendas: la UI consulta `GarmentPipeline.disponible`
+/// antes de llegar aqui, asi que esto solo corre si alguien se salta esa
+/// comprobacion.
+CamaraDeCaptura crearCamaraTrasera() {
+  throw const CapturaNoDisponible('La camara solo existe en movil.');
+}
+
+Future<CapturaDePrendas> abrirCapturaDePrendas() async {
+  throw const CapturaNoDisponible('La captura de prendas solo corre en movil.');
+}

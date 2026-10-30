@@ -32,6 +32,15 @@ class Configuracion {
     'CAPTURA_GUIA_EN_VIVO',
   );
 
+  /// Enciende la captura de prendas en cola (issue #11): el boton "Agregar
+  /// prendas" del closet y la cola en segundo plano.
+  ///
+  /// Apagada por defecto mientras falten el pipeline on-device (#12, #13) y el
+  /// endpoint del Closet (#25): sin ellos cada foto acabaria fallida o
+  /// esperando para siempre. `--dart-define=CAPTURA_PRENDAS=true` la enciende
+  /// para probar la pantalla y la cola en un telefono.
+  static const bool capturaPrendas = bool.fromEnvironment('CAPTURA_PRENDAS');
+
   /// Raiz del Core (perfil, consentimientos). El Core no va detras del gateway:
   /// en el docker compose se le pega directo, y la ruta /api/v1/usuarios del
   /// gateway todavia apunta al servicio viejo, que solo tiene /health.
