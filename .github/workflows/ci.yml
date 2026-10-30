@@ -253,13 +253,27 @@ jobs:
           cp .env.example .env
           docker compose config --quiet
 
+  # Ningun test usa fotos reales (#46, politica de datos): las imagenes de prueba
+  # se generan en el codigo (por ejemplo services/colorimetria/tests/falsos.py).
+  # Corre siempre, sin filtro de paths: una foto se puede colar desde cualquier
+  # carpeta y comprobarlo cuesta segundos. Una imagen sintetica que de verdad haga
+  # falta como archivo se anade, con su motivo, a .github/sinteticos-permitidos.txt.
+  fotos:
+    name: Sin fotos en las pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Buscar imagenes en carpetas de pruebas
+        run: .github/scripts/sin-fotos-en-pruebas.sh
+
   ci:
     # Un unico check para proteger la rama. Sin esto habria que marcar como
     # obligatorios siete jobs que casi siempre se saltan, y un job saltado no
     # deja fusionar.
     name: CI
     if: always()
-    needs: [cambios, java, gateway, core, python, infra]
+    needs: [cambios, java, gateway, core, python, infra, fotos]
     runs-on: ubuntu-latest
     steps:
       - name: Comprobar que nada fallo
