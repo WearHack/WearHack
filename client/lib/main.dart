@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
+import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/cuenta/autenticacion.dart';
@@ -45,6 +46,14 @@ Future<void> main() async {
     );
   }
 
+  // La cola se abre al arrancar y no al entrar en la pantalla: lo que quedo de
+  // la ultima vez se procesa y se sube aunque la persona no vuelva a capturar.
+  CapturaDePrendas? capturaPrendas;
+  if (Configuracion.capturaPrendas && crearGarmentPipeline().disponible) {
+    capturaPrendas = await abrirCapturaDePrendas();
+    capturaPrendas.cola.arrancar();
+  }
+
   final RepositorioFalso datos = RepositorioFalso();
   runApp(
     AplicacionWearHack(
@@ -55,6 +64,7 @@ Future<void> main() async {
       publicidad: datos,
       consentimiento: datos,
       cuenta: cuenta,
+      capturaPrendas: capturaPrendas,
     ),
   );
 }
@@ -77,6 +87,7 @@ class AplicacionWearHack extends StatelessWidget {
     required this.publicidad,
     required this.consentimiento,
     this.cuenta,
+    this.capturaPrendas,
   });
 
   final RepositorioCloset closet;
@@ -88,6 +99,9 @@ class AplicacionWearHack extends StatelessWidget {
 
   /// `null` cuando no hay User Pool configurado.
   final Cuenta? cuenta;
+
+  /// `null` en web o sin `--dart-define=CAPTURA_PRENDAS=true`.
+  final CapturaDePrendas? capturaPrendas;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +119,7 @@ class AplicacionWearHack extends StatelessWidget {
       crearCamara: crearCamaraFrontal,
       recortador: crearFaceCropper(),
       diagnostico: (_) => const PantallaEsqueleto(),
+      capturaPrendas: capturaPrendas,
     );
     return MaterialApp(
       title: 'WearHack',

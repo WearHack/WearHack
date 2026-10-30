@@ -10,10 +10,20 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:camera/camera.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:thermal/thermal.dart';
 import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/core/recorte/recortador_facial.dart';
+import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
+import 'package:wearhack/features/closet/captura/cola_captura.dart';
+import 'package:wearhack/features/closet/captura/estado_termico.dart';
+import 'package:wearhack/features/closet/captura/subidor_pendiente.dart';
+import 'package:wearhack/platform/captura/almacen_cola_archivos.dart';
+import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
 /// Pipeline on-device con LiteRT/TFLite.
@@ -129,3 +139,112 @@ class FaceCropperMovil implements FaceCropper {
 GarmentPipeline crearGarmentPipeline() => GarmentPipelineMovil();
 
 FaceCropper crearFaceCropper() => FaceCropperMovil();
+
+// ---------------------------------------------------------------------------
+// Captura de prendas en cola (issue #11)
+// ---------------------------------------------------------------------------
+
+/// La camara trasera, para fotografiar prendas.
+CamaraDeCaptura crearCamaraTrasera() => CamaraTrasera();
+
+/// La camara trasera con el plugin `camera`.
+///
+/// Sin guia de distancia: esa mide un rostro, y aqui no lo hay. Como la
+/// frontal, lee la foto a bytes y borra en un `finally` el archivo temporal que
+/// deja el plugin, para que la foto solo exista en el almacen de la cola.
+class CamaraTrasera implements CamaraDeCaptura {
+  CameraController? _controlador;
+
+  @override
+  bool get guiaDeDistanciaActiva => false;
+
+  @override
+  Stream<int?> get anchoDelRostroEnVivo => const Stream<int?>.empty();
+
+  @override
+  Future<void> inicializar() async {
+    final List<CameraDescription> camaras = await availableCameras();
+    final CameraDescription? trasera = camaras
+        .where(
+          (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
+        )
+        .firstOrNull;
+    if (trasera == null) throw const SinCamaraTrasera();
+    // `high` y no `max`: la prenda se reduce para u2netp y el clasificador, y
+    // una foto de 12 MP solo hace mas lento cada disparo y cada lote.
+    final CameraController c = CameraController(
+      trasera,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    _controlador = c;
+    await c.initialize();
+    await c.setFlashMode(FlashMode.off);
+  }
+
+  @override
+  Widget vistaPrevia() => CameraPreview(_controlador!);
+
+  @override
+  Future<FotoTomada> tomarFoto() async {
+    final XFile archivo = await _controlador!.takePicture();
+    try {
+      final String ext = p
+          .extension(archivo.path)
+          .replaceFirst('.', '')
+          .toLowerCase();
+      if (ext != 'jpg' && ext != 'jpeg') {
+        throw StateError(
+          'La camara entrego un formato inesperado: .$ext (se esperaba JPEG)',
+        );
+      }
+      return FotoTomada(bytes: await archivo.readAsBytes(), extension: 'jpg');
+    } finally {
+      try {
+        await File(archivo.path).delete();
+      } on FileSystemException {
+        // Ya no estaba.
+      }
+    }
+  }
+
+  @override
+  Future<void> liberar() async {
+    final CameraController? c = _controlador;
+    _controlador = null;
+    await c?.dispose();
+  }
+}
+
+/// El estado termico del telefono con el plugin `thermal`.
+EstadoTermicoDispositivo crearEstadoTermico() {
+  final Thermal thermal = Thermal();
+  return EstadoTermicoDispositivo(
+    // Los dos enums tienen los mismos niveles en el mismo orden.
+    niveles: thermal.onThermalStatusChanged.map(
+      (ThermalStatus s) => NivelTermico.values[s.index],
+    ),
+    temperaturasBateria: thermal.onBatteryTemperatureChanged,
+    umbral: UmbralTermico.desdeEntorno(),
+  );
+}
+
+/// Abre la captura de prendas con lo que tiene el telefono: el almacen privado
+/// de la app, el pipeline on-device, el sensor termico y la camara trasera.
+///
+/// El subidor es [SubidorPendiente] hasta que el Closet reciba prendas (#25):
+/// las procesadas esperan en la cola sin perderse.
+Future<CapturaDePrendas> abrirCapturaDePrendas() async {
+  final EstadoTermico termico = crearEstadoTermico();
+  final ColaCaptura cola = await ColaCaptura.abrir(
+    almacen: await AlmacenColaArchivos.enSoporteDeLaApp(),
+    procesador: ProcesadorSobrePipeline(crearGarmentPipeline()),
+    subidor: const SubidorPendiente(),
+    termico: termico,
+  );
+  return CapturaDePrendas(
+    cola: cola,
+    termico: termico,
+    crearCamara: crearCamaraTrasera,
+  );
+}

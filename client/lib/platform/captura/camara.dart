@@ -40,6 +40,14 @@ class SinCamaraFrontal implements Exception {
   String toString() => 'SinCamaraFrontal: este celular no tiene camara frontal';
 }
 
+/// El celular no tiene camara trasera, la de las prendas.
+class SinCamaraTrasera implements Exception {
+  const SinCamaraTrasera();
+
+  @override
+  String toString() => 'SinCamaraTrasera: este celular no tiene camara trasera';
+}
+
 abstract interface class CamaraDeCaptura {
   /// Abre la camara frontal con el flash apagado. Puede lanzar
   /// [SinCamaraFrontal] o el error de permisos del sistema.
