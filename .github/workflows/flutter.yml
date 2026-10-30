@@ -67,8 +67,36 @@ jobs:
       # detecta que algo de captura o de los interpretes se colo fuera de su
       # carpeta: en web no existe camara ni LiteRT, asi que un import mal
       # aislado rompe aqui y en ningun otro sitio.
+      # minSdk 26 y sin copia de seguridad automatica (#48): el closet y el token
+      # no deben acabar en un backup de Google. Son archivos generados por
+      # flutter create, asi que una regeneracion podria devolver los valores por
+      # defecto sin que nadie lo note. Este paso lo nota.
+      - name: Comprobar minSdk y allowBackup
+        run: |
+          grep -qE '^\s*minSdk\s*=\s*26\s*$' android/app/build.gradle.kts \
+            || { echo "android/app/build.gradle.kts debe fijar minSdk = 26"; exit 1; }
+          grep -q 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml \
+            || { echo 'AndroidManifest.xml debe tener android:allowBackup="false"'; exit 1; }
+
+      # APK de prueba, uno por ABI: arm64-v8a para los telefonos actuales y
+      # armeabi-v7a para los de 32 bits. Release porque es lo que se instala en
+      # las pruebas; mientras no haya keystore, el proyecto lo firma con las
+      # claves de debug. iOS queda fuera del MVP (sin runner macOS).
       - name: Construir APK
-        run: flutter build apk --debug
+        run: |
+          flutter build apk --release --split-per-abi \
+            --target-platform android-arm,android-arm64
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wearhack-apk-${{ github.sha }}
+          path: |
+            client/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            client/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          if-no-files-found: error
+          # Los artefactos cuentan contra el almacenamiento del repo privado.
+          retention-days: 7
 
       - name: Construir web
         run: flutter build web
