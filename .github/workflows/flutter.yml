@@ -78,6 +78,13 @@ jobs:
           grep -q 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml \
             || { echo 'AndroidManifest.xml debe tener android:allowBackup="false"'; exit 1; }
 
+      # Web antes que el APK: dart2js necesita bastante memoria, y despues del APK
+      # los daemons de Gradle y Kotlin siguen vivos con su heap (-Xmx8G en
+      # android/gradle.properties). En el runner de un repo privado eso agoto la
+      # memoria y el job se cancelo a mitad de dart2js (PR #96).
+      - name: Construir web
+        run: flutter build web
+
       # APK de prueba, uno por ABI: arm64-v8a para los telefonos actuales y
       # armeabi-v7a para los de 32 bits. Release porque es lo que se instala en
       # las pruebas; mientras no haya keystore, el proyecto lo firma con las
@@ -97,6 +104,3 @@ jobs:
           if-no-files-found: error
           # Los artefactos cuentan contra el almacenamiento del repo privado.
           retention-days: 7
-
-      - name: Construir web
-        run: flutter build web
