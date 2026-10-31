@@ -45,6 +45,9 @@ class ParametrosSegmentacion:
     piel_sobre_labios: bool = True
     # Fraccion del radio del iris que se descarta por la pupila.
     radio_pupila: float = 0.45
+    # Radio del iris, en radios, que se quita del ojo para quedarse con la
+    # esclerotica: un poco mas que el iris, para no tomar su borde.
+    margen_iris_esclerotica: float = 1.15
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,10 @@ class Regiones:
     cabello: np.ndarray
     ojos: np.ndarray
     ancho_rostro: float  # en pixeles del recorte
+    # El blanco del ojo: el contorno del ojo sin el iris. No entra en el
+    # clasificador; lo usa el analisis de normalizacion (tecnica T1) como
+    # referencia de la luz.
+    esclerotica: np.ndarray | None = None
 
 
 class SinRostro(Exception):
@@ -186,13 +193,19 @@ class SegmentadorRostro:
         cabello = erosionar(categorias == _CABELLO, p.margen_cabello)
 
         ojos = np.zeros(forma, np.uint8)
+        esclerotica = np.zeros(forma, np.uint8)
         yy, xx = np.mgrid[: forma[0], : forma[1]]
         for contorno, iris in self._ojos:
             centro = puntos[iris].mean(axis=0)
             radio = float(np.linalg.norm(puntos[iris] - centro, axis=1).mean())
             d2 = (xx - centro[0]) ** 2 + (yy - centro[1]) ** 2
             anillo = (d2 <= radio**2) & (d2 >= (p.radio_pupila * radio) ** 2)
-            ojos |= anillo.astype(np.uint8) & poligono(contorno)
+            ojo = poligono(contorno)
+            ojos |= anillo.astype(np.uint8) & ojo
+            fuera_del_iris = d2 > (p.margen_iris_esclerotica * radio) ** 2
+            esclerotica |= ojo & fuera_del_iris.astype(np.uint8)
+        # Lejos del parpado y de las pestanas, que oscurecen el borde.
+        esclerotica = erosionar(esclerotica, p.margen_piel)
 
         return Regiones(
             rgb=recorte,
@@ -200,4 +213,5 @@ class SegmentadorRostro:
             cabello=cabello.astype(bool),
             ojos=ojos.astype(bool),
             ancho_rostro=ancho_rostro,
+            esclerotica=esclerotica.astype(bool),
         )
