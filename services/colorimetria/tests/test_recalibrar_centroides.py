@@ -16,6 +16,7 @@ from app.jobs.recalibrar_centroides import (
     leer_conjunto,
     recalibrar_en,
     variables_de_piel,
+    variables_medidas,
     version_recalibrada,
 )
 from tests import falsos
@@ -110,6 +111,47 @@ def test_las_variables_de_piel_salen_del_lab():
     assert v["piel_calidez"] == 15.0
     assert v["piel_b_L"] == pytest.approx(25 / 60)
     assert "contraste" not in v and "cabello_L" not in v
+
+
+def test_con_cabello_e_iris_salen_tambien_sus_variables_y_el_contraste():
+    v = variables_medidas(
+        {
+            "piel": {"l": 60.0, "a": 10.0, "b": 25.0},
+            "cabello": {"l": 10.0, "a": 2.0, "b": 3.0},
+            "iris": {"l": 30.0, "a": 1.0, "b": 8.0},
+        }
+    )
+
+    assert v["contraste"] == 50.0
+    assert v["dL_piel_cabello"] == 50.0
+    assert v["dL_piel_ojos"] == 30.0
+    assert v["cabello_L"] == 10.0 and v["ojos_b"] == 8.0
+    # S y V no salen del Lab: no se mueven nunca.
+    assert not any(k.endswith(("_S", "_V")) for k in v)
+
+
+def test_sin_cabello_el_contraste_cae_a_piel_ojos():
+    v = variables_medidas(
+        {"piel": {"l": 60.0, "a": 10.0, "b": 25.0}, "iris": {"l": 35.0, "a": 1.0, "b": 8.0}}
+    )
+
+    assert v["contraste"] == 25.0
+    assert "cabello_L" not in v and "dL_piel_cabello" not in v
+
+
+def test_sin_piel_no_hay_variables():
+    assert variables_medidas({"cabello": {"l": 10.0, "a": 2.0, "b": 3.0}}) == {}
+
+
+def test_con_cabello_tambien_se_mueve_el_contraste():
+    # Piel L 60 y cabello L 10: contraste 50, z = 2. (25 * 1 + 20 * 2) / 45 = 1.44.
+    correcciones = [{**c, "cabello": {"l": 10.0, "a": 2.0, "b": 3.0}} for c in otonos(20)]
+    base = base_con(correcciones)
+
+    recalibrar_en(base, CONJUNTO_ESTABLE, tope=10.0, ahora=AHORA)
+
+    alto = vigente(base)["capas"]["contraste"]["centroides"]["ALTO"][0]
+    assert alto == pytest.approx((25 * 1 + 20 * 2) / 45)
 
 
 def test_sin_20_correcciones_por_estacion_no_hace_nada():

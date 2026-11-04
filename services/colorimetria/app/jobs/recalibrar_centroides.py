@@ -14,10 +14,11 @@ Reglas (respuestas B.11):
   Se trabaja en el espacio estandarizado del clasificador, el mismo de los centroides.
 - Solo entran las estaciones con al menos 20 correcciones nuevas; las demas esperan.
 - Tope de movimiento por eje (`--tope`, en desviaciones estandar).
-- Solo se mueven los ejes medidos. Hoy la correccion (`correcciones_colorimetria`,
-  del Core) guarda solo el Lab de la piel, asi que solo se mueven las variables de
-  piel que salen de el (L, a, b, C, h, calidez, a/L, b/L). Cabello, ojos, contraste,
-  S y V no se mueven.
+- Solo se mueven los ejes medidos. La correccion (`correcciones_colorimetria`, del
+  Core) guarda el Lab de piel, cabello e iris que tenia el perfil; de ahi salen las
+  mismas variables que en la extraccion (`calcular_variables`), contraste incluido.
+  Si falta el cabello (o las correcciones viejas, que solo traen piel), sus ejes no
+  se mueven. S y V no salen del Lab: nunca se mueven.
 - Sin retroceso: la version nueva se evalua contra un conjunto fijo (JSON, ver
   `leer_conjunto`). Si la exactitud de la estacion o de una capa empeora mas de un
   punto, se descarta. Sin conjunto tambien se descarta: no se publica nada sin medir.
@@ -48,6 +49,8 @@ from app.centroides import COLECCION as COLECCION_CENTROIDES
 from app.centroides import RepositorioCentroides
 from app.clasificador import CAPAS, ESTACIONES, ClasificadorJerarquico
 from app.config import ajustes
+from app.extraccion.muestreo import Muestra
+from app.extraccion.variables import calcular_variables
 from app.jobs._runner import ResultadoJob, salir
 
 log = logging.getLogger(__name__)
@@ -60,9 +63,6 @@ MIN_CORRECCIONES_POR_ESTACION = 20
 TOPE_POR_EJE = 0.5
 MAX_RETROCESO = 0.01  # un punto de exactitud
 
-# Por debajo, a/L y b/L se disparan con el ruido (igual que en app/extraccion/variables.py).
-_L_MINIMA_PARA_RAZONES = 5.0
-
 
 def estacion_de(temporada: str | None) -> str | None:
     """La estacion de 4 a partir de lo que guarde el Core (`OTONO`, `otono_suave`, `Otoño`)."""
@@ -72,26 +72,36 @@ def estacion_de(temporada: str | None) -> str | None:
     return base if base in ESTACIONES else None
 
 
-def variables_de_piel(lab: Mapping | None) -> dict[str, float]:
-    """Las variables del clasificador que salen solo del Lab de la piel."""
+def _muestra(lab: Mapping | None) -> Muestra | None:
+    """Un Lab guardado como Muestra. S y V no salen del Lab: quedan en NaN y se descartan."""
     if not lab:
-        return {}
+        return None
     try:
-        luz, a, b = float(lab["l"]), float(lab["a"]), float(lab["b"])
+        return Muestra(float(lab["l"]), float(lab["a"]), float(lab["b"]), math.nan, math.nan, 0)
     except (KeyError, TypeError, ValueError):
-        return {}
-    variables = {
-        "piel_L": luz,
-        "piel_a": a,
-        "piel_b": b,
-        "piel_C": math.hypot(a, b),
-        "piel_h": math.degrees(math.atan2(b, a)) % 360,
-        "piel_calidez": b - a,
+        return None
+
+
+def variables_medidas(correccion: Mapping) -> dict[str, float]:
+    """Las variables del clasificador que salen de los colores de la correccion.
+
+    Usa `calcular_variables` de la extraccion para que sean exactamente las mismas, y
+    descarta las que quedan en NaN: lo que no se midio no se mueve. El Core llama
+    `iris` a lo que la extraccion llama `ojos`.
+    """
+    muestras = {
+        "piel": _muestra(correccion.get("piel")),
+        "cabello": _muestra(correccion.get("cabello")),
+        "ojos": _muestra(correccion.get("iris")),
     }
-    if luz >= _L_MINIMA_PARA_RAZONES:
-        variables["piel_a_L"] = a / luz
-        variables["piel_b_L"] = b / luz
-    return variables
+    if muestras["piel"] is None:
+        return {}
+    return {k: v for k, v in calcular_variables(muestras).items() if not math.isnan(v)}
+
+
+def variables_de_piel(lab: Mapping | None) -> dict[str, float]:
+    """Las variables que salen solo del Lab de la piel (correcciones sin cabello ni iris)."""
+    return variables_medidas({"piel": lab})
 
 
 def correcciones_nuevas(coleccion, marca: datetime | None) -> list[dict]:
@@ -121,7 +131,7 @@ def agrupar(correcciones: Iterable[dict]) -> dict[str, list[dict[str, float]]]:
     por_estacion: dict[str, list[dict[str, float]]] = defaultdict(list)
     for c in correcciones:
         estacion = estacion_de(c.get("temporada_confirmada"))
-        variables = variables_de_piel(c.get("piel"))
+        variables = variables_medidas(c)
         if estacion and variables:
             por_estacion[estacion].append(variables)
     return dict(por_estacion)
