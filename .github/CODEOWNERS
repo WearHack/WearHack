@@ -1,40 +1,47 @@
 # CODEOWNERS de WearHack
 #
-# Los equipos de aqui son PLACEHOLDERS. Hay que crearlos en la GitHub
-# Organization (Settings -> Teams) y darles permiso de lectura sobre el repo
-# antes de que GitHub los asigne como revisores automaticos.
+# Los Teams (`mobile`, `backend`, `ia`) son los de la guia del repositorio
+# (docs/guia-repositorio-wearhack.md). Los crea un admin en la Organization
+# (Settings -> Teams) y les da permiso de escritura sobre el repo. Hasta que
+# existan, GitHub ignora esas lineas sin romper nada: solo no asigna revisor.
 #
-# Somos 6 generalistas que rotamos entre servicios: estas reglas NO son
-# propiedad exclusiva, son "que alguien que conozca la zona mire el PR".
+# La infraestructura no espera a los Teams: va a nombre de Ivan, que es quien
+# la opera, y por eso funciona desde ya.
+#
+# Somos 6 generalistas que rotamos entre areas: estas reglas NO son propiedad
+# exclusiva, son "que alguien que conozca la zona mire el PR".
+#
+# Gana la ULTIMA regla que coincide con la ruta. Lo general va arriba.
 
 # Fallback: cualquier ruta no cubierta abajo
-*                           @WearHack/core
+*                               @WearHack/backend
 
 # Cliente movil y web
-/client/                    @WearHack/mobile
+/client/                        @WearHack/mobile
+/tools/captura/                 @WearHack/mobile
 
-# Entrada al sistema: ruteo, auth y control de acceso
-/gateway/                   @WearHack/backend @WearHack/seguridad
+# Core (Spring Modulith): usuarios, closet, outfits, publicidad y plataforma
+/services/core/                 @WearHack/backend
 
-# Servicios de negocio (Spring Boot)
-/services/pom.xml           @WearHack/backend
-/services/usuarios/         @WearHack/backend
-/services/closet/           @WearHack/backend
-/services/outfits/          @WearHack/backend
-/services/publicidad/       @WearHack/backend
+# Gateway y servicios Java previos al Core. Salen cuando el Core los sustituya
+/gateway/                       @WearHack/backend
+/services/pom.xml               @WearHack/backend
+/services/usuarios/             @WearHack/backend
+/services/closet/               @WearHack/backend
+/services/outfits/              @WearHack/backend
+/services/publicidad/           @WearHack/backend
 
-# Servicios de IA (FastAPI)
-/services/colorimetria/     @WearHack/ia
-/services/recomendador/     @WearHack/ia
-
-# Infraestructura, contenedores y datos
-/infra/                     @WearHack/infra
-/docker-compose.yml         @WearHack/infra
-/infra/local/mongo/         @WearHack/infra @WearHack/backend
-
-# CI/CD y reglas del repo: cambios aqui afectan a todo el mundo
-/.github/                   @WearHack/infra @WearHack/core
-/.github/CODEOWNERS         @WearHack/core
+# Servicios de IA (FastAPI), entrenamiento y analisis de color
+/services/colorimetria/         @WearHack/ia
+/services/recomendador/         @WearHack/ia
+/tools/entrenamiento/           @WearHack/ia
+/analisis/                      @WearHack/ia
 
 # Decisiones de arquitectura: las revisa todo el equipo
-/docs/adr/                  @WearHack/core
+/docs/adr/                      @WearHack/mobile @WearHack/backend @WearHack/ia
+
+# Infraestructura, contenedores y despliegue: aprobacion de Ivan (issue #61)
+/infra/                         @IvanCamiloCubillos13
+/docker-compose.yml             @IvanCamiloCubillos13
+/.github/workflows/             @IvanCamiloCubillos13
+/.github/CODEOWNERS             @IvanCamiloCubillos13
