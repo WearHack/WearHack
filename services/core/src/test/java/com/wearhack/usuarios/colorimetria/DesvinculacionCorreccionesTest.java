@@ -93,6 +93,19 @@ class DesvinculacionCorreccionesTest {
     }
 
     @Test
+    void desvincularConservaCabelloEIris() {
+        mongo.save(new CorreccionColorimetria("completa", "sub-ana", new Lab(61, 13, 18), new Lab(25, 4, 8),
+                new Lab(35, 2, 12), "OTONO", hace(40), null));
+
+        tarea.desvincular(AHORA);
+
+        CorreccionColorimetria correccion = mongo.findById("completa", CorreccionColorimetria.class);
+        assertThat(correccion.usuarioId()).isNull();
+        assertThat(correccion.cabello()).isEqualTo(new Lab(25, 4, 8));
+        assertThat(correccion.iris()).isEqualTo(new Lab(35, 2, 12));
+    }
+
+    @Test
     void cuentaUsuariosDistintosParaElLogDeLaCorrida() {
         guardar("ana-1", hace(31));
         guardar("ana-2", hace(40));
