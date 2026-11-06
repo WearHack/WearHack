@@ -1,5 +1,6 @@
 package com.wearhack.usuarios.api;
 
+import com.wearhack.usuarios.Plan;
 import com.wearhack.usuarios.perfil.PerfilService;
 import com.wearhack.usuarios.perfil.Usuario;
 import jakarta.validation.Valid;
@@ -71,7 +72,8 @@ class PerfilController {
             boolean mayorDeEdad,
             Instant mayoriaEdadDeclaradaEn,
             Instant creadoEn,
-            Instant actualizadoEn) {
+            Instant actualizadoEn,
+            Plan plan) {
 
         static PerfilRespuesta de(Usuario usuario) {
             return new PerfilRespuesta(
@@ -80,7 +82,8 @@ class PerfilController {
                     usuario.mayoriaEdadDeclaradaEn() != null,
                     usuario.mayoriaEdadDeclaradaEn(),
                     usuario.creadoEn(),
-                    usuario.actualizadoEn());
+                    usuario.actualizadoEn(),
+                    usuario.planVigente());
         }
     }
 }

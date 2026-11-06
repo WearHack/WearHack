@@ -1,5 +1,6 @@
 package com.wearhack.usuarios.perfil;
 
+import com.wearhack.usuarios.Plan;
 import java.time.Instant;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,6 +16,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
  * @param nombre como quiere que la app la llame. Opcional
  * @param mayoriaEdadDeclaradaEn cuando marco la casilla de mayoria de edad. Es una
  *     declaracion, no una verificacion; se guarda como evidencia y no cambia despues
+ * @param plan el nivel de suscripcion. {@code null} en los perfiles creados antes de que
+ *     existieran los planes: cuenta como {@link Plan#GRATIS}
  */
 @Document("usuarios")
 public record Usuario(
@@ -22,9 +25,19 @@ public record Usuario(
         String nombre,
         @Field("mayoria_edad_declarada_en") Instant mayoriaEdadDeclaradaEn,
         @Field("creado_en") Instant creadoEn,
-        @Field("actualizado_en") Instant actualizadoEn) {
+        @Field("actualizado_en") Instant actualizadoEn,
+        Plan plan) {
+
+    /** Un perfil nuevo: empieza en el plan gratis. */
+    public Usuario(String id, String nombre, Instant mayoriaEdadDeclaradaEn, Instant creadoEn, Instant actualizadoEn) {
+        this(id, nombre, mayoriaEdadDeclaradaEn, creadoEn, actualizadoEn, Plan.GRATIS);
+    }
+
+    public Plan planVigente() {
+        return plan == null ? Plan.GRATIS : plan;
+    }
 
     Usuario conNombre(String nuevoNombre, Instant ahora) {
-        return new Usuario(id, nuevoNombre, mayoriaEdadDeclaradaEn, creadoEn, ahora);
+        return new Usuario(id, nuevoNombre, mayoriaEdadDeclaradaEn, creadoEn, ahora, plan);
     }
 }
