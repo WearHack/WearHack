@@ -11,7 +11,11 @@ import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
+import 'package:wearhack/features/colorimetria/cliente_colorimetria.dart';
+import 'package:wearhack/features/colorimetria/conexion_core.dart';
+import 'package:wearhack/features/colorimetria/perfil_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
+import 'package:wearhack/features/colorimetria/repositorio_consentimiento_core.dart';
 import 'package:wearhack/features/cuenta/autenticacion.dart';
 import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/features/cuenta/ui/puerta_de_acceso.dart';
@@ -29,6 +33,12 @@ Future<void> main() async {
   // Sin User Pool en --dart-define la app arranca como antes, sin acceso. Ver
   // infra/cognito/README.md.
   Cuenta? cuenta;
+
+  // Con cuenta, el consentimiento y el analisis de colorimetria van al Core.
+  // Sin ella siguen siendo los falsos: no hay a quien atribuirselos.
+  final RepositorioFalso datos = RepositorioFalso();
+  RepositorioConsentimiento consentimiento = datos;
+  ServicioColorimetria? colorimetria;
   if (Configuracion.cognitoConfigurado) {
     final Autenticacion autenticacion = await AutenticacionAmplify.configurar(
       region: Configuracion.cognitoRegion,
@@ -44,6 +54,13 @@ Future<void> main() async {
         token: autenticacion.tokenDeAcceso,
       ),
     );
+    final ConexionCore conexion = ConexionCore(
+      cliente: http.Client(),
+      base: Configuracion.coreBase,
+      token: autenticacion.tokenDeAcceso,
+    );
+    consentimiento = RepositorioConsentimientoCore(conexion);
+    colorimetria = ClienteColorimetria(conexion);
   }
 
   // La cola se abre al arrancar y no al entrar en la pantalla: lo que quedo de
@@ -54,7 +71,6 @@ Future<void> main() async {
     capturaPrendas.cola.arrancar();
   }
 
-  final RepositorioFalso datos = RepositorioFalso();
   runApp(
     AplicacionWearHack(
       closet: datos,
@@ -62,7 +78,8 @@ Future<void> main() async {
       clima: datos,
       ubicacion: crearServicioUbicacion(),
       publicidad: datos,
-      consentimiento: datos,
+      consentimiento: consentimiento,
+      colorimetria: colorimetria,
       cuenta: cuenta,
       capturaPrendas: capturaPrendas,
     ),
@@ -86,6 +103,7 @@ class AplicacionWearHack extends StatelessWidget {
     required this.ubicacion,
     required this.publicidad,
     required this.consentimiento,
+    this.colorimetria,
     this.cuenta,
     this.capturaPrendas,
   });
@@ -96,6 +114,9 @@ class AplicacionWearHack extends StatelessWidget {
   final ServicioUbicacion ubicacion;
   final RepositorioPublicidad publicidad;
   final RepositorioConsentimiento consentimiento;
+
+  /// `null` sin cuenta: la foto se toma pero no se analiza.
+  final ServicioColorimetria? colorimetria;
 
   /// `null` cuando no hay User Pool configurado.
   final Cuenta? cuenta;
@@ -120,6 +141,7 @@ class AplicacionWearHack extends StatelessWidget {
       recortador: crearFaceCropper(),
       diagnostico: (_) => const PantallaEsqueleto(),
       capturaPrendas: capturaPrendas,
+      colorimetria: colorimetria,
     );
     return MaterialApp(
       title: 'WearHack',

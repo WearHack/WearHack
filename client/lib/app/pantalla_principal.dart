@@ -9,6 +9,7 @@ import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/closet/ui/pantalla_captura_prendas.dart';
 import 'package:wearhack/features/closet/ui/pantalla_closet.dart';
+import 'package:wearhack/features/colorimetria/perfil_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_colorimetria.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
@@ -35,6 +36,7 @@ class PantallaPrincipal extends StatefulWidget {
     this.recortador,
     this.diagnostico,
     this.capturaPrendas,
+    this.colorimetria,
   });
 
   final RepositorioCloset closet;
@@ -60,6 +62,9 @@ class PantallaPrincipal extends StatefulWidget {
   /// web, o sin `--dart-define=CAPTURA_PRENDAS=true`. Con ella, el closet
   /// muestra el boton de agregar prendas.
   final CapturaDePrendas? capturaPrendas;
+
+  /// El analisis de colorimetria contra el Core, o `null` sin cuenta.
+  final ServicioColorimetria? colorimetria;
 
   @override
   State<PantallaPrincipal> createState() => _PantallaPrincipalState();
@@ -136,6 +141,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 capturaDisponible: widget.capturaRostroDisponible,
                 crearCamara: widget.crearCamara,
                 recortador: widget.recortador,
+                servicio: widget.colorimetria,
               ),
             ),
           ),
