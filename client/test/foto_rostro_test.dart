@@ -16,8 +16,10 @@ import 'package:wearhack/core/color/perfil_icc.dart';
 import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/core/recorte/controles_calidad.dart';
 import 'package:wearhack/features/colorimetria/consentimiento.dart';
+import 'package:wearhack/features/colorimetria/perfil_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_foto_rostro.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
@@ -82,6 +84,47 @@ class _RecortadorFalso implements FaceCropper {
     return resultado;
   }
 }
+
+/// El Core falso de la pantalla de colorimetria: responde, en orden, lo que se
+/// le haya puesto en [respuestas] (un perfil, o algo que lanzar).
+class _ServicioFalso implements ServicioColorimetria {
+  _ServicioFalso({this.guardado, List<Object>? respuestas})
+    : respuestas = respuestas ?? <Object>[];
+
+  PerfilColorimetria? guardado;
+  final List<Object> respuestas;
+
+  /// Lo que recibio `analizar`: debe ser siempre el recorte.
+  final List<Uint8List> recibidos = <Uint8List>[];
+  int borrados = 0;
+
+  @override
+  Future<PerfilColorimetria> analizar(Uint8List png) async {
+    recibidos.add(png);
+    final Object r = respuestas.removeAt(0);
+    if (r is PerfilColorimetria) return r;
+    throw r;
+  }
+
+  @override
+  Future<PerfilColorimetria?> perfil() async => guardado;
+
+  @override
+  Future<void> borrarPerfil() async {
+    borrados++;
+    guardado = null;
+  }
+}
+
+const PerfilColorimetria _primavera = PerfilColorimetria(
+  temporada: 'primavera_clara',
+  confianza: 0.82,
+  piel: null,
+  cabello: null,
+  iris: null,
+  ejes: <String>['calido'],
+  calculadoEn: null,
+);
 
 RecorteFacial _recorte({
   List<ControlCalidad> fallidos = const <ControlCalidad>[],
@@ -497,6 +540,149 @@ void main() {
       );
       expect(boton, findsOneWidget);
       expect(tester.widget<FilledButton>(boton).onPressed, isNull);
+    });
+  });
+
+  group('analisis del recorte desde la pantalla de colorimetria', () {
+    Future<void> montar(
+      WidgetTester tester, {
+      required _ServicioFalso servicio,
+      required RecorteFacial recorte,
+    }) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PantallaColorimetria(
+            repositorio: RepositorioFalso(
+              latencia: Duration.zero,
+              consentimiento: _autorizo(),
+            ),
+            capturaDisponible: true,
+            crearCamara: _CamaraFalsa.new,
+            recortador: _RecortadorFalso(resultado: recorte),
+            servicio: servicio,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> tomarYUsarLaFoto(WidgetTester tester) async {
+      await tester.tap(find.text('Tomar la foto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tomar foto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Usar esta foto'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('manda al servicio el recorte, nunca la foto completa', (
+      WidgetTester tester,
+    ) async {
+      final RecorteFacial recorte = _recorte();
+      final _ServicioFalso servicio = _ServicioFalso(
+        respuestas: <Object>[_primavera],
+      );
+      await montar(tester, servicio: servicio, recorte: recorte);
+
+      await tomarYUsarLaFoto(tester);
+
+      expect(servicio.recibidos, hasLength(1));
+      expect(servicio.recibidos.single, recorte.png);
+      expect(servicio.recibidos.single, isNot(_CamaraFalsa.bytesDeLaFoto));
+      expect(find.byKey(const Key('perfil_colorimetria')), findsOneWidget);
+      expect(find.text('Primavera clara'), findsOneWidget);
+      expect(find.text('Confianza: 82 %'), findsOneWidget);
+    });
+
+    testWidgets('si ya hay un resultado guardado, se ve al abrir', (
+      WidgetTester tester,
+    ) async {
+      await montar(
+        tester,
+        servicio: _ServicioFalso(guardado: _primavera),
+        recorte: _recorte(),
+      );
+
+      expect(find.text('Primavera clara'), findsOneWidget);
+      expect(find.text('Otra foto'), findsOneWidget);
+    });
+
+    testWidgets('borrar el resultado pide confirmacion y lo quita', (
+      WidgetTester tester,
+    ) async {
+      final _ServicioFalso servicio = _ServicioFalso(guardado: _primavera);
+      await montar(tester, servicio: servicio, recorte: _recorte());
+
+      await tester.tap(find.text('Borrar mi resultado'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(servicio.borrados, 0);
+
+      await tester.tap(find.text('Borrar mi resultado'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Borrar'));
+      await tester.pumpAndSettle();
+
+      expect(servicio.borrados, 1);
+      expect(find.byKey(const Key('perfil_colorimetria')), findsNothing);
+    });
+
+    testWidgets('un 422 muestra el motivo y pide otra foto, sin reintentar', (
+      WidgetTester tester,
+    ) async {
+      final _ServicioFalso servicio = _ServicioFalso(
+        respuestas: <Object>[
+          ErrorDelCore(422, 'No se ve el rostro: repite la foto'),
+        ],
+      );
+      await montar(tester, servicio: servicio, recorte: _recorte());
+
+      await tomarYUsarLaFoto(tester);
+
+      expect(find.text('No se ve el rostro: repite la foto'), findsOneWidget);
+      expect(find.text('Reintentar'), findsNothing);
+      expect(find.byKey(const Key('perfil_colorimetria')), findsNothing);
+    });
+
+    testWidgets(
+      'con el servicio caido (503) se reintenta con el mismo recorte',
+      (WidgetTester tester) async {
+        final RecorteFacial recorte = _recorte();
+        final _ServicioFalso servicio = _ServicioFalso(
+          respuestas: <Object>[ErrorDelCore(503, 'x'), _primavera],
+        );
+        await montar(tester, servicio: servicio, recorte: recorte);
+
+        await tomarYUsarLaFoto(tester);
+        expect(find.textContaining('no está disponible'), findsOneWidget);
+
+        await tester.tap(find.text('Reintentar'));
+        await tester.pumpAndSettle();
+
+        expect(servicio.recibidos, hasLength(2));
+        expect(servicio.recibidos.last, recorte.png);
+        expect(find.text('Primavera clara'), findsOneWidget);
+        expect(find.text('Reintentar'), findsNothing);
+      },
+    );
+
+    testWidgets('sin red se puede reintentar', (WidgetTester tester) async {
+      final _ServicioFalso servicio = _ServicioFalso(
+        respuestas: <Object>[Exception('sin red'), _primavera],
+      );
+      await montar(tester, servicio: servicio, recorte: _recorte());
+
+      await tomarYUsarLaFoto(tester);
+      expect(find.textContaining('No pudimos conectar'), findsOneWidget);
+
+      await tester.tap(find.text('Reintentar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Primavera clara'), findsOneWidget);
     });
   });
 }
