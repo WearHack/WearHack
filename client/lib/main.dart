@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:wearhack/app/pantalla_principal.dart';
+import 'package:wearhack/app/tema.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
@@ -145,7 +146,8 @@ class AplicacionWearHack extends StatelessWidget {
     );
     return MaterialApp(
       title: 'WearHack',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+      theme: TemaWearHack.claro,
+      darkTheme: TemaWearHack.oscuro,
       home: cuenta == null
           ? app
           : PuertaDeAcceso(
