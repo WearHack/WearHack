@@ -31,6 +31,10 @@ services:
       COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_IDS: ${COGNITO_CLIENT_IDS:-}
+      # Imagenes de prendas en S3 de verdad. Sin S3_ENDPOINT ni claves, el SDK usa la
+      # region y el rol de la EC2 (LabRole). El bucket lo crea crear-host.sh.
+      S3_REGION: us-east-1
+      S3_BUCKET_PRENDAS: ${S3_BUCKET_PRENDAS}
     depends_on:
       colorimetria:
         condition: service_started
