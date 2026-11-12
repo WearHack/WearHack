@@ -132,6 +132,12 @@
       <artifactId>testcontainers-mongodb</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- MinIO real para la subida y las URLs firmadas de las imagenes del closet. -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-minio</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-junit-jupiter</artifactId>
