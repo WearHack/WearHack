@@ -7,12 +7,14 @@ library;
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:wearhack/features/cuenta/plan.dart';
 
 class PerfilUsuario {
   const PerfilUsuario({
     required this.id,
     required this.nombre,
     required this.mayoriaEdadDeclaradaEn,
+    this.plan = Plan.gratis,
   });
 
   factory PerfilUsuario.desdeJson(Map<String, dynamic> json) => PerfilUsuario(
@@ -21,11 +23,13 @@ class PerfilUsuario {
     mayoriaEdadDeclaradaEn: DateTime.parse(
       json['mayoriaEdadDeclaradaEn'] as String,
     ),
+    plan: Plan.desdeCore(json['plan']),
   );
 
   final String id;
   final String? nombre;
   final DateTime mayoriaEdadDeclaradaEn;
+  final Plan plan;
 }
 
 /// Una respuesta de error del Core, con su mensaje.
@@ -34,6 +38,9 @@ class ErrorDelCore implements Exception {
 
   final int estado;
   final String mensaje;
+
+  /// 429: se acabaron las solicitudes de IA del plan este mes.
+  bool get esCuotaAgotada => estado == 429;
 
   @override
   String toString() => mensaje;
@@ -83,6 +90,20 @@ class ClienteUsuarios {
       }),
     );
     return _perfilDe(respuesta);
+  }
+
+  /// El plan y la cuota de IA que queda este mes.
+  Future<EstadoPlan> plan() async {
+    final http.Response respuesta = await cliente.get(
+      Uri.parse('$base/api/v1/usuarios/me/plan'),
+      headers: await _cabeceras(),
+    );
+    if (respuesta.statusCode != 200) {
+      throw ErrorDelCore(respuesta.statusCode, _mensaje(respuesta));
+    }
+    return EstadoPlan.desdeJson(
+      jsonDecode(respuesta.body) as Map<String, dynamic>,
+    );
   }
 
   Future<Map<String, String>> _cabeceras() async => <String, String>{
