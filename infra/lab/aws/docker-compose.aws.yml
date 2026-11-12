@@ -1,0 +1,80 @@
+# Despliegue del monolito en la EC2 del Learner Lab (#60, #20).
+# desplegar.sh lo copia a la raiz del checkout: las rutas de build son relativas a ella.
+# Mongo es Atlas (URIs en .env, desde SSM). Sin MinIO ni collector: el Core aun no
+# usa S3 y no hay donde mandar trazas. Solo Caddy publica puertos (80/443).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-sin-otel: &sin-otel
+  OTEL_SDK_DISABLED: "true"
+  OTEL_TRACES_EXPORTER: none
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+  MANAGEMENT_TRACING_ENABLED: "false"
+  MANAGEMENT_OTLP_TRACING_EXPORT_ENABLED: "false"
+  MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+
+services:
+  core:
+    build: ./services/core
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      <<: *sin-otel
+      OTEL_SERVICE_NAME: core
+      SERVER_PORT: 8090
+      LOG_LEVEL: INFO
+      MONGO_URI: ${MONGODB_URI_CORE}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_CLIENT_IDS: ${COGNITO_CLIENT_IDS:-}
+    depends_on:
+      colorimetria:
+        condition: service_started
+
+  colorimetria:
+    build: ./services/colorimetria
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      <<: *sin-otel
+      SERVICIO: colorimetria
+      SERVER_PORT: 8091
+      ENTORNO: lab
+      LOG_LEVEL: INFO
+      MONGO_URI: ${MONGODB_URI_COLORIMETRIA}
+
+  recomendador:
+    build: ./services/recomendador
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      <<: *sin-otel
+      SERVICIO: recomendador
+      SERVER_PORT: 8092
+      ENTORNO: lab
+      LOG_LEVEL: INFO
+      MONGO_URI: ${MONGODB_URI_RECOMENDACION}
+
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-datos:/data
+      - caddy-config:/config
+    depends_on:
+      - core
+
+volumes:
+  caddy-datos:
+  caddy-config:
