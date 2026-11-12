@@ -63,44 +63,31 @@ services:
       retries: 12
       start_period: 20s
 
-  minio:
-    # MinIO dejo de publicar en Docker Hub: quay.io es el registro oficial.
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  s3:
+    # S3 local: Adobe S3Mock. MinIO dejo de publicar imagenes (quay.io responde 401 y Docker
+    # Hub ya no las tiene). S3Mock crea los buckets al arrancar y no valida firmas ni
+    # claves: en AWS el que exige la URL firmada es S3.
+    image: adobe/s3mock:5.2.3
+    # La imagen corre como un usuario sin permisos sobre el volumen nuevo: sin root no puede
+    # escribir en /data y responde 500. Es solo el S3 de desarrollo local.
+    user: "0"
     restart: unless-stopped
     networks: [wearhack]
     logging: *logging
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-wearhack}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-wearhack_local_dev}
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: ${S3_BUCKET_PRENDAS:-wearhack-prendas},${S3_BUCKET_ROSTROS:-wearhack-rostros}
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /data
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${S3_PORT:-9000}:9090"
     volumes:
-      - minio-datos:/data
+      - s3-datos:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090/"]
       interval: 5s
       timeout: 5s
       retries: 12
       start_period: 10s
-
-  # Contenedor de un solo uso: crea los buckets y se apaga.
-  minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
-    networks: [wearhack]
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
-      S3_BUCKET_PRENDAS: ${S3_BUCKET_PRENDAS:-wearhack-prendas}
-      S3_BUCKET_ROSTROS: ${S3_BUCKET_ROSTROS:-wearhack-rostros}
-    volumes:
-      - ./infra/local/minio/init.sh:/init.sh:ro
-    entrypoint: ["/bin/sh", "/init.sh"]
 
   # --------------------------------------------------------- observabilidad ---
   otel-collector:
@@ -157,7 +144,7 @@ services:
       SERVER_PORT: 8081
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       MONGO_URI: ${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}
-      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:9090}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
     ports:
@@ -240,7 +227,7 @@ services:
       # Imagenes de prendas del closet (S3_ENDPOINT y las claves vienen de entorno-negocio).
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET_PRENDAS: ${S3_BUCKET_PRENDAS:-wearhack-prendas}
-      # Las URLs firmadas las abre el telefono, que no conoce el nombre minio. En el emulador
+      # Las URLs firmadas las abre el telefono, que no conoce el nombre s3. En el emulador
       # de Android el host es 10.0.2.2; en un telefono fisico, la IP del equipo en la red.
       S3_ENDPOINT_PUBLICO: ${S3_ENDPOINT_PUBLICO:-http://localhost:9000}
     ports:
@@ -250,8 +237,8 @@ services:
         condition: service_started
       mongo:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      s3:
+        condition: service_healthy
 
   # -------------------------------------------------- servicios de IA (Python) ---
   colorimetria:
@@ -265,7 +252,7 @@ services:
       ENTORNO: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       MONGO_URI: ${MONGODB_URI_COLORIMETRIA:-${MONGO_URI:-mongodb://wearhack:wearhack_local_dev@mongo:27017/wearhack?authSource=admin}}
-      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:9090}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-wearhack}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-wearhack_local_dev}
       S3_BUCKET_ROSTROS: ${S3_BUCKET_ROSTROS:-wearhack-rostros}
@@ -276,8 +263,8 @@ services:
         condition: service_started
       mongo:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      s3:
+        condition: service_healthy
 
   recomendador:
     <<: *servicio
@@ -349,4 +336,4 @@ networks:
 
 volumes:
   mongo-datos:
-  minio-datos:
+  s3-datos:

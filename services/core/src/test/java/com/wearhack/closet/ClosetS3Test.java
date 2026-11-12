@@ -28,8 +28,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -38,8 +39,12 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 /**
- * El camino completo de la imagen contra un MinIO real (issue #25): sube con el PUT, se descarga
+ * El camino completo de la imagen contra un S3 local (issue #25): sube con el PUT, se descarga
  * con la URL firmada del GET sin credenciales, y desaparece al eliminar la cuenta.
+ *
+ * <p>El S3 es Adobe S3Mock: MinIO dejo de publicar imagenes (quay.io responde 401 y Docker Hub ya
+ * no las tiene). S3Mock no valida firmas, asi que aqui se comprueba que la URL viene firmada; que
+ * el bucket rechace una URL sin firma lo garantiza S3 en AWS.
  *
  * <p>Lo unico simulado es el token: en local no hay User Pool de Cognito.
  */
@@ -52,16 +57,15 @@ class ClosetS3Test {
     private static final String SUB = "sub-closet-s3";
     private static final String ID = "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
     private static final String BUCKET = "wearhack-prendas-test";
-    private static final String USUARIO = "minio-prueba";
-    private static final String CLAVE = "minio-prueba-secreta";
+    private static final String USUARIO = "s3-prueba";
+    private static final String CLAVE = "s3-prueba-secreta";
     private static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 42, 7, 13};
 
     /** La misma imagen que el compose, para no bajar otra. */
-    private static final MinIOContainer MINIO = new MinIOContainer(
-            DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
-                    .asCompatibleSubstituteFor("minio/minio"))
-            .withUserName(USUARIO)
-            .withPassword(CLAVE);
+    private static final GenericContainer<?> S3 = new GenericContainer<>(
+            DockerImageName.parse("adobe/s3mock:5.2.3"))
+            .withExposedPorts(9090)
+            .waitingFor(Wait.forHttp("/").forPort(9090));
 
     private static S3Client s3;
 
@@ -75,10 +79,10 @@ class ClosetS3Test {
     private ApplicationEventPublisher eventos;
 
     @DynamicPropertySource
-    static void minio(DynamicPropertyRegistry propiedades) {
-        MINIO.start();
-        propiedades.add("wearhack.closet.imagenes.endpoint", MINIO::getS3URL);
-        propiedades.add("wearhack.closet.imagenes.endpoint-publico", MINIO::getS3URL);
+    static void s3(DynamicPropertyRegistry propiedades) {
+        S3.start();
+        propiedades.add("wearhack.closet.imagenes.endpoint", ClosetS3Test::urlS3);
+        propiedades.add("wearhack.closet.imagenes.endpoint-publico", ClosetS3Test::urlS3);
         propiedades.add("wearhack.closet.imagenes.bucket", () -> BUCKET);
         propiedades.add("wearhack.closet.imagenes.access-key", () -> USUARIO);
         propiedades.add("wearhack.closet.imagenes.secret-key", () -> CLAVE);
@@ -87,9 +91,9 @@ class ClosetS3Test {
     @BeforeAll
     static void crearBucket() {
         // Corre antes que el contexto de Spring; start() no hace nada si ya esta arriba.
-        MINIO.start();
+        S3.start();
         s3 = S3Client.builder()
-                .endpointOverride(URI.create(MINIO.getS3URL()))
+                .endpointOverride(URI.create(urlS3()))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(USUARIO, CLAVE)))
                 .forcePathStyle(true)
@@ -100,7 +104,11 @@ class ClosetS3Test {
     @AfterAll
     static void cerrar() {
         s3.close();
-        MINIO.stop();
+        S3.stop();
+    }
+
+    private static String urlS3() {
+        return "http://" + S3.getHost() + ":" + S3.getMappedPort(9090);
     }
 
     @Test
@@ -132,11 +140,8 @@ class ClosetS3Test {
             assertThat(descarga.statusCode()).isEqualTo(200);
             assertThat(descarga.body()).isEqualTo(PNG);
 
-            // Sin la firma, el bucket privado no la entrega.
-            String sinFirma = url.substring(0, url.indexOf('?'));
-            HttpResponse<byte[]> anonima = http.send(
-                    HttpRequest.newBuilder(URI.create(sinFirma)).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
-            assertThat(anonima.statusCode()).isEqualTo(403);
+            // Es una URL firmada y de corta duracion, no un enlace publico.
+            assertThat(url).contains("X-Amz-Signature=", "X-Amz-Expires=");
         }
 
         eventos.publishEvent(new CuentaEliminada(SUB));

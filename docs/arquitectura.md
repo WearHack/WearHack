@@ -194,7 +194,7 @@ flowchart LR
 | colorimetria | 8091 |
 | recomendador | 8092 |
 | MongoDB | 27017 |
-| MinIO | 9000, consola en 9001 |
+| S3 local (S3Mock) | 9000 |
 | OpenTelemetry Collector | 4317 gRPC, 4318 HTTP |
 
 Solo el 8080 hace falta. Los demas se publican para poder depurar un servicio
