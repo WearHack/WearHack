@@ -36,6 +36,19 @@ wearhack:
       dias-maximos: 30
     colorimetria:
       max-recorte-bytes: 5242880
+  closet:
+    imagenes:
+      bucket: ${S3_BUCKET_PRENDAS:wearhack-prendas}
+      region: ${S3_REGION:us-east-1}
+      # Vacio en AWS: usa el de la region y las credenciales del rol de la tarea.
+      endpoint: ${S3_ENDPOINT:}
+      # El que firma las URLs que abre el telefono. En local MinIO es minio:9000 para el
+      # Core, pero el telefono tiene que llegar por otro nombre.
+      endpoint-publico: ${S3_ENDPOINT_PUBLICO:}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      max-bytes: 5242880
+      url-minutos: 15
 
 management:
   endpoints:

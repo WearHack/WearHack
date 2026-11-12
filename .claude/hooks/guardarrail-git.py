@@ -49,7 +49,7 @@ REGLAS = [
     (
         re.compile(INICIO + r"docker\s+compose\s+down\b[^;&|]*(?:-v\b|--volumes\b)"),
         "Eso borra los volumenes: se lleva por delante los datos de Mongo y "
-        "los buckets de MinIO. Usa 'docker compose down' a secas salvo que "
+        "los archivos del S3 local. Usa 'docker compose down' a secas salvo que "
         "alguien pida empezar de cero. Ver AGENTS.md.",
     ),
 ]

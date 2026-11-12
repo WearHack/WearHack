@@ -36,7 +36,7 @@ def bloque_del_gateway(compose: str) -> str:
 
 
 def puertos_de_servicios(env_example: str) -> dict[str, int]:
-    """Los puertos 8080..8999 de .env.example. Excluye Mongo, MinIO y el collector."""
+    """Los puertos 8080..8999 de .env.example. Excluye Mongo, el S3 local y el collector."""
     puertos = {}
     for m in re.finditer(r"(?m)^([A-Z]+)_PORT=(\d+)\s*$", env_example):
         puerto = int(m.group(2))

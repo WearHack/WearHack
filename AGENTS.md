@@ -165,7 +165,7 @@ carpeta creada.
 | colorimetria | 8091 |
 | recomendador | 8092 |
 | MongoDB | 27017 |
-| MinIO | 9000, consola 9001 |
+| S3 local (S3Mock) | 9000 |
 | OpenTelemetry Collector | 4317 gRPC, 4318 HTTP |
 
 ---
@@ -177,7 +177,7 @@ create`. Un cambio a mano se pierde en la siguiente regeneracion. Si hace falta
 tocarlos, dilo y que quede anotado.
 
 **`docker compose down -v` borra los volumenes.** Se lleva por delante los datos
-de Mongo y los buckets de MinIO. Usa `down` a secas salvo que alguien pida
+de Mongo y los archivos del S3 local. Usa `down` a secas salvo que alguien pida
 explicitamente empezar de cero.
 
 **`.env`** tiene credenciales locales. No lo leas ni lo imprimas.

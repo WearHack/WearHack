@@ -6,7 +6,7 @@ Es el recorrido que se hizo a mano al montar el esqueleto, empaquetado:
   2. todos los contenedores estan sanos
   3. cada servicio responde /api/v1/<servicio>/health A TRAVES DEL GATEWAY
   4. las trazas llegan al collector
-  5. los buckets de MinIO existen
+  5. los buckets del S3 local (S3Mock) existen
   6. MongoDB tiene sus colecciones y el indice compuesto de prendas
 
 Solo lee. No levanta, no para y no borra nada: si el entorno no esta arriba, lo
@@ -39,13 +39,13 @@ RAIZ_COMPOSE = None  # se ejecuta desde la raiz del repo, donde vive docker-comp
 # /api/v1/<nombre>/health. El Core tampoco: no va detras del gateway, se le pega
 # directo (ver la seccion 3b). Mientras convivan el Core y los servicios viejos, esta
 # lista cambia; cuando el gateway desaparezca, este script se reescribe.
-INFRA = {"mongo", "minio", "minio-init", "otel-collector", "gateway", "core"}
+INFRA = {"mongo", "s3", "otel-collector", "gateway", "core"}
 
 # Modulos del Core. Cada uno responde /api/v1/<modulo>/health en el propio Core.
 MODULOS_DEL_CORE = ("usuarios", "closet", "outfits", "publicidad")
 
-# minio-init es un contenedor de un solo uso: termina y es lo esperado
-UN_SOLO_USO = {"minio-init"}
+# Contenedores de un solo uso: terminan y es lo esperado. Hoy no hay ninguno.
+UN_SOLO_USO: set[str] = set()
 
 COLECCIONES = {
     "usuarios", "prendas", "outfits", "selecciones",
@@ -216,17 +216,18 @@ def main() -> int:
     cfg = compose("config", "--format", "json")
     if cfg.returncode == 0:
         try:
-            env = json.loads(cfg.stdout)["services"]["minio-init"]["environment"]
-            buckets = [env[k] for k in ("S3_BUCKET_PRENDAS", "S3_BUCKET_ROSTROS") if k in env]
+            env = json.loads(cfg.stdout)["services"]["s3"]["environment"]
+            buckets = [b for b in env["COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS"].split(",") if b]
         except (KeyError, ValueError):
             pass
-    log_minio = compose("logs", "minio-init").stdout
+    # S3Mock no pide credenciales: la raiz lista los buckets.
+    lista = compose("exec", "-T", "s3", "wget", "-q", "-O", "-", "http://localhost:9090/").stdout
     if not buckets:
-        anotar("buckets de MinIO", False, "no se pudieron resolver los nombres desde el compose")
+        anotar("buckets del S3 local", False, "no se pudieron resolver los nombres desde el compose")
     else:
         for b in buckets:
-            anotar(f"bucket {b}", b in log_minio and "Buckets listos" in log_minio,
-                   "" if b in log_minio else "minio-init no lo menciona")
+            presente = f"<Name>{b}</Name>" in lista
+            anotar(f"bucket {b}", presente, "" if presente else "S3Mock no lo lista")
 
     # 6. Mongo. Las credenciales son las del propio contenedor: no pasan por aqui.
     js = ("const b=db.getSiblingDB(process.env.MONGO_DB);"

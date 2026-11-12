@@ -13,6 +13,14 @@ wearhack:
       cron: "-"
     colorimetria:
       max-recorte-bytes: 5242880
+  closet:
+    imagenes:
+      # Las pruebas reemplazan AlmacenImagenes por un mock: esto solo deja construir el cliente.
+      bucket: wearhack-prendas-test
+      endpoint: http://localhost:9
+      access-key: prueba
+      secret-key: prueba
+      max-bytes: 1024
   ia:
     colorimetria:
       url: ${COLORIMETRIA_URL:http://colorimetria:8091}

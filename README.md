@@ -27,8 +27,8 @@ docker compose up -d
 curl -s localhost:8080/api/v1/usuarios/health
 ```
 
-Eso levanta los siete servicios, MongoDB con sus colecciones e indices, MinIO
-con sus buckets y el collector de OpenTelemetry.
+Eso levanta los siete servicios, MongoDB con sus colecciones e indices, el S3 local
+(S3Mock) con sus buckets y el collector de OpenTelemetry.
 
 Para comprobar los seis servicios de una vez:
 
@@ -79,7 +79,7 @@ captura esta aislado tras un import condicional, y un import mal colocado rompe
 | `services/publicidad/` | Catalogo de marcas aliadas |
 | `services/colorimetria/` | Temporada de color por nearest-centroid |
 | `services/recomendador/` | Motor combinatorio de outfits |
-| `infra/local/` | Init de Mongo, buckets de MinIO y config del collector |
+| `infra/local/` | Init de Mongo y config del collector |
 | `infra/terraform/` | Infraestructura de AWS. Pendiente |
 | `docs/` | Arquitectura y decisiones |
 

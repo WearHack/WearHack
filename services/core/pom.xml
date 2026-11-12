@@ -91,6 +91,11 @@
       <artifactId>cognitoidentityprovider</artifactId>
     </dependency>
     <dependency>
+      <!-- Las imagenes de prendas del closet. MinIO en local, S3 en AWS. -->
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+    </dependency>
+    <dependency>
       <groupId>net.logstash.logback</groupId>
       <artifactId>logstash-logback-encoder</artifactId>
       <version>${logstash-logback-encoder.version}</version>
