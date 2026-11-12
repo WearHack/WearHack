@@ -17,10 +17,13 @@ AWS en GitHub.
 |---|---|---|
 | `secretos.sh` | CloudShell | URIs de Atlas a SSM (SecureString) y borra el archivo |
 | `cognito.sh` | CloudShell | User Pool y app client; IDs a SSM |
-| `crear-host.sh` | CloudShell | Security group (80/443, sin 22), EC2 t3.large, IP elastica |
+| `crear-host.sh` | CloudShell | Bucket de prendas, security group (80/443, sin 22), EC2 t3.large, IP elastica |
 | `instalar-host.sh` | EC2, user-data | Docker, Compose, git, clona el repo, timer, primer despliegue |
 | `desplegar.sh` | EC2, timer | Pull de `develop`, `.env` desde SSM, `compose up --build`, rollback |
 | `docker-compose.aws.yml`, `Caddyfile` | EC2 | Servicios y proxy. Solo Caddy publica puertos |
+
+Las imagenes de prendas van a `wearhack-prendas-<cuenta>` (privado, solo URLs firmadas).
+El Core entra con el rol de la EC2 (`LabRole`), sin claves.
 
 Atlas da las URIs sin base y el Core la exige (`Database name must not be empty`):
 `desplegar.sh` le agrega `/<MONGODB_DB>`.

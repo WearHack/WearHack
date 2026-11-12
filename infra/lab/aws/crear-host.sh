@@ -1,10 +1,18 @@
 #!/bin/bash
 # Corre en CloudShell, desde la carpeta infra/lab/aws. Crea security group, EC2 e IP
-# elastica. Reusa el SG, la instancia "wearhack-core" y la IP si ya existen.
+# elastica, y el bucket de imagenes de prendas. Reusa lo que ya exista.
 #
 # Antes: secretos.sh (URIs de Atlas y token de GitHub en SSM) y cognito.sh.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# Bucket privado de imagenes de prendas. El nombre lleva la cuenta: es global en S3.
+CUENTA=$(aws sts get-caller-identity --query Account --output text)
+BUCKET=wearhack-prendas-$CUENTA
+if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+  aws s3api create-bucket --bucket "$BUCKET" --region us-east-1 >/dev/null
+fi
+aws s3api put-public-access-block --bucket "$BUCKET" --public-access-block-configuration   BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
 VPC=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
 SG=$(aws ec2 describe-security-groups --filters Name=group-name,Values=wearhack-core Name=vpc-id,Values="$VPC" \

@@ -52,6 +52,16 @@ fi
 log "desplegando $RAMA ${ANTES:0:7} -> ${NUEVO:0:7}"
 git_ reset --quiet --hard "$NUEVO"
 
+# Si el commit trae otra version de este script, se corre esa (con lo que ya se trajo).
+if ! cmp -s "$AWS_DIR/desplegar.sh" "$BASE/desplegar.sh" && [ -z "${REEJECUTADO:-}" ]; then
+  install -m 755 "$AWS_DIR/desplegar.sh" "$BASE/desplegar.sh"
+  log "desplegar.sh cambio, se relanza"
+  exec 9>&-
+  ANTES_DESPLIEGUE=$ANTES REEJECUTADO=1 FORZAR=1 exec "$BASE/desplegar.sh"
+fi
+# Tras relanzarse, el checkout ya esta en el commit nuevo: el anterior es el de antes.
+ANTES=${ANTES_DESPLIEGUE:-$ANTES}
+
 # El compose y el Caddyfile se copian a la raiz del checkout: sus rutas de build
 # (./services/...) son relativas a ella. Quedan fuera de git por info/exclude.
 for f in docker-compose.aws.yml Caddyfile; do cp "$AWS_DIR/$f" "$REPO/$f"; done
@@ -61,10 +71,12 @@ grep -qx '/docker-compose.aws.yml' "$REPO/.git/info/exclude" 2>/dev/null || \
 TOKEN=$(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 300')
 IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
 DB=$(leer MONGODB_DB); DB=${DB:-wearhack}
+CUENTA=$(aws sts get-caller-identity --query Account --output text)
 umask 077
 {
   echo "DOMINIO=$(echo "$IP" | tr . -).sslip.io"
   echo "MONGODB_DB=$DB"
+  echo "S3_BUCKET_PRENDAS=wearhack-prendas-$CUENTA"
   for n in MONGODB_URI_CORE MONGODB_URI_COLORIMETRIA MONGODB_URI_RECOMENDACION MONGODB_URI_JOBS; do
     v=$(leer "$n")
     [ -n "$v" ] && v=$(con_base "$v" "$DB")
