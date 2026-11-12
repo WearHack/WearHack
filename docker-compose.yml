@@ -237,6 +237,12 @@ services:
       COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_IDS: ${COGNITO_CLIENT_IDS:-}
+      # Imagenes de prendas del closet (S3_ENDPOINT y las claves vienen de entorno-negocio).
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET_PRENDAS: ${S3_BUCKET_PRENDAS:-wearhack-prendas}
+      # Las URLs firmadas las abre el telefono, que no conoce el nombre minio. En el emulador
+      # de Android el host es 10.0.2.2; en un telefono fisico, la IP del equipo en la red.
+      S3_ENDPOINT_PUBLICO: ${S3_ENDPOINT_PUBLICO:-http://localhost:9000}
     ports:
       - "${CORE_PORT:-8090}:8090"
     depends_on:
@@ -244,6 +250,8 @@ services:
         condition: service_started
       mongo:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # -------------------------------------------------- servicios de IA (Python) ---
   colorimetria:
