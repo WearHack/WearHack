@@ -5,7 +5,6 @@
 /// se rompiera, `flutter build web` fallaria en CI.
 library;
 
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:wearhack/core/color/color_base.dart';
