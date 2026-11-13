@@ -8,6 +8,7 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/atributos_c18.dart';
 import 'package:wearhack/core/recorte/recortador_facial.dart';
 import 'package:wearhack/core/vocabulario.dart';
 
@@ -15,23 +16,38 @@ export 'package:wearhack/core/recorte/recortador_facial.dart'
     show CajaRostro, RecorteFacial;
 
 /// Lo que el pipeline on-device saca de la foto de una prenda.
+///
+/// Tipo, patron y textura van en el vocabulario de C.18 ([TipoC18] y compania),
+/// que es el que valida el Closet del Core.
 class PrendaClasificada {
   const PrendaClasificada({
     required this.imagenSinFondo,
     required this.tipo,
-    required this.textura,
+    required this.confianzaTipo,
     required this.patron,
+    required this.confianzaPatron,
     required this.color,
     required this.categoriaColor,
+    this.textura,
   });
 
   /// PNG con transparencia: la prenda ya recortada del fondo.
   final Uint8List imagenSinFondo;
 
-  final TipoPrenda tipo;
-  final Textura textura;
-  final Patron patron;
+  final TipoC18 tipo;
+  final double confianzaTipo;
+  final PatronC18 patron;
+  final double confianzaPatron;
+
+  /// `null` hasta que el usuario la elija en la revision (#55): no hay
+  /// clasificador de textura, y el Closet pone la de por defecto del tipo.
+  final TexturaC18? textura;
+
   final ColorLab color;
+
+  /// TODO(#58): es la del vocabulario de las pantallas, no la de C.18. Hay que
+  /// mapearla al subir (por ejemplo `marron` a `CAFE`) hasta que exista la
+  /// tabla ISCC-NBS.
   final CategoriaColor categoriaColor;
 }
 

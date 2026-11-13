@@ -5,10 +5,9 @@
 /// se rompiera, `flutter build web` fallaria en CI.
 library;
 
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:wearhack/core/color/color_base.dart';
 import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/platform/captura.dart';
 import 'package:wearhack/platform/captura/captura_movil.dart'
@@ -22,15 +21,19 @@ void main() {
     expect(crearFaceCropper().disponible, isTrue);
   });
 
-  test('los stubs de movil avisan de que no estan implementados', () async {
-    final GarmentPipeline pipeline = crearGarmentPipeline();
+  test(
+    'sin los --dart-define del color base, el lote falla al preparar',
+    () async {
+      // Las pruebas no pasan COLOR_METODO y compania: es lo que pasaria en una
+      // build sin configurar. Falla antes de cargar ningun modelo.
+      final GarmentPipeline pipeline = crearGarmentPipeline();
 
-    await expectLater(pipeline.preparar(), throwsUnimplementedError);
-    await expectLater(
-      pipeline.procesar(Uint8List(0)),
-      throwsUnimplementedError,
-    );
-  });
+      await expectLater(
+        pipeline.preparar(),
+        throwsA(isA<ConfiguracionColorBaseInvalida>()),
+      );
+    },
+  );
 
   test('CapturaNoDisponible dice cual es el detalle', () {
     const fallo = CapturaNoDisponible('solo en movil');

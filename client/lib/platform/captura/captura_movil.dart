@@ -1,4 +1,4 @@
-/// Implementacion para Android e iOS. Stub.
+/// Implementacion para Android e iOS.
 ///
 /// Este archivo solo entra en la build cuando existe `dart:io`, es decir en
 /// movil. La build de web no lo compila nunca, asi que aqui se puede depender
@@ -16,6 +16,8 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:thermal/thermal.dart';
+import 'package:wearhack/core/clasificacion/pipeline_prendas.dart';
+import 'package:wearhack/core/color/color_base.dart';
 import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/core/recorte/recortador_facial.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
@@ -24,42 +26,19 @@ import 'package:wearhack/features/closet/captura/estado_termico.dart';
 import 'package:wearhack/features/closet/captura/subidor_pendiente.dart';
 import 'package:wearhack/platform/captura/almacen_cola_archivos.dart';
 import 'package:wearhack/platform/captura/camara.dart';
+import 'package:wearhack/platform/captura/clasificador_litert.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
-/// Pipeline on-device con LiteRT/TFLite.
+/// Pipeline on-device de prendas: fondo, clasificacion y color base, con un
+/// modelo en memoria a la vez (ver [PipelinePrendasOnDevice]).
 ///
-/// Pendiente de implementar. Cuando se haga:
-///
-/// 1. Cargar `u2netp.tflite`, quitar el fondo, **liberar el interprete**.
-/// 2. Cargar `clasificador_prenda.tflite`, sacar tipo, textura y patron de sus
-///    tres cabezas, **liberar el interprete**.
-/// 3. Calcular el color base sobre los pixeles no transparentes y pasarlo a Lab.
-///
-/// Los pasos 1 y 2 no se solapan: es lo que permite que esto corra en gama
-/// media-baja.
-class GarmentPipelineMovil implements GarmentPipeline {
-  @override
-  bool get disponible => true;
-
-  @override
-  Future<void> preparar() async {
-    // TODO(ia): comprobar que los modelos estan en assets/models/ y elegir
-    // delegado (NNAPI o Core ML) con reserva a CPU.
-    throw UnimplementedError('GarmentPipelineMovil.preparar');
-  }
-
-  @override
-  Future<PrendaClasificada> procesar(Uint8List foto) async {
-    // TODO(ia): los tres pasos de arriba, uno detras de otro.
-    throw UnimplementedError('GarmentPipelineMovil.procesar');
-  }
-
-  @override
-  Future<void> liberar() async {
-    // TODO(ia): cerrar cualquier interprete que siguiera abierto.
-    throw UnimplementedError('GarmentPipelineMovil.liberar');
-  }
-}
+/// La remocion de fondo es [RemovedorDeFondoPendiente] hasta que este u2netp
+/// (#12): sin ella el pipeline falla en vez de subir la foto original.
+GarmentPipeline crearGarmentPipeline() => PipelinePrendasOnDevice(
+  removedor: const RemovedorDeFondoPendiente(),
+  clasificador: ClasificadorLiteRT(),
+  configuracionColor: ConfiguracionColorBase.desdeEntorno,
+);
 
 /// Detector de rostros con ML Kit.
 ///
@@ -135,8 +114,6 @@ class FaceCropperMovil implements FaceCropper {
     ).recortar(foto);
   }
 }
-
-GarmentPipeline crearGarmentPipeline() => GarmentPipelineMovil();
 
 FaceCropper crearFaceCropper() => FaceCropperMovil();
 

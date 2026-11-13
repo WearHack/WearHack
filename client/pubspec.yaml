@@ -27,6 +27,7 @@ dependencies:
   share_plus: ^13.3.1
   # Estado termico del sistema (Android 10+) y temperatura de la bateria, para
   # pausar la cola de captura de prendas si el telefono se calienta (#11).
+  tflite_flutter: 0.12.1
   thermal: ^1.2.2
 
 dev_dependencies:

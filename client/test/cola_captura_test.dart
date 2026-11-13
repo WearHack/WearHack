@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wearhack/core/atributos_c18.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/captura/cola_captura.dart';
 import 'package:wearhack/features/closet/captura/item_cola.dart';
@@ -132,7 +133,7 @@ void main() {
 
       final ItemCola item = _item(cola, 'f1');
       expect(item.estado, EstadoItem.porSubir);
-      expect(item.datos!.tipo, TipoPrenda.camiseta);
+      expect(item.datos!.tipo, TipoC18.camiseta);
       expect(e.almacen.procesadas, contains('f1'));
       // La original sigue: todavia no se subio.
       expect(e.almacen.originales, contains('f1'));
@@ -506,9 +507,51 @@ void main() {
       expect(vuelto.ultimoIntento, original.ultimoIntento);
       expect(vuelto.ultimoError, 'algo');
       expect(vuelto.creadoEn, original.creadoEn);
-      expect(vuelto.datos!.tipo, TipoPrenda.camiseta);
+      expect(vuelto.datos!.tipo, TipoC18.camiseta);
+      expect(vuelto.datos!.confianzaTipo, 0.9);
+      expect(vuelto.datos!.patron, PatronC18.liso);
+      expect(vuelto.datos!.textura, isNull);
       expect(vuelto.datos!.color.l, 50);
       expect(vuelto.datos!.color.b, -20);
+    });
+
+    test('los atributos se guardan con los codigos de C.18', () {
+      final ItemCola item = ItemCola.nuevo(
+        id: 'f1',
+        creadoEn: DateTime.utc(2026, 11, 12),
+      ).procesado(DatosPrenda.dePrenda(prendaDeEjemplo()));
+
+      final Map<String, Object?> datos =
+          item.toJson()['datos']! as Map<String, Object?>;
+
+      expect(datos['tipo'], 'CAMISETA');
+      expect(datos['patron'], 'LISO');
+    });
+
+    test('lo guardado con el vocabulario viejo se vuelve a procesar', () {
+      // Asi se guardaba antes de pasar a C.18. La original sigue en disco hasta
+      // que se sube, asi que reprocesar no pierde la foto.
+      final ItemCola vuelto = ItemCola.fromJson(<String, Object?>{
+        'id': 'f1',
+        'creado_en': '2026-11-01T10:00:00.000Z',
+        'estado': 'porSubir',
+        'intentos': 2,
+        'ultimo_intento': null,
+        'ultimo_error': null,
+        'datos': <String, Object?>{
+          'tipo': 'camiseta',
+          'textura': 'algodon',
+          'patron': 'solido',
+          'l': 50,
+          'a': 10,
+          'b': -20,
+          'categoria_color': 'azul',
+        },
+      });
+
+      expect(vuelto.estado, EstadoItem.porProcesar);
+      expect(vuelto.datos, isNull);
+      expect(vuelto.intentos, 0);
     });
   });
 
