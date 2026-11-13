@@ -17,6 +17,7 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/atributos_c18.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
@@ -24,56 +25,78 @@ enum EstadoItem { porProcesar, porSubir, fallida }
 
 /// Los atributos que saca el pipeline, sin la imagen. La imagen vive en su
 /// propio archivo: no tiene sentido llevar un PNG dentro de un JSON.
+///
+/// Tipo, patron y textura se guardan con los codigos de C.18 (`CAMISETA`,
+/// `LISO`...), los mismos que se suben al Closet.
 class DatosPrenda {
   const DatosPrenda({
     required this.tipo,
-    required this.textura,
+    required this.confianzaTipo,
     required this.patron,
+    required this.confianzaPatron,
+    required this.textura,
     required this.color,
     required this.categoriaColor,
   });
 
   factory DatosPrenda.dePrenda(PrendaClasificada p) => DatosPrenda(
     tipo: p.tipo,
-    textura: p.textura,
+    confianzaTipo: p.confianzaTipo,
     patron: p.patron,
+    confianzaPatron: p.confianzaPatron,
+    textura: p.textura,
     color: p.color,
     categoriaColor: p.categoriaColor,
   );
 
-  factory DatosPrenda.fromJson(Map<String, Object?> json) => DatosPrenda(
-    tipo: TipoPrenda.values.byName(json['tipo']! as String),
-    textura: Textura.values.byName(json['textura']! as String),
-    patron: Patron.values.byName(json['patron']! as String),
-    color: ColorLab(
-      l: (json['l']! as num).toDouble(),
-      a: (json['a']! as num).toDouble(),
-      b: (json['b']! as num).toDouble(),
-    ),
-    categoriaColor: CategoriaColor.values.byName(
-      json['categoria_color']! as String,
-    ),
-  );
+  /// Lanza [FormatException] si algun valor no es del vocabulario actual.
+  factory DatosPrenda.fromJson(Map<String, Object?> json) {
+    final Object? textura = json['textura'];
+    return DatosPrenda(
+      tipo: TipoC18.deCodigo(json['tipo']! as String),
+      confianzaTipo: (json['confianza_tipo']! as num).toDouble(),
+      patron: PatronC18.deCodigo(json['patron']! as String),
+      confianzaPatron: (json['confianza_patron']! as num).toDouble(),
+      textura: textura == null ? null : TexturaC18.deCodigo(textura as String),
+      color: ColorLab(
+        l: (json['l']! as num).toDouble(),
+        a: (json['a']! as num).toDouble(),
+        b: (json['b']! as num).toDouble(),
+      ),
+      categoriaColor: CategoriaColor.values.firstWhere(
+        (CategoriaColor c) => c.name == json['categoria_color'],
+        orElse: () => throw FormatException(
+          'Categoria de color desconocida: ${json['categoria_color']}',
+        ),
+      ),
+    );
+  }
 
-  final TipoPrenda tipo;
-  final Textura textura;
-  final Patron patron;
+  final TipoC18 tipo;
+  final double confianzaTipo;
+  final PatronC18 patron;
+  final double confianzaPatron;
+  final TexturaC18? textura;
   final ColorLab color;
   final CategoriaColor categoriaColor;
 
   PrendaClasificada aPrenda(Uint8List imagenSinFondo) => PrendaClasificada(
     imagenSinFondo: imagenSinFondo,
     tipo: tipo,
-    textura: textura,
+    confianzaTipo: confianzaTipo,
     patron: patron,
+    confianzaPatron: confianzaPatron,
+    textura: textura,
     color: color,
     categoriaColor: categoriaColor,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'tipo': tipo.name,
-    'textura': textura.name,
-    'patron': patron.name,
+    'tipo': tipo.codigo,
+    'confianza_tipo': confianzaTipo,
+    'patron': patron.codigo,
+    'confianza_patron': confianzaPatron,
+    'textura': textura?.codigo,
     'l': color.l,
     'a': color.a,
     'b': color.b,
@@ -107,17 +130,25 @@ class ItemCola {
   factory ItemCola.fromJson(Map<String, Object?> json) {
     final Object? datos = json['datos'];
     final Object? ultimo = json['ultimo_intento'];
-    return ItemCola._(
+    final ItemCola item = ItemCola._(
       id: json['id']! as String,
       creadoEn: DateTime.parse(json['creado_en']! as String),
       estado: EstadoItem.values.byName(json['estado']! as String),
       intentos: json['intentos']! as int,
       ultimoIntento: ultimo == null ? null : DateTime.parse(ultimo as String),
       ultimoError: json['ultimo_error'] as String?,
-      datos: datos == null
-          ? null
-          : DatosPrenda.fromJson((datos as Map<Object?, Object?>).cast()),
+      datos: null,
     );
+    if (datos == null) return item;
+    try {
+      return item._conDatos(
+        DatosPrenda.fromJson((datos as Map<Object?, Object?>).cast()),
+      );
+    } on FormatException {
+      // Guardado con un vocabulario anterior. La original sigue en disco hasta
+      // que se sube, asi que volver a procesarla no pierde nada.
+      return item.aReprocesar();
+    }
   }
 
   /// Identificador generado en el telefono. Tambien es la **llave de
@@ -150,6 +181,16 @@ class ItemCola {
     ultimoIntento: null,
     ultimoError: null,
     datos: datos,
+  );
+
+  ItemCola _conDatos(DatosPrenda d) => ItemCola._(
+    id: id,
+    creadoEn: creadoEn,
+    estado: estado,
+    intentos: intentos,
+    ultimoIntento: ultimoIntento,
+    ultimoError: ultimoError,
+    datos: d,
   );
 
   /// Un paso fallo. Si [definitivo], se agotaron los intentos.

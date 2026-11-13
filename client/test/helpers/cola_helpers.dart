@@ -4,6 +4,7 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/atributos_c18.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/captura/almacen_cola.dart';
 import 'package:wearhack/features/closet/captura/cola_captura.dart';
@@ -60,9 +61,10 @@ class AlmacenEnMemoria implements AlmacenCola {
 
 PrendaClasificada prendaDeEjemplo({int marca = 0}) => PrendaClasificada(
   imagenSinFondo: Uint8List.fromList(<int>[137, 80, 78, 71, marca]),
-  tipo: TipoPrenda.camiseta,
-  textura: Textura.algodon,
-  patron: Patron.solido,
+  tipo: TipoC18.camiseta,
+  confianzaTipo: 0.9,
+  patron: PatronC18.liso,
+  confianzaPatron: 0.8,
   color: const ColorLab(l: 50, a: 10, b: -20),
   categoriaColor: CategoriaColor.azul,
 );
