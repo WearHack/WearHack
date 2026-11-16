@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/etiquetas.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
+import 'package:wearhack/features/closet/ui/silueta_prenda.dart';
 
 class MuestraPrenda extends StatelessWidget {
   const MuestraPrenda({super.key, required this.prenda, this.tamano});
@@ -48,12 +49,25 @@ class MuestraPrenda extends StatelessWidget {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
-        child: Center(
-          child: Icon(
-            prenda.slot.icono,
-            color: frente,
-            size: tamano == null ? 48 : tamano! * 0.5,
-          ),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints c) {
+            // La silueta ocupa algo mas de la mitad de la muestra, sea del
+            // tamano que sea.
+            final double lado = tamano != null
+                ? tamano! * 0.62
+                : (c.biggest.shortestSide.isFinite
+                          ? c.biggest.shortestSide
+                          : 96) *
+                      0.58;
+            return Center(
+              child: SiluetaPrenda(
+                tipo: prenda.tipo,
+                color: frente,
+                fondo: multicolor ? const Color(0xFF1565C0) : fondo,
+                tamano: lado,
+              ),
+            );
+          },
         ),
       ),
     );

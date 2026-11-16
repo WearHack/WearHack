@@ -1,16 +1,15 @@
 /// El tema visual de WearHack, claro y oscuro.
 ///
-/// La idea: la interfaz es neutra y fria (un verde petroleo y grises
-/// azulados) para que lo unico con color vivo sean las prendas. Las muestras
-/// de color del closet y los outfits son lo que debe llamar la atencion, no el
-/// chrome. El rosa frambuesa se reserva para lo secundario (etiquetas, chips
-/// seleccionados) y nunca para acciones principales.
+/// Sale del logo: terracota, naranja, ocre y arena sobre un crema calido, con
+/// el cafe del nombre para el texto. La interfaz es sobria y las muestras de
+/// color de las prendas son lo que mas se ve. El terracota es la accion
+/// principal; el ocre, lo secundario (chips seleccionados).
 ///
 /// Sin fuentes descargadas: se usa la del sistema, para no sumar dependencias
 /// ni peticiones de red. La personalidad viene de los pesos y el espaciado.
 ///
-/// Todos los pares texto/fondo pasan 4.5:1 (7:1 en el texto principal). Los
-/// bordes de campos pasan 3:1.
+/// Todos los pares texto/fondo pasan 4.5:1 y los bordes de campos 3:1; lo
+/// comprueba `test/tema_test.dart`.
 library;
 
 import 'package:flutter/material.dart';
@@ -21,66 +20,66 @@ abstract final class TemaWearHack {
 
   static const ColorScheme _esquemaClaro = ColorScheme(
     brightness: Brightness.light,
-    primary: Color(0xFF1F5560),
+    primary: Color(0xFFA8412B),
     onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFFCFE6EA),
-    onPrimaryContainer: Color(0xFF0E2F36),
-    secondary: Color(0xFFA8325E),
+    primaryContainer: Color(0xFFF6D9CC),
+    onPrimaryContainer: Color(0xFF4A1D10),
+    secondary: Color(0xFF8A5A00),
     onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFF6D9E3),
-    onSecondaryContainer: Color(0xFF4A1228),
-    tertiary: Color(0xFF4C5E66),
+    secondaryContainer: Color(0xFFF7E3B8),
+    onSecondaryContainer: Color(0xFF3E2A00),
+    tertiary: Color(0xFF6B2C1E),
     onTertiary: Color(0xFFFFFFFF),
     error: Color(0xFFB3261E),
     onError: Color(0xFFFFFFFF),
     errorContainer: Color(0xFFF9DEDC),
     onErrorContainer: Color(0xFF410E0B),
-    surface: Color(0xFFF5F7F7),
-    onSurface: Color(0xFF1A2B33),
-    onSurfaceVariant: Color(0xFF4C5E66),
-    surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFFFFFFF),
-    surfaceContainer: Color(0xFFEBEFEF),
-    surfaceContainerHigh: Color(0xFFE3E8E9),
-    surfaceContainerHighest: Color(0xFFDCE2E4),
-    outline: Color(0xFF6E7F85),
-    outlineVariant: Color(0xFFCBD5D8),
-    inverseSurface: Color(0xFF1A2B33),
-    onInverseSurface: Color(0xFFF5F7F7),
-    inversePrimary: Color(0xFF8CC9D3),
+    surface: Color(0xFFFAF5EC),
+    onSurface: Color(0xFF2E1A14),
+    onSurfaceVariant: Color(0xFF6B4F44),
+    surfaceContainerLowest: Color(0xFFFFFDF8),
+    surfaceContainerLow: Color(0xFFFFFDF8),
+    surfaceContainer: Color(0xFFF2EBDF),
+    surfaceContainerHigh: Color(0xFFEBE2D4),
+    surfaceContainerHighest: Color(0xFFE4D9C9),
+    outline: Color(0xFF8A6E62),
+    outlineVariant: Color(0xFFE4D6C8),
+    inverseSurface: Color(0xFF2E1A14),
+    onInverseSurface: Color(0xFFFAF5EC),
+    inversePrimary: Color(0xFFF0A08A),
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
   );
 
   static const ColorScheme _esquemaOscuro = ColorScheme(
     brightness: Brightness.dark,
-    primary: Color(0xFF8CC9D3),
-    onPrimary: Color(0xFF08333B),
-    primaryContainer: Color(0xFF1F4A53),
-    onPrimaryContainer: Color(0xFFCFE6EA),
-    secondary: Color(0xFFF0A9C2),
-    onSecondary: Color(0xFF55122D),
-    secondaryContainer: Color(0xFF5B1E37),
-    onSecondaryContainer: Color(0xFFF6D9E3),
-    tertiary: Color(0xFFA6B6BC),
-    onTertiary: Color(0xFF11191C),
+    primary: Color(0xFFF0A08A),
+    onPrimary: Color(0xFF4A1608),
+    primaryContainer: Color(0xFF7A3321),
+    onPrimaryContainer: Color(0xFFFFDACF),
+    secondary: Color(0xFFE8B95A),
+    onSecondary: Color(0xFF3E2A00),
+    secondaryContainer: Color(0xFF5A4000),
+    onSecondaryContainer: Color(0xFFF7E3B8),
+    tertiary: Color(0xFFD8B88A),
+    onTertiary: Color(0xFF2E1A14),
     error: Color(0xFFF2B8B5),
     onError: Color(0xFF601410),
     errorContainer: Color(0xFF8C1D18),
     onErrorContainer: Color(0xFFF9DEDC),
-    surface: Color(0xFF11191C),
-    onSurface: Color(0xFFE3EBED),
-    onSurfaceVariant: Color(0xFFA6B6BC),
-    surfaceContainerLowest: Color(0xFF0C1214),
-    surfaceContainerLow: Color(0xFF182226),
-    surfaceContainer: Color(0xFF1F2C31),
-    surfaceContainerHigh: Color(0xFF26353B),
-    surfaceContainerHighest: Color(0xFF2E3F46),
-    outline: Color(0xFF6F8087),
-    outlineVariant: Color(0xFF34464D),
-    inverseSurface: Color(0xFFE3EBED),
-    onInverseSurface: Color(0xFF1A2B33),
-    inversePrimary: Color(0xFF1F5560),
+    surface: Color(0xFF1B1310),
+    onSurface: Color(0xFFF2E6DD),
+    onSurfaceVariant: Color(0xFFC4AFA3),
+    surfaceContainerLowest: Color(0xFF120C0A),
+    surfaceContainerLow: Color(0xFF211713),
+    surfaceContainer: Color(0xFF251B17),
+    surfaceContainerHigh: Color(0xFF2F241F),
+    surfaceContainerHighest: Color(0xFF3A2D27),
+    outline: Color(0xFF8E7568),
+    outlineVariant: Color(0xFF4A3A33),
+    inverseSurface: Color(0xFFF2E6DD),
+    onInverseSurface: Color(0xFF2E1A14),
+    inversePrimary: Color(0xFFA8412B),
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
   );
@@ -127,7 +126,14 @@ abstract final class TemaWearHack {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: texto.titleLarge?.copyWith(color: c.onSurface),
+        toolbarHeight: 64,
+        // Tamano explicito: los estilos de `base.textTheme` todavia no traen
+        // el tamano (Flutter se lo pone al arrancar la app), y copiarlos aqui
+        // lo dejaba en el tamano del texto base.
+        titleTextStyle: texto.headlineSmall?.copyWith(
+          fontSize: 24,
+          color: c.onSurface,
+        ),
         shape: Border(bottom: BorderSide(color: c.outlineVariant)),
       ),
       // Tarjetas planas con borde fino: sin sombra, para que las muestras de
@@ -148,17 +154,22 @@ abstract final class TemaWearHack {
         elevation: 0,
         height: 68,
         labelTextStyle: WidgetStatePropertyAll<TextStyle>(
-          texto.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+          texto.labelMedium!.copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: c.surfaceContainerLowest,
         indicatorColor: c.primaryContainer,
         selectedLabelTextStyle: texto.labelMedium?.copyWith(
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           color: c.onSurface,
         ),
         unselectedLabelTextStyle: texto.labelMedium?.copyWith(
+          fontSize: 12,
           color: c.onSurfaceVariant,
         ),
       ),
@@ -190,7 +201,7 @@ abstract final class TemaWearHack {
           side: BorderSide(color: c.outlineVariant),
         ),
         selectedColor: c.secondaryContainer,
-        labelStyle: texto.labelLarge,
+        labelStyle: texto.labelLarge?.copyWith(fontSize: 14),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
