@@ -10,11 +10,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
 import 'package:wearhack/core/ui/formato.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/features/colorimetria/consentimiento.dart';
 import 'package:wearhack/features/colorimetria/perfil_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/repositorio_consentimiento.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_consentimiento.dart';
 import 'package:wearhack/features/colorimetria/ui/pantalla_foto_rostro.dart';
+import 'package:wearhack/features/colorimetria/ui/resultado_color.dart';
 import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
@@ -516,43 +518,80 @@ class _TarjetaPerfil extends StatelessWidget {
     final String? temporada = perfil.temporada;
     final double? confianza = perfil.confianza;
     final DateTime? fecha = perfil.calculadoEn;
-    return Card(
-      key: const Key('perfil_colorimetria'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Tu temporada', style: texto.labelLarge),
-            const SizedBox(height: 4),
-            Text(
-              temporada == null ? 'Sin clasificar' : _legible(temporada),
-              style: texto.headlineSmall,
-            ),
-            if (confianza != null)
-              Text('Confianza: ${(confianza * 100).round()} %'),
-            if (temporada == null)
-              const Text(
-                'La foto no alcanzó para decidir. Prueba con más luz y sin '
-                'sombras en el rostro.',
-              ),
-            if (perfil.ejes.isNotEmpty) ...<Widget>[
+    final bool hayColores =
+        perfil.piel != null || perfil.cabello != null || perfil.iris != null;
+    return Aparece(
+      desliz: 16,
+      child: Card(
+        key: const Key('perfil_colorimetria'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Tu temporada', style: texto.labelLarge),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
+              Row(
                 children: <Widget>[
-                  for (final String e in perfil.ejes)
-                    Chip(label: Text(_legible(e))),
+                  if (confianza != null) ...<Widget>[
+                    AnilloConfianza(valor: confianza),
+                    const SizedBox(width: 16),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          temporada == null
+                              ? 'Sin clasificar'
+                              : _legible(temporada),
+                          style: texto.headlineMedium,
+                        ),
+                        if (confianza != null)
+                          Text('Confianza: ${(confianza * 100).round()} %'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
+              if (temporada == null) ...<Widget>[
+                const SizedBox(height: 8),
+                const Text(
+                  'La foto no alcanzó para decidir. Prueba con más luz y sin '
+                  'sombras en el rostro.',
+                ),
+              ],
+              if (hayColores) ...<Widget>[
+                const SizedBox(height: 20),
+                Text('Tus colores', style: texto.labelLarge),
+                const SizedBox(height: 8),
+                MuestrasPerfil(
+                  piel: perfil.piel,
+                  cabello: perfil.cabello,
+                  iris: perfil.iris,
+                ),
+              ],
+              if (perfil.ejes.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: <Widget>[
+                    for (final String e in perfil.ejes)
+                      Chip(label: Text(_legible(e))),
+                  ],
+                ),
+              ],
+              if (fecha != null) ...<Widget>[
+                const SizedBox(height: 8),
+                Text('Calculada el ${formatoFecha(fecha)}.'),
+              ],
+              TextButton.icon(
+                onPressed: onBorrar,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Borrar mi resultado'),
+              ),
             ],
-            if (fecha != null) Text('Calculada el ${formatoFecha(fecha)}.'),
-            TextButton.icon(
-              onPressed: onBorrar,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Borrar mi resultado'),
-            ),
-          ],
+          ),
         ),
       ),
     );

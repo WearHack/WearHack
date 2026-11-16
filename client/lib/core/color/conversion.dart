@@ -82,6 +82,33 @@ Xyz perfilASrgbLineal(PerfilRgb perfil, int r, int g, int b) {
   );
 }
 
+/// sRGB de 8 bits de un Lab con blanco D65: la inversa de [xyzD65aLab].
+///
+/// Sirve para pintar en pantalla un color que se midio en Lab. Un Lab fuera del
+/// gamut de sRGB se recorta al borde, igual que en [perfilASrgb8].
+({int r, int g, int b}) labASrgb8(ColorLab lab) {
+  const double epsilon = 216 / 24389;
+  const double kappa = 24389 / 27;
+  final double fy = (lab.l + 16) / 116;
+  final double fx = fy + lab.a / 500;
+  final double fz = fy - lab.b / 200;
+  final double fx3 = fx * fx * fx;
+  final double fz3 = fz * fz * fz;
+  final double xr = fx3 > epsilon ? fx3 : (116 * fx - 16) / kappa;
+  final double yr = lab.l > kappa * epsilon ? fy * fy * fy : lab.l / kappa;
+  final double zr = fz3 > epsilon ? fz3 : (116 * fz - 16) / kappa;
+  final Xyz lineal = _multiplicar(_xyzD65ASrgbLineal, (
+    xr * blancoD65.$1,
+    yr * blancoD65.$2,
+    zr * blancoD65.$3,
+  ));
+  return (
+    r: _codificarSrgb(lineal.$1),
+    g: _codificarSrgb(lineal.$2),
+    b: _codificarSrgb(lineal.$3),
+  );
+}
+
 int _codificarSrgb(double lineal) {
   final double v = lineal.clamp(0.0, 1.0).toDouble();
   final double codificado = v <= 0.0031308
