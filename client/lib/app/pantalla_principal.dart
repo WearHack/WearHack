@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/closet/ui/pantalla_captura_prendas.dart';
@@ -95,16 +96,22 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
   // Cada seccion se construye de nuevo al entrar, y asi recarga. Si se
   // eliminara una prenda en el closet, outfits y semana ya lo reflejan.
-  Widget _contenido() => switch (_seccion) {
-    0 => PantallaCloset(repositorio: widget.closet),
-    1 => PantallaOutfits(
-      repositorio: widget.outfits,
-      clima: widget.clima,
-      ubicacion: widget.ubicacion,
-    ),
-    2 => PantallaSemana(repositorio: widget.outfits),
-    _ => PantallaMarcas(repositorio: widget.publicidad),
-  };
+  Widget _contenido() => Aparece(
+    // La clave por seccion hace que cada cambio de pestana entre con un
+    // fundido, sin dejar la anterior en el arbol mientras se va.
+    key: ValueKey<int>(_seccion),
+    desliz: 0,
+    child: switch (_seccion) {
+      0 => PantallaCloset(repositorio: widget.closet),
+      1 => PantallaOutfits(
+        repositorio: widget.outfits,
+        clima: widget.clima,
+        ubicacion: widget.ubicacion,
+      ),
+      2 => PantallaSemana(repositorio: widget.outfits),
+      _ => PantallaMarcas(repositorio: widget.publicidad),
+    },
+  );
 
   Widget? _botonAgregarPrendas() {
     final CapturaDePrendas? captura = widget.capturaPrendas;

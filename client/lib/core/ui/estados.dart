@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 
 /// Una lista vacia, explicada. Vacio no es error: un closet nuevo no tiene
 /// prendas y una semana puede no tener outfits.
@@ -15,15 +16,30 @@ class MensajeVacio extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colores = Theme.of(context).colorScheme;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icono, size: 48, color: colores.outline),
-            const SizedBox(height: 12),
-            Text(texto, textAlign: TextAlign.center),
-          ],
+      child: Aparece(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colores.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Icon(
+                    icono,
+                    size: 40,
+                    color: colores.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(texto, textAlign: TextAlign.center),
+            ],
+          ),
         ),
       ),
     );
@@ -43,6 +59,12 @@ class ErrorDeCarga extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 40,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
           const Text('No se pudo cargar la información.'),
           const SizedBox(height: 12),
           FilledButton.tonal(

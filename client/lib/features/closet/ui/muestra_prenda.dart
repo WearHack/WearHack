@@ -28,7 +28,9 @@ class MuestraPrenda extends StatelessWidget {
 
     final Widget caja = Tooltip(
       message: '${prenda.tipo.etiqueta} ${prenda.categoriaColor.etiqueta}',
-      child: DecoratedBox(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
         decoration: BoxDecoration(
           color: multicolor ? null : fondo,
           gradient: multicolor
@@ -41,7 +43,7 @@ class MuestraPrenda extends StatelessWidget {
                   ],
                 )
               : null,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: Theme.of(context).colorScheme.outlineVariant,
           ),

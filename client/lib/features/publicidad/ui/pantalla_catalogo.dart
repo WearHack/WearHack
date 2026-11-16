@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
 import 'package:wearhack/core/ui/formato.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
 import 'package:wearhack/features/publicidad/catalogo.dart';
 import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
@@ -63,7 +64,11 @@ class _PantallaCatalogoState extends State<PantallaCatalogo> {
               }
               final List<ProductoCatalogo>? productos = snapshot.data;
               if (productos == null) {
-                return const Center(child: CircularProgressIndicator());
+                return const EsqueletoCuadricula(
+                  anchoMaximo: 200,
+                  proporcion: 0.7,
+                  cantidad: 6,
+                );
               }
               if (productos.isEmpty) {
                 return const MensajeVacio(
@@ -83,10 +88,14 @@ class _PantallaCatalogoState extends State<PantallaCatalogo> {
                 itemCount: productos.length,
                 itemBuilder: (BuildContext context, int i) {
                   final PrendaPuente? puente = widget.puentes[productos[i].id];
-                  return _TarjetaProducto(
-                    producto: productos[i],
-                    esPuente: puente != null,
-                    onTap: puente == null ? null : () => _abrir(puente),
+                  return Aparece(
+                    key: ValueKey<String>(productos[i].id),
+                    indice: i,
+                    child: _TarjetaProducto(
+                      producto: productos[i],
+                      esPuente: puente != null,
+                      onTap: puente == null ? null : () => _abrir(puente),
+                    ),
                   );
                 },
               );
