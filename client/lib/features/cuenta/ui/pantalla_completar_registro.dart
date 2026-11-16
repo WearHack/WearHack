@@ -68,50 +68,56 @@ class _PantallaCompletarRegistroState extends State<PantallaCompletarRegistro> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Completa tu registro')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: <Widget>[
-          TextField(
-            controller: _nombre,
-            maxLength: 80,
-            decoration: const InputDecoration(
-              labelText: 'Como quieres que te llamemos (opcional)',
-            ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: ListView(
+            padding: const EdgeInsets.all(24),
+            children: <Widget>[
+              TextField(
+                controller: _nombre,
+                maxLength: 80,
+                decoration: const InputDecoration(
+                  labelText: 'Como quieres que te llamemos (opcional)',
+                ),
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                key: const Key('casilla-mayoria-edad'),
+                value: _mayorDeEdad,
+                onChanged: _enviando
+                    ? null
+                    : (bool? valor) =>
+                          setState(() => _mayorDeEdad = valor ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Declaro que soy mayor de 18 anos'),
+                subtitle: Text('Fecha de la declaracion: $fecha'),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'WearHack es solo para mayores de edad. Si no lo eres, no '
+                'continues.',
+              ),
+              if (_error != null) ...<Widget>[
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _mayorDeEdad && !_enviando ? _completar : null,
+                child: const Text('Continuar'),
+              ),
+              TextButton(
+                onPressed: _enviando ? null : widget.alCancelar,
+                child: const Text('Salir'),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          CheckboxListTile(
-            key: const Key('casilla-mayoria-edad'),
-            value: _mayorDeEdad,
-            onChanged: _enviando
-                ? null
-                : (bool? valor) =>
-                      setState(() => _mayorDeEdad = valor ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text('Declaro que soy mayor de 18 anos'),
-            subtitle: Text('Fecha de la declaracion: $fecha'),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'WearHack es solo para mayores de edad. Si no lo eres, no '
-            'continues.',
-          ),
-          if (_error != null) ...<Widget>[
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ],
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _mayorDeEdad && !_enviando ? _completar : null,
-            child: const Text('Continuar'),
-          ),
-          TextButton(
-            onPressed: _enviando ? null : widget.alCancelar,
-            child: const Text('Salir'),
-          ),
-        ],
+        ),
       ),
     );
   }
