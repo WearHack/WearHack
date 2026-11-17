@@ -1,7 +1,9 @@
 #!/bin/bash
 # En la EC2. Sigue la rama develop de WearHack/WearHack: si hay commit nuevo (o FORZAR=1),
-# actualiza el checkout y reconstruye con docker compose. Si el Core no queda healthy,
-# vuelve al commit anterior. Lo lanza el timer wearhack-desplegar cada 5 minutos.
+# actualiza el checkout y levanta el compose con las imagenes de ese commit, que publica
+# en GHCR el workflow imagenes-lab.yml (#47). Si no aparecen en 30 minutos, o no hay
+# token de GHCR, las construye en el host. Si el Core no queda healthy, vuelve al commit
+# anterior. Lo lanza el timer wearhack-desplegar cada 5 minutos.
 #
 # Vive copiado en /opt/wearhack/desplegar.sh; tras cada despliegue bueno se reemplaza
 # por la version del repo, asi que los cambios a este archivo tambien llegan solos.
@@ -15,6 +17,8 @@ AWS_DIR=$REPO/infra/lab/aws
 RAMA=${RAMA:-develop}
 URL=https://github.com/WearHack/WearHack.git
 COMPOSE=(docker compose -p wearhack -f docker-compose.aws.yml)
+SERVICIOS=(core colorimetria recomendador)
+ESPERA_IMAGENES=1800
 R=us-east-1
 log() { echo "$(date -u +%FT%TZ) $*"; }
 leer() { aws ssm get-parameter --region $R --name "/wearhack/$1" --with-decryption \
@@ -49,7 +53,29 @@ if [ "${FORZAR:-0}" != "1" ]; then
   # Un commit que ya fallo no se reintenta cada 5 minutos: espera al siguiente.
   [ "$(cat "$BASE/.fallido" 2>/dev/null)" = "$NUEVO" ] && exit 0
 fi
-log "desplegando $RAMA ${ANTES:0:7} -> ${NUEVO:0:7}"
+# Imagenes: las de GHCR si ya estan publicadas para este commit. Si aun no, se espera
+# al siguiente turno del timer; pasado ESPERA_IMAGENES (o con FORZAR) se construyen aqui.
+MODO=build
+TOKEN_GHCR=$(leer GHCR_TOKEN)
+USUARIO_GHCR=$(leer GHCR_USER)
+if [ -n "$TOKEN_GHCR" ] && [ -n "$USUARIO_GHCR" ]; then
+  printf '%s' "$TOKEN_GHCR" | docker login ghcr.io -u "$USUARIO_GHCR" --password-stdin >/dev/null 2>&1 || true
+  publicadas=1
+  for s in "${SERVICIOS[@]}"; do
+    docker manifest inspect "ghcr.io/wearhack/wearhack-$s:$NUEVO" >/dev/null 2>&1 || { publicadas=0; break; }
+  done
+  if [ "$publicadas" = 1 ]; then
+    MODO=pull
+  elif [ "${FORZAR:-0}" != "1" ] &&        [ $(( $(date +%s) - $(git_ log -1 --format=%ct "$NUEVO") )) -lt "$ESPERA_IMAGENES" ]; then
+    log "esperando las imagenes de ${NUEVO:0:7} en GHCR"
+    docker logout ghcr.io >/dev/null 2>&1 || true
+    exit 0
+  else
+    log "sin imagenes de ${NUEVO:0:7} en GHCR: se construyen en el host"
+  fi
+fi
+
+log "desplegando $RAMA ${ANTES:0:7} -> ${NUEVO:0:7} ($MODO)"
 git_ reset --quiet --hard "$NUEVO"
 
 # Si el commit trae otra version de este script, se corre esa (con lo que ya se trajo).
@@ -77,6 +103,7 @@ umask 077
   echo "DOMINIO=$(echo "$IP" | tr . -).sslip.io"
   echo "MONGODB_DB=$DB"
   echo "S3_BUCKET_PRENDAS=wearhack-prendas-$CUENTA"
+  echo "IMAGEN_TAG=$NUEVO"
   for n in MONGODB_URI_CORE MONGODB_URI_COLORIMETRIA MONGODB_URI_RECOMENDACION MONGODB_URI_JOBS; do
     v=$(leer "$n")
     [ -n "$v" ] && v=$(con_base "$v" "$DB")
@@ -99,16 +126,29 @@ sano() {
   return 1
 }
 
+levantar() {
+  if [ "$MODO" = pull ]; then
+    "${COMPOSE[@]}" pull --quiet "${SERVICIOS[@]}" &&       "${COMPOSE[@]}" up -d --no-build --remove-orphans
+  else
+    "${COMPOSE[@]}" up -d --build --remove-orphans
+  fi
+}
+
 cd "$REPO"
-if "${COMPOSE[@]}" up -d --build --remove-orphans && sano; then
+if levantar && sano; then
+  docker logout ghcr.io >/dev/null 2>&1 || true
   log "OK ${NUEVO:0:7}"
   install -m 755 "$AWS_DIR/desplegar.sh" "$BASE/desplegar.sh"
-  docker image prune -f >/dev/null
+  # Las imagenes de commits viejos se acumulan: fuera las que nadie usa hace 3 dias.
+  docker image prune -af --filter until=72h >/dev/null
   exit 0
 fi
 log "FALLO ${NUEVO:0:7}, vuelvo a ${ANTES:0:7}"
 echo "$NUEVO" > "$BASE/.fallido"
 git_ reset --quiet --hard "$ANTES"
 for f in docker-compose.aws.yml Caddyfile; do cp "$AWS_DIR/$f" "$REPO/$f"; done
-"${COMPOSE[@]}" up -d --build --remove-orphans || true
+sed -i "s/^IMAGEN_TAG=.*/IMAGEN_TAG=$ANTES/" "$REPO/.env"
+# Las imagenes del commit anterior ya estan en el host (descargadas o construidas).
+"${COMPOSE[@]}" up -d --no-build --remove-orphans || "${COMPOSE[@]}" up -d --build --remove-orphans || true
+docker logout ghcr.io >/dev/null 2>&1 || true
 exit 1
