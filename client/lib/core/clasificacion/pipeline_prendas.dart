@@ -53,27 +53,33 @@ class PipelinePrendasOnDevice implements GarmentPipeline {
     required this._removedor,
     required this._clasificador,
     required ConfiguracionColorBase Function() configuracionColor,
-  }) : _leerConfiguracionColor = configuracionColor;
+    required Future<TablaIsccNbs> Function() tablaColores,
+  }) : _leerConfiguracionColor = configuracionColor,
+       _cargarTablaColores = tablaColores;
 
   final RemovedorDeFondo _removedor;
   final ClasificadorDePrendas _clasificador;
   final ConfiguracionColorBase Function() _leerConfiguracionColor;
   ConfiguracionColorBase? _configuracionColor;
+  final Future<TablaIsccNbs> Function() _cargarTablaColores;
+  TablaIsccNbs? _tablaColores;
 
   @override
   bool get disponible => true;
 
-  /// Lee la configuracion del color base. Si falta, el lote entero falla aqui,
-  /// antes de gastar tiempo en quitar fondos.
+  /// Lee la configuracion del color base y la tabla ISCC-NBS. Si falta algo,
+  /// el lote entero falla aqui, antes de gastar tiempo en quitar fondos.
   @override
   Future<void> preparar() async {
     _configuracionColor ??= _leerConfiguracionColor();
+    _tablaColores ??= await _cargarTablaColores();
   }
 
   @override
   Future<PrendaClasificada> procesar(Uint8List foto) async {
     final ConfiguracionColorBase configuracion = _configuracionColor ??=
         _leerConfiguracionColor();
+    final TablaIsccNbs tabla = _tablaColores ??= await _cargarTablaColores();
 
     final img.Image prenda = await _removedor.quitarFondo(foto);
     final Clasificacion clasificacion = await _clasificador.clasificar(prenda);
@@ -96,7 +102,7 @@ class PipelinePrendasOnDevice implements GarmentPipeline {
       patron: clasificacion.patron,
       confianzaPatron: clasificacion.confianzaPatron,
       color: color.color,
-      categoriaColor: categoriaDeLab(color.color),
+      categoriaColor: tabla.categoria(color.color),
     );
   }
 

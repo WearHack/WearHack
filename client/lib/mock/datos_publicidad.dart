@@ -136,7 +136,7 @@ const ProductoCatalogo _sandalias = ProductoCatalogo(
     tipo: TipoPrenda.sandalia,
     slot: SlotOutfit.calzado,
     colorLab: ColorLab(l: 40.0, a: 14.0, b: 26.0),
-    categoriaColor: CategoriaColor.marron,
+    categoriaColor: CategoriaColor.cafe,
     textura: Textura.cuero,
     patron: Patron.solido,
     formalidad: Formalidad.casual,

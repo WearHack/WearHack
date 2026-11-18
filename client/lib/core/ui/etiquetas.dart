@@ -105,18 +105,26 @@ extension EtiquetaClima on Clima {
 
 extension EtiquetaCategoriaColor on CategoriaColor {
   String get etiqueta => switch (this) {
-    CategoriaColor.blanco => 'Blanco',
     CategoriaColor.negro => 'Negro',
+    CategoriaColor.blanco => 'Blanco',
     CategoriaColor.gris => 'Gris',
     CategoriaColor.beige => 'Beige',
-    CategoriaColor.marron => 'Marrón',
+    CategoriaColor.cafe => 'Café',
+    CategoriaColor.vinotinto => 'Vinotinto',
     CategoriaColor.rojo => 'Rojo',
+    CategoriaColor.rosado => 'Rosado',
+    CategoriaColor.fucsia => 'Fucsia',
     CategoriaColor.naranja => 'Naranja',
     CategoriaColor.amarillo => 'Amarillo',
+    CategoriaColor.mostaza => 'Mostaza',
+    CategoriaColor.verdeOliva => 'Verde oliva',
     CategoriaColor.verde => 'Verde',
+    CategoriaColor.turquesa => 'Turquesa',
+    CategoriaColor.celeste => 'Celeste',
     CategoriaColor.azul => 'Azul',
+    CategoriaColor.azulMarino => 'Azul marino',
     CategoriaColor.morado => 'Morado',
-    CategoriaColor.rosa => 'Rosa',
+    CategoriaColor.lila => 'Lila',
     CategoriaColor.multicolor => 'Multicolor',
   };
 
@@ -125,18 +133,26 @@ extension EtiquetaCategoriaColor on CategoriaColor {
   /// No es el color real de la prenda: ese esta en Lab y convertirlo bien pide
   /// la cadena de `core/color/`. Para una miniatura basta con la categoria.
   Color get muestra => switch (this) {
-    CategoriaColor.blanco => const Color(0xFFF5F5F5),
     CategoriaColor.negro => const Color(0xFF212121),
+    CategoriaColor.blanco => const Color(0xFFF5F5F5),
     CategoriaColor.gris => const Color(0xFF9E9E9E),
     CategoriaColor.beige => const Color(0xFFD7C4A3),
-    CategoriaColor.marron => const Color(0xFF6D4C41),
+    CategoriaColor.cafe => const Color(0xFF6D4C41),
+    CategoriaColor.vinotinto => const Color(0xFF7B1F2B),
     CategoriaColor.rojo => const Color(0xFFC62828),
+    CategoriaColor.rosado => const Color(0xFFF48FB1),
+    CategoriaColor.fucsia => const Color(0xFFD81B78),
     CategoriaColor.naranja => const Color(0xFFEF6C00),
-    CategoriaColor.amarillo => const Color(0xFFF9A825),
+    CategoriaColor.amarillo => const Color(0xFFF9D825),
+    CategoriaColor.mostaza => const Color(0xFFC9A227),
+    CategoriaColor.verdeOliva => const Color(0xFF6B7A2E),
     CategoriaColor.verde => const Color(0xFF2E7D32),
+    CategoriaColor.turquesa => const Color(0xFF1ABC9C),
+    CategoriaColor.celeste => const Color(0xFF81C3EA),
     CategoriaColor.azul => const Color(0xFF1565C0),
+    CategoriaColor.azulMarino => const Color(0xFF1A237E),
     CategoriaColor.morado => const Color(0xFF6A1B9A),
-    CategoriaColor.rosa => const Color(0xFFF48FB1),
+    CategoriaColor.lila => const Color(0xFFC3A6DC),
     CategoriaColor.multicolor => const Color(0xFF9575CD),
   };
 }

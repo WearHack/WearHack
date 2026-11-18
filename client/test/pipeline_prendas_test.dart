@@ -2,6 +2,7 @@
 /// los pasos y lo que sale.
 library;
 
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:image/image.dart' as img;
 import 'package:wearhack/core/atributos_c18.dart';
 import 'package:wearhack/core/clasificacion/clasificador_prenda.dart';
 import 'package:wearhack/core/clasificacion/pipeline_prendas.dart';
+import 'package:wearhack/core/color/categoria_color.dart';
 import 'package:wearhack/core/color/color_base.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
@@ -67,6 +69,9 @@ img.Image camisetaAzul() {
   return imagen;
 }
 
+Future<TablaIsccNbs> tablaColores() async =>
+    TablaIsccNbs.desdeJson(File(assetTablaIsccNbs).readAsStringSync());
+
 void main() {
   test(
     'quita el fondo, clasifica y saca el color de la prenda sin fondo',
@@ -78,6 +83,7 @@ void main() {
         removedor: RemovedorFalso(bitacora, sinFondo),
         clasificador: clasificador,
         configuracionColor: configuracion,
+        tablaColores: tablaColores,
       );
 
       await pipeline.preparar();
@@ -104,6 +110,7 @@ void main() {
       removedor: RemovedorFalso(bitacora, camisetaAzul()),
       clasificador: ClasificadorFalso(bitacora),
       configuracionColor: configuracion,
+      tablaColores: tablaColores,
     );
     final Uint8List foto = Uint8List.fromList(<int>[0xFF, 0xD8, 1, 2, 3]);
 
@@ -121,6 +128,7 @@ void main() {
       removedor: const RemovedorDeFondoPendiente(),
       clasificador: ClasificadorFalso(<String>[]),
       configuracionColor: configuracion,
+      tablaColores: tablaColores,
     );
 
     await expectLater(
@@ -138,6 +146,7 @@ void main() {
         removedor: RemovedorFalso(<String>[], vacia),
         clasificador: ClasificadorFalso(<String>[]),
         configuracionColor: configuracion,
+        tablaColores: tablaColores,
       );
 
       await expectLater(
@@ -156,6 +165,7 @@ void main() {
         clasificador: ClasificadorFalso(bitacora),
         configuracionColor: () =>
             ConfiguracionColorBase.desdeTextos(const <String, String>{}),
+        tablaColores: tablaColores,
       );
 
       await expectLater(
