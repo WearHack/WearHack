@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
 import 'package:wearhack/core/ui/etiquetas.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
@@ -27,6 +28,10 @@ class _PantallaClosetState extends State<PantallaCloset> {
 
   /// `null` muestra todas.
   SlotOutfit? _filtro;
+
+  /// Las prendas que ya entraron con animacion: al desplazarse o filtrar, lo
+  /// que ya se vio no vuelve a entrar.
+  final Set<String> _vistas = <String>{};
 
   void _recargar() {
     setState(() {
@@ -80,7 +85,7 @@ class _PantallaClosetState extends State<PantallaCloset> {
         if (snapshot.hasError) return ErrorDeCarga(onReintentar: _recargar);
         final List<Prenda>? prendas = snapshot.data;
         if (prendas == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const EsqueletoCuadricula();
         }
         if (prendas.isEmpty) {
           return const MensajeVacio(
@@ -126,11 +131,18 @@ class _PantallaClosetState extends State<PantallaCloset> {
                             childAspectRatio: 0.8,
                           ),
                       itemCount: visibles.length,
-                      itemBuilder: (BuildContext context, int i) =>
-                          _TarjetaPrenda(
-                            prenda: visibles[i],
-                            onTap: () => _abrir(visibles[i]),
+                      itemBuilder: (BuildContext context, int i) {
+                        final Prenda p = visibles[i];
+                        return Aparece(
+                          key: ValueKey<String>(p.id),
+                          indice: i,
+                          animar: _vistas.add(p.id),
+                          child: _TarjetaPrenda(
+                            prenda: p,
+                            onTap: () => _abrir(p),
                           ),
+                        );
+                      },
                     ),
             ),
           ],

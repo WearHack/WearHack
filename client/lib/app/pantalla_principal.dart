@@ -5,6 +5,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:wearhack/app/marca.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/closet/ui/pantalla_captura_prendas.dart';
@@ -95,16 +97,22 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
   // Cada seccion se construye de nuevo al entrar, y asi recarga. Si se
   // eliminara una prenda en el closet, outfits y semana ya lo reflejan.
-  Widget _contenido() => switch (_seccion) {
-    0 => PantallaCloset(repositorio: widget.closet),
-    1 => PantallaOutfits(
-      repositorio: widget.outfits,
-      clima: widget.clima,
-      ubicacion: widget.ubicacion,
-    ),
-    2 => PantallaSemana(repositorio: widget.outfits),
-    _ => PantallaMarcas(repositorio: widget.publicidad),
-  };
+  Widget _contenido() => Aparece(
+    // La clave por seccion hace que cada cambio de pestana entre con un
+    // fundido, sin dejar la anterior en el arbol mientras se va.
+    key: ValueKey<int>(_seccion),
+    desliz: 0,
+    child: switch (_seccion) {
+      0 => PantallaCloset(repositorio: widget.closet),
+      1 => PantallaOutfits(
+        repositorio: widget.outfits,
+        clima: widget.clima,
+        ubicacion: widget.ubicacion,
+      ),
+      2 => PantallaSemana(repositorio: widget.outfits),
+      _ => PantallaMarcas(repositorio: widget.publicidad),
+    },
+  );
 
   Widget? _botonAgregarPrendas() {
     final CapturaDePrendas? captura = widget.capturaPrendas;
@@ -128,8 +136,17 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   Widget build(BuildContext context) {
     final WidgetBuilder? diagnostico = widget.diagnostico;
+    final bool conRiel = MediaQuery.sizeOf(context).width >= _anchoRiel;
     final PreferredSizeWidget barra = AppBar(
-      title: Text(_secciones[_seccion].titulo),
+      title: conRiel
+          ? Text(_secciones[_seccion].titulo)
+          : Row(
+              children: <Widget>[
+                const MarcaWearHack(alto: 26),
+                const SizedBox(width: 12),
+                Text(_secciones[_seccion].titulo),
+              ],
+            ),
       actions: <Widget>[
         IconButton(
           tooltip: 'Tu color',
@@ -157,7 +174,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       ],
     );
 
-    if (MediaQuery.sizeOf(context).width >= _anchoRiel) {
+    if (conRiel) {
       return Scaffold(
         appBar: barra,
         floatingActionButton: _botonAgregarPrendas(),
@@ -167,6 +184,10 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               selectedIndex: _seccion,
               onDestinationSelected: _ir,
               labelType: NavigationRailLabelType.all,
+              leading: const Padding(
+                padding: EdgeInsets.only(top: 14, bottom: 22),
+                child: MarcaWearHack(alto: 46),
+              ),
               destinations: <NavigationRailDestination>[
                 for (final _Seccion s in _secciones)
                   NavigationRailDestination(

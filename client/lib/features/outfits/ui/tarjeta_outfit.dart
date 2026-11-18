@@ -30,7 +30,7 @@ class TarjetaOutfit extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: seleccionado
           ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: colores.primary, width: 2),
             )
           : null,
@@ -56,7 +56,15 @@ class TarjetaOutfit extends StatelessWidget {
                     ),
                   ),
                   if (seleccionado)
-                    Icon(Icons.check_circle, color: colores.primary),
+                    // Aparece con un pequeno rebote: confirma la eleccion.
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutBack,
+                      builder: (BuildContext context, double t, Widget? hijo) =>
+                          Transform.scale(scale: t, child: hijo),
+                      child: Icon(Icons.check_circle, color: colores.primary),
+                    ),
                 ],
               ),
               const SizedBox(height: 12),

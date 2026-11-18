@@ -39,8 +39,8 @@ extension EtiquetaSlot on SlotOutfit {
     SlotOutfit.accesorio => 'Accesorio',
   };
 
-  /// Material no trae iconos de pantalon ni de zapato. Son aproximaciones
-  /// hasta que haya imagen procesada de cada prenda.
+  /// Icono del slot, para filtros y listas. La muestra de una prenda dibuja su
+  /// propia silueta (`SiluetaPrenda`) y ya no lo usa.
   IconData get icono => switch (this) {
     SlotOutfit.superior => Icons.checkroom,
     SlotOutfit.inferior => Icons.accessibility_new,

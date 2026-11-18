@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
 import 'package:wearhack/core/ui/etiquetas.dart';
+import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
@@ -161,9 +162,14 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
                         'Generados a partir de tu clóset para esta semana.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      for (final Outfit o in outfits) ...<Widget>[
+                      for (final (int i, Outfit o)
+                          in outfits.indexed) ...<Widget>[
                         const SizedBox(height: 8),
-                        TarjetaOutfit(outfit: o),
+                        Aparece(
+                          key: ValueKey<String>(o.id),
+                          indice: i,
+                          child: TarjetaOutfit(outfit: o),
+                        ),
                       ],
                     ],
                   ],
