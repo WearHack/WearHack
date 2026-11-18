@@ -19,6 +19,8 @@ x-sin-otel: &sin-otel
 
 services:
   core:
+    # La imagen la publica imagenes-lab.yml en GHCR; build queda de respaldo.
+    image: ghcr.io/wearhack/wearhack-core:${IMAGEN_TAG:-local}
     build: ./services/core
     restart: unless-stopped
     logging: *logging
@@ -40,6 +42,7 @@ services:
         condition: service_started
 
   colorimetria:
+    image: ghcr.io/wearhack/wearhack-colorimetria:${IMAGEN_TAG:-local}
     build: ./services/colorimetria
     restart: unless-stopped
     logging: *logging
@@ -52,6 +55,7 @@ services:
       MONGO_URI: ${MONGODB_URI_COLORIMETRIA}
 
   recomendador:
+    image: ghcr.io/wearhack/wearhack-recomendador:${IMAGEN_TAG:-local}
     build: ./services/recomendador
     restart: unless-stopped
     logging: *logging
