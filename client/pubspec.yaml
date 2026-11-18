@@ -42,3 +42,5 @@ flutter:
   # un README que explica de donde bajarlos. Ver assets/models/README.md.
   assets:
     - assets/models/
+    # Tabla ISCC-NBS de categorias de color (#58). La genera tools/iscc-nbs/.
+    - assets/color/
