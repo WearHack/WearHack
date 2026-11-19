@@ -2,7 +2,8 @@
 
 Entrada: centroides_nist_1958.csv, transcrito de Kelly (1958), "Central Notations for the
 Revised ISCC-NBS Color-Name Blocks", J. Res. NBS 61(5), RP2911. Dominio publico en EE. UU.
-Salida: client/assets/color/iscc_nbs.json.
+Salida: client/assets/color/iscc_nbs.json y la misma copia en el Core
+(services/core/src/main/resources/colores/), que la usa para ajustar las categorias.
 
 Munsell a Lab con colour-science (BSD-3). No se usa munsellinterpol, que es GPL (#58).
 La renotacion Munsell esta referida al iluminante C: se pasa a D65 con Bradford, igual que
@@ -35,7 +36,11 @@ import numpy as np  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 CSV = AQUI / "centroides_nist_1958.csv"
-SALIDA = AQUI.parents[1] / "client" / "assets" / "color" / "iscc_nbs.json"
+RAIZ = AQUI.parents[1]
+SALIDAS = (
+    RAIZ / "client" / "assets" / "color" / "iscc_nbs.json",
+    RAIZ / "services" / "core" / "src" / "main" / "resources" / "colores" / "iscc_nbs.json",
+)
 
 # Las 20 categorias oficiales (CategoriaColor del Core). La app usa los mismos nombres.
 CATEGORIAS = (
@@ -261,14 +266,16 @@ def main() -> int:
     args = p.parse_args()
     texto = json.dumps(generar(), ensure_ascii=False, indent=1) + "\n"
     if args.comprobar:
-        if SALIDA.read_text(encoding="utf-8") != texto:
-            print(f"{SALIDA} no coincide con lo generado", file=sys.stderr)
-            return 1
-        print("OK")
-        return 0
-    SALIDA.parent.mkdir(parents=True, exist_ok=True)
-    SALIDA.write_text(texto, encoding="utf-8", newline="\n")
-    print(f"escrito {SALIDA}")
+        distintas = [s for s in SALIDAS if s.read_text(encoding="utf-8") != texto]
+        for s in distintas:
+            print(f"{s} no coincide con lo generado", file=sys.stderr)
+        if not distintas:
+            print("OK")
+        return 1 if distintas else 0
+    for s in SALIDAS:
+        s.parent.mkdir(parents=True, exist_ok=True)
+        s.write_text(texto, encoding="utf-8", newline="\n")
+        print(f"escrito {s}")
     return 0
 
 
