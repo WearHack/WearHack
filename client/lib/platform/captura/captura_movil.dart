@@ -36,13 +36,32 @@ import 'package:wearhack/platform/captura/contratos.dart';
 ///
 /// La remocion de fondo es [RemovedorDeFondoPendiente] hasta que este u2netp
 /// (#12): sin ella el pipeline falla en vez de subir la foto original.
-GarmentPipeline crearGarmentPipeline() => PipelinePrendasOnDevice(
-  removedor: const RemovedorDeFondoPendiente(),
-  clasificador: ClasificadorLiteRT(),
-  configuracionColor: ConfiguracionColorBase.desdeEntorno,
-  tablaColores: () async =>
-      TablaIsccNbs.desdeJson(await rootBundle.loadString(assetTablaIsccNbs)),
-);
+///
+/// Con [ajustesColor], la tabla ISCC-NBS lleva los ajustes de categoria que
+/// decidio el Core (#58). Si no se pueden leer (sin red, sin sesion), se usa la
+/// tabla tal cual: la categoria es una propuesta que la persona puede corregir.
+GarmentPipeline crearGarmentPipeline({FuenteAjustesColor? ajustesColor}) =>
+    PipelinePrendasOnDevice(
+      removedor: const RemovedorDeFondoPendiente(),
+      clasificador: ClasificadorLiteRT(),
+      configuracionColor: ConfiguracionColorBase.desdeEntorno,
+      tablaColores: () => _tablaColores(ajustesColor),
+    );
+
+Future<TablaIsccNbs> _tablaColores(FuenteAjustesColor? ajustesColor) async {
+  final TablaIsccNbs tabla = TablaIsccNbs.desdeJson(
+    await rootBundle.loadString(assetTablaIsccNbs),
+  );
+  if (ajustesColor == null) return tabla;
+  try {
+    return tabla.conAjustes(
+      await ajustesColor().timeout(const Duration(seconds: 10)),
+    );
+  } on Object catch (e) {
+    debugPrint('Ajustes de color no disponibles, se usa la tabla base: $e');
+    return tabla;
+  }
+}
 
 /// Detector de rostros con ML Kit.
 ///
@@ -215,11 +234,15 @@ EstadoTermicoDispositivo crearEstadoTermico() {
 ///
 /// El subidor es [SubidorPendiente] hasta que el Closet reciba prendas (#25):
 /// las procesadas esperan en la cola sin perderse.
-Future<CapturaDePrendas> abrirCapturaDePrendas() async {
+Future<CapturaDePrendas> abrirCapturaDePrendas({
+  FuenteAjustesColor? ajustesColor,
+}) async {
   final EstadoTermico termico = crearEstadoTermico();
   final ColaCaptura cola = await ColaCaptura.abrir(
     almacen: await AlmacenColaArchivos.enSoporteDeLaApp(),
-    procesador: ProcesadorSobrePipeline(crearGarmentPipeline()),
+    procesador: ProcesadorSobrePipeline(
+      crearGarmentPipeline(ajustesColor: ajustesColor),
+    ),
     subidor: const SubidorPendiente(),
     termico: termico,
   );

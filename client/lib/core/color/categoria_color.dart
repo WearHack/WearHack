@@ -8,7 +8,8 @@
 /// y se regenera, no aqui.
 ///
 /// Los centroides no se mueven: son el estandar. Lo que se ajusta con las
-/// correcciones de los usuarios es la traduccion (tarea del Core).
+/// correcciones de los usuarios es la traduccion: la decide una tarea del Core
+/// y la app la aplica con [TablaIsccNbs.conAjustes].
 ///
 /// **No devuelve `multicolor`.** Eso no es una propiedad de un color sino de la
 /// prenda (un patron con varios colores), y lo decide quien ve el patron.
@@ -76,7 +77,28 @@ class TablaIsccNbs {
 
   /// La categoria de un color: la de su bloque mas cercano.
   CategoriaColor categoria(ColorLab color) => bloqueMasCercano(color).categoria;
+
+  /// La misma tabla con la categoria de algunos bloques cambiada: los ajustes
+  /// que el Core decide con las correcciones de los usuarios (#58). Los
+  /// centroides no se mueven. Un numero de bloque que no existe se ignora.
+  TablaIsccNbs conAjustes(Map<int, CategoriaColor> ajustes) {
+    if (ajustes.isEmpty) return this;
+    return TablaIsccNbs(<BloqueIsccNbs>[
+      for (final BloqueIsccNbs b in bloques)
+        ajustes.containsKey(b.numero)
+            ? BloqueIsccNbs(
+                numero: b.numero,
+                nombre: b.nombre,
+                lab: b.lab,
+                categoria: ajustes[b.numero]!,
+              )
+            : b,
+    ]);
+  }
 }
+
+/// De donde salen los ajustes de categoria: en la app, del Core.
+typedef FuenteAjustesColor = Future<Map<int, CategoriaColor>> Function();
 
 BloqueIsccNbs _bloque(Map<String, Object?> b) {
   final List<Object?> lab = b['lab']! as List<Object?>;
