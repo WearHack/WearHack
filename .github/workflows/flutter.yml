@@ -89,6 +89,22 @@ jobs:
       # armeabi-v7a para los de 32 bits. Release porque es lo que se instala en
       # las pruebas; mientras no haya keystore, el proyecto lo firma con las
       # claves de debug. iOS queda fuera del MVP (sin runner macOS).
+      # El proyecto pide -Xmx8G para Gradle (android/gradle.properties, generado)
+      # y el runner de un repo privado tiene unos 7 GB: Gradle, el daemon de
+      # Kotlin y el NDK juntos agotan la memoria y GitHub apaga el runner a
+      # mitad del build ("received a shutdown signal"). El gradle.properties de
+      # ~/.gradle gana al del proyecto, asi que el limite queda solo en CI.
+      - name: Limitar la memoria de Gradle
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError
+          org.gradle.workers.max=2
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+          free -h
+          df -h /
+
       - name: Construir APK
         run: |
           flutter build apk --release --split-per-abi \
