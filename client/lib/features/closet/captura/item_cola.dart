@@ -63,12 +63,7 @@ class DatosPrenda {
         a: (json['a']! as num).toDouble(),
         b: (json['b']! as num).toDouble(),
       ),
-      categoriaColor: CategoriaColor.values.firstWhere(
-        (CategoriaColor c) => c.name == json['categoria_color'],
-        orElse: () => throw FormatException(
-          'Categoria de color desconocida: ${json['categoria_color']}',
-        ),
-      ),
+      categoriaColor: _categoriaGuardada(json['categoria_color']! as String),
     );
   }
 
@@ -102,6 +97,22 @@ class DatosPrenda {
     'b': color.b,
     'categoria_color': categoriaColor.name,
   };
+}
+
+/// La categoria guardada en la cola. Los nombres de antes de las 20 categorias
+/// del Core (#58) se traducen, para no perder lo que ya estaba en cola al
+/// actualizar la app.
+CategoriaColor _categoriaGuardada(String nombre) {
+  final String actual = switch (nombre) {
+    'marron' => 'cafe',
+    'rosa' => 'rosado',
+    _ => nombre,
+  };
+  return CategoriaColor.values.firstWhere(
+    (CategoriaColor c) => c.name == actual,
+    orElse: () =>
+        throw FormatException('Categoria de color desconocida: $nombre'),
+  );
 }
 
 class ItemCola {

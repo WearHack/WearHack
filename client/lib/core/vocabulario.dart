@@ -52,20 +52,47 @@ enum SlotOutfit {
 
 enum Clima { frio, templado, calido, lluvia }
 
+/// Las 20 categorias de color de prenda, las mismas y en el mismo orden que
+/// `CategoriaColor` del Core (#58), mas [multicolor].
+///
+/// Las asigna la tabla ISCC-NBS (`core/color/categoria_color.dart`).
+/// [multicolor] no sale de la tabla: no es un color sino un patron, y lo decide
+/// quien ve el patron. El Core no la tiene todavia.
 enum CategoriaColor {
-  blanco,
   negro,
+  blanco,
   gris,
   beige,
-  marron,
+  cafe,
+  vinotinto,
   rojo,
+  rosado,
+  fucsia,
   naranja,
   amarillo,
+  mostaza,
+  verdeOliva,
   verde,
+  turquesa,
+  celeste,
   azul,
+  azulMarino,
   morado,
-  rosa,
-  multicolor,
+  lila,
+  multicolor;
+
+  /// El nombre en el Core y en la tabla ISCC-NBS: `verdeOliva` es
+  /// `VERDE_OLIVA`.
+  String get codigo => name
+      .replaceAllMapped(RegExp('[A-Z]'), (Match m) => '_${m[0]}')
+      .toUpperCase();
+
+  /// La categoria de un [codigo] del Core o de la tabla.
+  static CategoriaColor desdeCodigo(String codigo) => values.firstWhere(
+    (CategoriaColor c) => c.codigo == codigo,
+    orElse: () =>
+        throw FormatException('Categoria de color desconocida: $codigo'),
+  );
 }
 
 /// Color en espacio CIELAB.

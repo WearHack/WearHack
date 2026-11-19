@@ -12,11 +12,13 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:thermal/thermal.dart';
 import 'package:wearhack/core/clasificacion/pipeline_prendas.dart';
+import 'package:wearhack/core/color/categoria_color.dart';
 import 'package:wearhack/core/color/color_base.dart';
 import 'package:wearhack/core/recorte/configuracion_recorte.dart';
 import 'package:wearhack/core/recorte/recortador_facial.dart';
@@ -38,6 +40,8 @@ GarmentPipeline crearGarmentPipeline() => PipelinePrendasOnDevice(
   removedor: const RemovedorDeFondoPendiente(),
   clasificador: ClasificadorLiteRT(),
   configuracionColor: ConfiguracionColorBase.desdeEntorno,
+  tablaColores: () async =>
+      TablaIsccNbs.desdeJson(await rootBundle.loadString(assetTablaIsccNbs)),
 );
 
 /// Detector de rostros con ML Kit.

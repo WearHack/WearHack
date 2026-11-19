@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +19,11 @@ List<List<int>> _veces(int n, List<int> pixel) =>
     List<List<int>>.generate(n, (_) => pixel);
 
 ColorLab _lab(int r, int g, int b) => perfilALab(PerfilRgb.srgb, r, g, b);
+
+/// Las categorias se prueban en categoria_color_test.dart.
+final TablaIsccNbs _tabla = TablaIsccNbs.desdeJson(
+  File(assetTablaIsccNbs).readAsStringSync(),
+);
 
 ResultadoColorBase? _calcular(
   List<List<int>> pixeles,
@@ -209,7 +215,7 @@ void main() {
         _veces(40, <int>[0, 0, 0, 255]),
         _moda,
       )!;
-      expect(categoriaDeLab(r.color), CategoriaColor.negro);
+      expect(_tabla.categoria(r.color), CategoriaColor.negro);
     });
 
     test('muestrea las imagenes grandes', () {
@@ -270,80 +276,6 @@ void main() {
         ),
         throwsArgumentError,
       );
-    });
-  });
-
-  group('categoriaDeLab', () {
-    final Map<CategoriaColor, List<List<int>>> referencias =
-        <CategoriaColor, List<List<int>>>{
-          CategoriaColor.blanco: <List<int>>[
-            <int>[255, 255, 255],
-            <int>[240, 240, 240],
-          ],
-          CategoriaColor.negro: <List<int>>[
-            <int>[0, 0, 0],
-            <int>[25, 25, 25],
-          ],
-          CategoriaColor.gris: <List<int>>[
-            <int>[128, 128, 128],
-            <int>[100, 100, 100],
-          ],
-          CategoriaColor.rojo: <List<int>>[
-            <int>[220, 20, 20],
-            <int>[160, 0, 0],
-          ],
-          CategoriaColor.naranja: <List<int>>[
-            <int>[255, 140, 0],
-          ],
-          CategoriaColor.amarillo: <List<int>>[
-            <int>[255, 230, 0],
-          ],
-          CategoriaColor.verde: <List<int>>[
-            <int>[0, 128, 0],
-            <int>[34, 139, 34],
-          ],
-          CategoriaColor.azul: <List<int>>[
-            <int>[0, 0, 255],
-            <int>[0, 0, 128],
-            <int>[30, 144, 255],
-          ],
-          CategoriaColor.morado: <List<int>>[
-            <int>[128, 0, 128],
-          ],
-          CategoriaColor.rosa: <List<int>>[
-            <int>[255, 182, 193],
-          ],
-          CategoriaColor.marron: <List<int>>[
-            <int>[101, 67, 33],
-          ],
-          CategoriaColor.beige: <List<int>>[
-            <int>[245, 245, 220],
-          ],
-        };
-
-    referencias.forEach((CategoriaColor esperada, List<List<int>> colores) {
-      test('${esperada.name}: $colores', () {
-        for (final List<int> c in colores) {
-          expect(
-            categoriaDeLab(_lab(c[0], c[1], c[2])),
-            esperada,
-            reason: 'rgb(${c[0]}, ${c[1]}, ${c[2]})',
-          );
-        }
-      });
-    });
-
-    test('nunca devuelve multicolor', () {
-      for (int r = 0; r < 256; r += 51) {
-        for (int g = 0; g < 256; g += 51) {
-          for (int b = 0; b < 256; b += 51) {
-            expect(
-              categoriaDeLab(_lab(r, g, b)),
-              isNot(CategoriaColor.multicolor),
-            );
-          }
-        }
-      }
     });
   });
 }
