@@ -12,6 +12,7 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:wearhack/core/color/categoria_color.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
@@ -46,7 +47,9 @@ class FaceCropperWeb implements FaceCropper {
   }
 }
 
-GarmentPipeline crearGarmentPipeline() => GarmentPipelineWeb();
+/// [ajustesColor] se ignora: en web no se clasifican prendas.
+GarmentPipeline crearGarmentPipeline({FuenteAjustesColor? ajustesColor}) =>
+    GarmentPipelineWeb();
 
 FaceCropper crearFaceCropper() => FaceCropperWeb();
 
@@ -57,6 +60,8 @@ CamaraDeCaptura crearCamaraTrasera() {
   throw const CapturaNoDisponible('La camara solo existe en movil.');
 }
 
-Future<CapturaDePrendas> abrirCapturaDePrendas() async {
+Future<CapturaDePrendas> abrirCapturaDePrendas({
+  FuenteAjustesColor? ajustesColor,
+}) async {
   throw const CapturaNoDisponible('La captura de prendas solo corre en movil.');
 }
