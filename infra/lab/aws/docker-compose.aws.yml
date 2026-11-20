@@ -67,6 +67,44 @@ services:
       LOG_LEVEL: INFO
       MONGO_URI: ${MONGODB_URI_RECOMENDACION}
 
+  # Jobs batch (#36): la misma imagen del servicio, otro comando, sin puertos. Solo con el
+  # profile `jobs`; los corre correr-jobs.sh (timer wearhack-jobs) o a mano:
+  #   docker compose -p wearhack -f docker-compose.aws.yml --profile jobs run --rm   #     jobs-recomendador python -m app.jobs.ranking_prendas_puente
+  # Sin build: usan la imagen que ya bajo o construyo desplegar.sh para el mismo commit.
+  jobs-colorimetria:
+    image: ghcr.io/wearhack/wearhack-colorimetria:${IMAGEN_TAG:-local}
+    profiles: [jobs]
+    restart: "no"
+    logging: *logging
+    healthcheck:
+      disable: true
+    environment:
+      <<: *sin-otel
+      SERVICIO: colorimetria
+      ENTORNO: lab
+      LOG_LEVEL: INFO
+      MONGO_URI: ${MONGODB_URI_JOBS}
+    # El conjunto fijo de evaluacion de la recalibracion (#37). Si no esta, el job
+    # descarta la version nueva: no se publica nada sin medir.
+    volumes:
+      - /opt/wearhack/evaluacion:/evaluacion:ro
+    command: ["python", "-c", "print('Uso: run --rm jobs-colorimetria python -m app.jobs.<nombre>')"]
+
+  jobs-recomendador:
+    image: ghcr.io/wearhack/wearhack-recomendador:${IMAGEN_TAG:-local}
+    profiles: [jobs]
+    restart: "no"
+    logging: *logging
+    healthcheck:
+      disable: true
+    environment:
+      <<: *sin-otel
+      SERVICIO: recomendador
+      ENTORNO: lab
+      LOG_LEVEL: INFO
+      MONGO_URI: ${MONGODB_URI_JOBS}
+    command: ["python", "-c", "print('Uso: run --rm jobs-recomendador python -m app.jobs.<nombre>')"]
+
   caddy:
     image: caddy:2.10.2
     restart: unless-stopped

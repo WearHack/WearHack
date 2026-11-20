@@ -134,11 +134,29 @@ levantar() {
   fi
 }
 
+# Los jobs batch (#36): correr-jobs.sh y su timer viven en el repo. Se instalan o
+# actualizan tras cada despliegue bueno, asi una EC2 ya creada los recibe sola.
+instalar_jobs() {
+  install -m 755 "$AWS_DIR/correr-jobs.sh" "$BASE/correr-jobs.sh"
+  local cambio=0 f
+  for f in "$AWS_DIR"/systemd/*; do
+    cmp -s "$f" "/etc/systemd/system/$(basename "$f")" && continue
+    install -m 644 "$f" /etc/systemd/system/
+    cambio=1
+  done
+  if [ "$cambio" = 1 ]; then
+    systemctl daemon-reload
+    systemctl enable --now wearhack-jobs.timer
+    log "timer de jobs instalado"
+  fi
+}
+
 cd "$REPO"
 if levantar && sano; then
   docker logout ghcr.io >/dev/null 2>&1 || true
   log "OK ${NUEVO:0:7}"
   install -m 755 "$AWS_DIR/desplegar.sh" "$BASE/desplegar.sh"
+  instalar_jobs
   # Las imagenes de commits viejos se acumulan: fuera las que nadie usa hace 3 dias.
   docker image prune -af --filter until=72h >/dev/null
   exit 0
