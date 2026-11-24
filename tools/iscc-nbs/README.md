@@ -1,7 +1,9 @@
 # tools/iscc-nbs: tabla de categorías de color de prenda (#58)
 
-Genera `client/assets/color/iscc_nbs.json`. La app asigna cada color al bloque ISCC-NBS
-más cercano (ΔE00) y le pone la categoría del bloque.
+Genera `client/assets/color/iscc_nbs.json` y su copia en el Core,
+`services/core/src/main/resources/colores/iscc_nbs.json`. Las dos tienen que ser iguales y una
+prueba del Core falla si se separan. La app asigna cada color al bloque ISCC-NBS más cercano
+(ΔE00) y le pone la categoría del bloque.
 
 | Archivo | Qué es |
 |---|---|
@@ -24,8 +26,11 @@ cd client && flutter test test/categoria_color_test.dart
 ## Decisiones
 
 - Los centroides no se mueven: son el estándar. Lo que cambia con las correcciones de los
-  usuarios es la categoría de un bloque (≥ 10 correcciones y ≥ 70 % de acuerdo, tarea del
-  Core, pendiente).
+  usuarios es la categoría de un bloque: con 10 correcciones o más y al menos el 70 % de
+  acuerdo. Lo decide la tarea `AjusteCategoriasColor` del Core, una vez al día, y lo guarda en
+  `ajustes_categoria_color`. La app lo baja de `GET /api/v1/closet/colores/ajustes` y lo
+  aplica sobre esta tabla. Para cambiar una categoría a mano, para todos, se cambia `REGLAS`
+  y se regenera.
 - El `+`/`-` del original (incertidumbre en el decimal siguiente) se descarta.
 - La renotación Munsell no llega por debajo de V = 1. En los cuatro negros con V < 1, la
   cromaticidad se toma de V = 1 y la luminancia del valor real. Quedan anotados en `ajustes`.

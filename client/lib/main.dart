@@ -9,8 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/app/tema.dart';
+import 'package:wearhack/core/color/categoria_color.dart';
 import 'package:wearhack/core/configuracion.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
+import 'package:wearhack/features/closet/colores/cliente_ajustes_color.dart';
 import 'package:wearhack/features/closet/repositorio_closet.dart';
 import 'package:wearhack/features/colorimetria/cliente_colorimetria.dart';
 import 'package:wearhack/features/colorimetria/conexion_core.dart';
@@ -40,6 +42,7 @@ Future<void> main() async {
   final RepositorioFalso datos = RepositorioFalso();
   RepositorioConsentimiento consentimiento = datos;
   ServicioColorimetria? colorimetria;
+  FuenteAjustesColor? ajustesColor;
   if (Configuracion.cognitoConfigurado) {
     final Autenticacion autenticacion = await AutenticacionAmplify.configurar(
       region: Configuracion.cognitoRegion,
@@ -62,13 +65,18 @@ Future<void> main() async {
     );
     consentimiento = RepositorioConsentimientoCore(conexion);
     colorimetria = ClienteColorimetria(conexion);
+    ajustesColor = ClienteAjustesColor(
+      cliente: http.Client(),
+      base: Configuracion.coreBase,
+      token: autenticacion.tokenDeAcceso,
+    ).ajustes;
   }
 
   // La cola se abre al arrancar y no al entrar en la pantalla: lo que quedo de
   // la ultima vez se procesa y se sube aunque la persona no vuelva a capturar.
   CapturaDePrendas? capturaPrendas;
   if (Configuracion.capturaPrendas && crearGarmentPipeline().disponible) {
-    capturaPrendas = await abrirCapturaDePrendas();
+    capturaPrendas = await abrirCapturaDePrendas(ajustesColor: ajustesColor);
     capturaPrendas.cola.arrancar();
   }
 

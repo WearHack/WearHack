@@ -1,0 +1,2978 @@
+{
+ "fuente": "Kelly 1958, J. Res. NBS 61(5) RP2911, tabla 1 (centroides ISCC-NBS)",
+ "conversion": "colour-science 0.4.7, renotacion Munsell (C) -> Bradford -> Lab D65",
+ "version": 1,
+ "categorias": [
+  "NEGRO",
+  "BLANCO",
+  "GRIS",
+  "BEIGE",
+  "CAFE",
+  "VINOTINTO",
+  "ROJO",
+  "ROSADO",
+  "FUCSIA",
+  "NARANJA",
+  "AMARILLO",
+  "MOSTAZA",
+  "VERDE_OLIVA",
+  "VERDE",
+  "TURQUESA",
+  "CELESTE",
+  "AZUL",
+  "AZUL_MARINO",
+  "MORADO",
+  "LILA"
+ ],
+ "bloques": [
+  {
+   "numero": 1,
+   "nombre": "vivid pink",
+   "munsell": "1.5R 7/13",
+   "lab": [
+    70.72,
+    56.14,
+    17.15
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 2,
+   "nombre": "strong pink",
+   "munsell": "1.5R 7.5/9.1",
+   "lab": [
+    75.61,
+    38.74,
+    12.35
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 3,
+   "nombre": "deep pink",
+   "munsell": "1.9R 6/11.1",
+   "lab": [
+    60.93,
+    47.04,
+    14.91
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 4,
+   "nombre": "light pink",
+   "munsell": "2.5R 8.6/5.2",
+   "lab": [
+    86.27,
+    21.75,
+    8.44
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 5,
+   "nombre": "moderate pink",
+   "munsell": "2.5R 7.2/5.2",
+   "lab": [
+    72.76,
+    20.99,
+    7.78
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 6,
+   "nombre": "dark pink",
+   "munsell": "2.5R 6/6",
+   "lab": [
+    60.99,
+    25.44,
+    9.12
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 7,
+   "nombre": "pale pink",
+   "munsell": "2.5R 8.8/2.3",
+   "lab": [
+    88.23,
+    7.36,
+    2.81
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 8,
+   "nombre": "grayish pink",
+   "munsell": "2.5R 7.2/2.3",
+   "lab": [
+    72.79,
+    8.34,
+    3.11
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 9,
+   "nombre": "pinkish white",
+   "munsell": "7.6R 9.2/1",
+   "lab": [
+    92.12,
+    2.45,
+    1.84
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 10,
+   "nombre": "pinkish gray",
+   "munsell": "7.6R 7.5/1",
+   "lab": [
+    75.7,
+    3.38,
+    2.32
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 11,
+   "nombre": "vivid red",
+   "munsell": "5R 4/15",
+   "lab": [
+    40.55,
+    65.42,
+    31.58
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 12,
+   "nombre": "strong red",
+   "munsell": "4R 4.5/12",
+   "lab": [
+    45.75,
+    53.81,
+    22.02
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 13,
+   "nombre": "deep red",
+   "munsell": "5R 2.8/9.9",
+   "lab": [
+    28.19,
+    47.66,
+    17.53
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 14,
+   "nombre": "very deep red",
+   "munsell": "5R 1.4/9",
+   "lab": [
+    14.2,
+    44.1,
+    3.71
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 15,
+   "nombre": "moderate red",
+   "munsell": "4R 4.5/9.1",
+   "lab": [
+    45.79,
+    41.28,
+    16.93
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 16,
+   "nombre": "dark red",
+   "munsell": "4.5R 2.8/6.8",
+   "lab": [
+    28.23,
+    33.17,
+    11.42
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 17,
+   "nombre": "very dark red",
+   "munsell": "3.5R 1.2/4.9",
+   "lab": [
+    12.32,
+    25.71,
+    0.23
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 18,
+   "nombre": "light grayish red",
+   "munsell": "4.9R 6/3.4",
+   "lab": [
+    61.02,
+    13.87,
+    6.64
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 19,
+   "nombre": "grayish red",
+   "munsell": "4.6R 4.5/4.7",
+   "lab": [
+    45.85,
+    21.76,
+    9.65
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 20,
+   "nombre": "dark grayish red",
+   "munsell": "3.5R 2.7/2.2",
+   "lab": [
+    27.27,
+    12.21,
+    3.27
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 21,
+   "nombre": "blackish red",
+   "munsell": "3.5R 1.1/1.6",
+   "lab": [
+    11.39,
+    10.32,
+    0.28
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 22,
+   "nombre": "reddish gray",
+   "munsell": "6.5R 5.5/1.1",
+   "lab": [
+    56.05,
+    4.52,
+    2.46
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 23,
+   "nombre": "dark reddish gray",
+   "munsell": "6R 3.5/1.1",
+   "lab": [
+    35.54,
+    5.93,
+    2.71
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 24,
+   "nombre": "reddish black",
+   "munsell": "6R 0.9/0.8",
+   "lab": [
+    9.36,
+    4.97,
+    0.69
+   ],
+   "categoria": "NEGRO",
+   "ajustes": [
+    "cromaticidad de V=1 (V=0.9 fuera de la renotacion)"
+   ]
+  },
+  {
+   "numero": 25,
+   "nombre": "vivid yellowish pink",
+   "munsell": "8R 7/13",
+   "lab": [
+    70.77,
+    51.45,
+    41.23
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 26,
+   "nombre": "strong yellowish pink",
+   "munsell": "8R 7.5/9",
+   "lab": [
+    75.65,
+    35.99,
+    28.02
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 27,
+   "nombre": "deep yellowish pink",
+   "munsell": "5.6R 6/12.4",
+   "lab": [
+    60.93,
+    51.41,
+    28.55
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 28,
+   "nombre": "light yellowish pink",
+   "munsell": "0.7YR 8.6/4.8",
+   "lab": [
+    86.3,
+    17.62,
+    19.09
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 29,
+   "nombre": "moderate yellowish pink",
+   "munsell": "0.7YR 7.2/4.8",
+   "lab": [
+    72.79,
+    17.25,
+    17.93
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 30,
+   "nombre": "dark yellowish pink",
+   "munsell": "7R 6/6",
+   "lab": [
+    61.0,
+    24.25,
+    15.55
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 31,
+   "nombre": "pale yellowish pink",
+   "munsell": "2.1YR 8.8/2.2",
+   "lab": [
+    88.24,
+    6.48,
+    8.24
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 32,
+   "nombre": "grayish yellowish pink",
+   "munsell": "0.5YR 7.2/2.3",
+   "lab": [
+    72.8,
+    7.89,
+    7.61
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 33,
+   "nombre": "brownish pink",
+   "munsell": "6.5YR 7.2/2.2",
+   "lab": [
+    72.81,
+    5.28,
+    11.85
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 34,
+   "nombre": "vivid reddish orange",
+   "munsell": "9.5R 5.5/15.5",
+   "lab": [
+    55.94,
+    57.72,
+    60.11
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 35,
+   "nombre": "strong reddish orange",
+   "munsell": "9.5R 5.5/12",
+   "lab": [
+    55.97,
+    46.57,
+    44.91
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 36,
+   "nombre": "deep reddish orange",
+   "munsell": "9.5R 4/12",
+   "lab": [
+    40.64,
+    47.21,
+    43.55
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 37,
+   "nombre": "moderate reddish orange",
+   "munsell": "9.5R 5.5/9.1",
+   "lab": [
+    56.0,
+    35.89,
+    32.64
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 38,
+   "nombre": "dark reddish orange",
+   "munsell": "9.5R 4/9.1",
+   "lab": [
+    40.67,
+    37.22,
+    31.67
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 39,
+   "nombre": "grayish reddish orange",
+   "munsell": "0.5YR 5.5/6",
+   "lab": [
+    56.03,
+    22.97,
+    22.64
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 40,
+   "nombre": "strong reddish brown",
+   "munsell": "0.5YR 3/11.2",
+   "lab": [
+    30.28,
+    45.4,
+    43.28
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 41,
+   "nombre": "deep reddish brown",
+   "munsell": "9.8R 1.5/7.5",
+   "lab": [
+    15.23,
+    36.34,
+    15.47
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 42,
+   "nombre": "light reddish brown",
+   "munsell": "0.5YR 5.5/4.1",
+   "lab": [
+    56.04,
+    15.83,
+    15.09
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 43,
+   "nombre": "moderate reddish brown",
+   "munsell": "9.6R 3.4/5.2",
+   "lab": [
+    34.48,
+    23.63,
+    17.61
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 44,
+   "nombre": "dark reddish brown",
+   "munsell": "9.5R 1.3/3.6",
+   "lab": [
+    13.34,
+    19.66,
+    7.48
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 45,
+   "nombre": "light grayish reddish brown",
+   "munsell": "3YR 5.5/2.3",
+   "lab": [
+    56.05,
+    8.01,
+    10.0
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 46,
+   "nombre": "grayish reddish brown",
+   "munsell": "9.9R 3.4/2.3",
+   "lab": [
+    34.5,
+    11.19,
+    8.11
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 47,
+   "nombre": "dark grayish reddish brown",
+   "munsell": "9.5R 2/2",
+   "lab": [
+    20.22,
+    9.75,
+    5.29
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 48,
+   "nombre": "vivid orange",
+   "munsell": "4.5YR 6.6/16",
+   "lab": [
+    66.93,
+    39.44,
+    86.91
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 49,
+   "nombre": "brilliant orange",
+   "munsell": "4.5YR 8/12.1",
+   "lab": [
+    80.52,
+    32.39,
+    63.25
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 50,
+   "nombre": "strong orange",
+   "munsell": "4.5YR 6.5/12.1",
+   "lab": [
+    65.96,
+    32.9,
+    62.73
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 51,
+   "nombre": "deep orange",
+   "munsell": "4.5YR 5/12.1",
+   "lab": [
+    50.98,
+    32.56,
+    62.67
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 52,
+   "nombre": "light orange",
+   "munsell": "4.5YR 8/8.1",
+   "lab": [
+    80.53,
+    22.68,
+    41.56
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 53,
+   "nombre": "moderate orange",
+   "munsell": "4.6YR 6.5/8.1",
+   "lab": [
+    65.97,
+    23.09,
+    40.66
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 54,
+   "nombre": "brownish orange",
+   "munsell": "4.5YR 5/8.2",
+   "lab": [
+    50.99,
+    24.63,
+    41.54
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 55,
+   "nombre": "strong brown",
+   "munsell": "5YR 3.5/8",
+   "lab": [
+    35.53,
+    24.07,
+    41.79
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 56,
+   "nombre": "deep brown",
+   "munsell": "5YR 2.1/6",
+   "lab": [
+    21.21,
+    20.08,
+    28.88
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 57,
+   "nombre": "light brown",
+   "munsell": "5.5YR 5.5/4.6",
+   "lab": [
+    56.06,
+    13.12,
+    23.74
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 58,
+   "nombre": "moderate brown",
+   "munsell": "5.5YR 3.5/3.9",
+   "lab": [
+    35.55,
+    12.8,
+    20.2
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 59,
+   "nombre": "dark brown",
+   "munsell": "5.5YR 1.6/3.6",
+   "lab": [
+    16.29,
+    15.03,
+    18.46
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 60,
+   "nombre": "light grayish brown",
+   "munsell": "6.5YR 5.5/2.2",
+   "lab": [
+    56.06,
+    5.95,
+    11.8
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 61,
+   "nombre": "grayish brown",
+   "munsell": "5.6YR 3.5/2",
+   "lab": [
+    35.55,
+    6.98,
+    10.61
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 62,
+   "nombre": "dark grayish brown",
+   "munsell": "5.5YR 2/1.7",
+   "lab": [
+    20.23,
+    6.07,
+    7.42
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 63,
+   "nombre": "light brownish gray",
+   "munsell": "6.8YR 5.5/1",
+   "lab": [
+    56.06,
+    2.75,
+    5.42
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 64,
+   "nombre": "brownish gray",
+   "munsell": "6.4YR 3.5/0.9",
+   "lab": [
+    35.55,
+    3.15,
+    4.87
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 65,
+   "nombre": "brownish black",
+   "munsell": "7.5YR 0.8/0.8",
+   "lab": [
+    8.31,
+    3.15,
+    3.78
+   ],
+   "categoria": "NEGRO",
+   "ajustes": [
+    "cromaticidad de V=1 (V=0.8 fuera de la renotacion)"
+   ]
+  },
+  {
+   "numero": 66,
+   "nombre": "vivid orange yellow",
+   "munsell": "9YR 7.2/16",
+   "lab": [
+    72.84,
+    21.96,
+    99.71
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 67,
+   "nombre": "brilliant orange yellow",
+   "munsell": "9YR 8.4/12.1",
+   "lab": [
+    84.43,
+    18.03,
+    74.68
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 68,
+   "nombre": "strong orange yellow",
+   "munsell": "9YR 7.2/12.1",
+   "lab": [
+    72.84,
+    18.69,
+    74.54
+   ],
+   "categoria": "NARANJA"
+  },
+  {
+   "numero": 69,
+   "nombre": "deep orange yellow",
+   "munsell": "9YR 6/12.1",
+   "lab": [
+    61.08,
+    18.98,
+    74.22
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 70,
+   "nombre": "light orange yellow",
+   "munsell": "9YR 8.6/8.1",
+   "lab": [
+    86.35,
+    12.27,
+    50.96
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 71,
+   "nombre": "moderate orange yellow",
+   "munsell": "9YR 7.2/8.1",
+   "lab": [
+    72.84,
+    13.14,
+    49.24
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 72,
+   "nombre": "dark orange yellow",
+   "munsell": "9YR 6/8.1",
+   "lab": [
+    61.08,
+    14.12,
+    49.36
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 73,
+   "nombre": "pale orange yellow",
+   "munsell": "9.1YR 8.6/4.4",
+   "lab": [
+    86.34,
+    6.27,
+    28.24
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 74,
+   "nombre": "strong yellowish brown",
+   "munsell": "9YR 4.6/9.6",
+   "lab": [
+    46.94,
+    16.78,
+    59.01
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 75,
+   "nombre": "deep yellowish brown",
+   "munsell": "9.5YR 2.9/6",
+   "lab": [
+    29.36,
+    11.5,
+    37.12
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 76,
+   "nombre": "light yellowish brown",
+   "munsell": "9.2YR 6.6/4.7",
+   "lab": [
+    66.99,
+    7.84,
+    28.83
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 77,
+   "nombre": "moderate yellowish brown",
+   "munsell": "9.5YR 4.5/4",
+   "lab": [
+    45.91,
+    7.72,
+    25.33
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 78,
+   "nombre": "dark yellowish brown",
+   "munsell": "9.5YR 2.2/3.7",
+   "lab": [
+    22.24,
+    7.95,
+    21.54
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 79,
+   "nombre": "light grayish yellowish brown",
+   "munsell": "9.5YR 6.4/2.4",
+   "lab": [
+    65.01,
+    3.79,
+    15.14
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 80,
+   "nombre": "grayish yellowish brown",
+   "munsell": "9.5YR 4.6/2.1",
+   "lab": [
+    46.93,
+    4.05,
+    13.31
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 81,
+   "nombre": "dark grayish yellowish brown",
+   "munsell": "9.5YR 2.4/1.8",
+   "lab": [
+    24.25,
+    4.03,
+    10.22
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 82,
+   "nombre": "vivid yellow",
+   "munsell": "4Y 7.8/14.5",
+   "lab": [
+    78.7,
+    2.17,
+    99.5
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 83,
+   "nombre": "brilliant yellow",
+   "munsell": "4Y 8.8/9.5",
+   "lab": [
+    88.34,
+    -0.86,
+    67.0
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 84,
+   "nombre": "strong yellow",
+   "munsell": "4Y 7.2/9.5",
+   "lab": [
+    72.89,
+    1.16,
+    66.01
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 85,
+   "nombre": "deep yellow",
+   "munsell": "4Y 6/9.5",
+   "lab": [
+    61.12,
+    2.41,
+    65.85
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 86,
+   "nombre": "light yellow",
+   "munsell": "4Y 8.8/6.6",
+   "lab": [
+    88.32,
+    -1.68,
+    47.68
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 87,
+   "nombre": "moderate yellow",
+   "munsell": "4Y 7.2/6.6",
+   "lab": [
+    72.87,
+    -0.07,
+    46.18
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 88,
+   "nombre": "dark yellow",
+   "munsell": "4Y 6/6.6",
+   "lab": [
+    61.11,
+    1.03,
+    46.33
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 89,
+   "nombre": "pale yellow",
+   "munsell": "4.2Y 8.9/3.6",
+   "lab": [
+    89.27,
+    -2.25,
+    27.48
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 90,
+   "nombre": "grayish yellow",
+   "munsell": "4.2Y 7.2/3.6",
+   "lab": [
+    72.85,
+    -1.2,
+    26.02
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 91,
+   "nombre": "dark grayish yellow",
+   "munsell": "4Y 6/4.1",
+   "lab": [
+    61.1,
+    -0.24,
+    28.83
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 92,
+   "nombre": "yellowish white",
+   "munsell": "4.1Y 9.2/1.3",
+   "lab": [
+    92.15,
+    -0.88,
+    8.8
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 93,
+   "nombre": "yellowish gray",
+   "munsell": "4.1Y 7.5/1.3",
+   "lab": [
+    75.73,
+    -0.73,
+    9.91
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 94,
+   "nombre": "light olive brown",
+   "munsell": "2.5Y 5/8.4",
+   "lab": [
+    51.05,
+    6.57,
+    56.32
+   ],
+   "categoria": "MOSTAZA"
+  },
+  {
+   "numero": 95,
+   "nombre": "moderate olive brown",
+   "munsell": "2.5Y 3.5/6",
+   "lab": [
+    35.59,
+    5.66,
+    40.25
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 96,
+   "nombre": "dark olive brown",
+   "munsell": "2.5Y 1.8/2.5",
+   "lab": [
+    18.28,
+    3.18,
+    16.84
+   ],
+   "categoria": "CAFE"
+  },
+  {
+   "numero": 97,
+   "nombre": "vivid greenish yellow",
+   "munsell": "9.5Y 7.8/14.5",
+   "lab": [
+    78.75,
+    -15.49,
+    103.24
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 98,
+   "nombre": "brilliant greenish yellow",
+   "munsell": "9.5Y 8.8/9.5",
+   "lab": [
+    88.38,
+    -14.11,
+    69.71
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 99,
+   "nombre": "strong greenish yellow",
+   "munsell": "9.5Y 7.2/9.5",
+   "lab": [
+    72.92,
+    -12.7,
+    68.9
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 100,
+   "nombre": "deep greenish yellow",
+   "munsell": "9.5Y 6/9.5",
+   "lab": [
+    61.16,
+    -11.67,
+    68.37
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 101,
+   "nombre": "light greenish yellow",
+   "munsell": "9.5Y 8.8/6.6",
+   "lab": [
+    88.35,
+    -11.38,
+    49.48
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 102,
+   "nombre": "moderate greenish yellow",
+   "munsell": "9.5Y 7.2/6.6",
+   "lab": [
+    72.9,
+    -10.31,
+    47.68
+   ],
+   "categoria": "AMARILLO"
+  },
+  {
+   "numero": 103,
+   "nombre": "dark greenish yellow",
+   "munsell": "9.5Y 6/6.6",
+   "lab": [
+    61.14,
+    -9.79,
+    47.93
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 104,
+   "nombre": "pale greenish yellow",
+   "munsell": "9.5Y 8.9/4.1",
+   "lab": [
+    89.29,
+    -8.24,
+    31.96
+   ],
+   "categoria": "BEIGE"
+  },
+  {
+   "numero": 105,
+   "nombre": "grayish greenish yellow",
+   "munsell": "9.5Y 7.2/4.1",
+   "lab": [
+    72.87,
+    -7.51,
+    30.29
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 106,
+   "nombre": "light olive",
+   "munsell": "8.1Y 5.1/8",
+   "lab": [
+    52.11,
+    -6.99,
+    58.13
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 107,
+   "nombre": "moderate olive",
+   "munsell": "8Y 3.5/5.8",
+   "lab": [
+    35.62,
+    -4.57,
+    41.32
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 108,
+   "nombre": "dark olive",
+   "munsell": "8Y 1.7/3.2",
+   "lab": [
+    17.32,
+    -2.21,
+    23.19
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 109,
+   "nombre": "light grayish olive",
+   "munsell": "8.3Y 5.5/2.4",
+   "lab": [
+    56.1,
+    -3.67,
+    17.59
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 110,
+   "nombre": "grayish olive",
+   "munsell": "8.1Y 3.5/2.3",
+   "lab": [
+    35.59,
+    -2.76,
+    15.73
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 111,
+   "nombre": "dark grayish olive",
+   "munsell": "8Y 2/2",
+   "lab": [
+    20.26,
+    -1.79,
+    11.3
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 112,
+   "nombre": "light olive gray",
+   "munsell": "7.4Y 5.5/1.3",
+   "lab": [
+    56.08,
+    -1.78,
+    9.65
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 113,
+   "nombre": "olive gray",
+   "munsell": "8.1Y 3.5/1",
+   "lab": [
+    35.57,
+    -1.35,
+    6.86
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 114,
+   "nombre": "olive black",
+   "munsell": "9Y 0.9/0.8",
+   "lab": [
+    9.39,
+    -1.04,
+    4.72
+   ],
+   "categoria": "NEGRO",
+   "ajustes": [
+    "cromaticidad de V=1 (V=0.9 fuera de la renotacion)"
+   ]
+  },
+  {
+   "numero": 115,
+   "nombre": "vivid yellow green",
+   "munsell": "5GY 7.5/14.5",
+   "lab": [
+    75.9,
+    -38.03,
+    96.12
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 116,
+   "nombre": "brilliant yellow green",
+   "munsell": "5GY 8.5/9.1",
+   "lab": [
+    85.5,
+    -28.11,
+    60.56
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 117,
+   "nombre": "strong yellow green",
+   "munsell": "5GY 6/9.1",
+   "lab": [
+    61.19,
+    -27.63,
+    57.92
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 118,
+   "nombre": "deep yellow green",
+   "munsell": "5GY 4/9.1",
+   "lab": [
+    40.86,
+    -26.13,
+    58.06
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 119,
+   "nombre": "light yellow green",
+   "munsell": "5GY 8.6/5.2",
+   "lab": [
+    86.42,
+    -17.66,
+    36.05
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 120,
+   "nombre": "moderate yellow green",
+   "munsell": "5GY 6/5.2",
+   "lab": [
+    61.14,
+    -17.28,
+    32.45
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 121,
+   "nombre": "pale yellow green",
+   "munsell": "3.5GY 8.7/2.2",
+   "lab": [
+    87.33,
+    -7.64,
+    17.46
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 122,
+   "nombre": "grayish yellow green",
+   "munsell": "4.4GY 6.1/2.2",
+   "lab": [
+    62.09,
+    -7.82,
+    14.59
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 123,
+   "nombre": "strong olive green",
+   "munsell": "5GY 3.2/7.8",
+   "lab": [
+    32.56,
+    -23.38,
+    48.7
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 124,
+   "nombre": "deep olive green",
+   "munsell": "5GY 2.4/7.1",
+   "lab": [
+    24.35,
+    -23.03,
+    42.53
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 125,
+   "nombre": "moderate olive green",
+   "munsell": "5GY 3.5/5.2",
+   "lab": [
+    35.64,
+    -16.93,
+    30.34
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 126,
+   "nombre": "dark olive green",
+   "munsell": "5GY 1.8/3.7",
+   "lab": [
+    18.32,
+    -12.82,
+    20.04
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 127,
+   "nombre": "grayish olive green",
+   "munsell": "5GY 3.5/2.2",
+   "lab": [
+    35.59,
+    -7.4,
+    11.99
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 128,
+   "nombre": "dark grayish olive green",
+   "munsell": "5GY 2/2",
+   "lab": [
+    20.26,
+    -5.28,
+    7.92
+   ],
+   "categoria": "VERDE_OLIVA"
+  },
+  {
+   "numero": 129,
+   "nombre": "vivid yellowish green",
+   "munsell": "0.5G 7/15.5",
+   "lab": [
+    71.1,
+    -73.26,
+    58.74
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 130,
+   "nombre": "brilliant yellowish green",
+   "munsell": "0.5G 8/9.1",
+   "lab": [
+    80.7,
+    -44.62,
+    36.06
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 131,
+   "nombre": "strong yellowish green",
+   "munsell": "0.5G 5.5/9.1",
+   "lab": [
+    56.21,
+    -45.12,
+    33.98
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 132,
+   "nombre": "deep yellowish green",
+   "munsell": "0.5G 3.5/11.5",
+   "lab": [
+    35.72,
+    -56.77,
+    38.88
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 133,
+   "nombre": "very deep yellowish green",
+   "munsell": "0.5G 2/9.2",
+   "lab": [
+    20.36,
+    -43.52,
+    25.62
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 134,
+   "nombre": "very light yellowish green",
+   "munsell": "0.5G 9.1/5.1",
+   "lab": [
+    91.26,
+    -26.71,
+    21.35
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 135,
+   "nombre": "light yellowish green",
+   "munsell": "0.5G 7.5/5.1",
+   "lab": [
+    75.81,
+    -26.24,
+    20.65
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 136,
+   "nombre": "moderate yellowish green",
+   "munsell": "0.5G 5.5/5.1",
+   "lab": [
+    56.15,
+    -25.55,
+    19.04
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 137,
+   "nombre": "dark yellowish green",
+   "munsell": "0.5G 3.5/5.1",
+   "lab": [
+    35.64,
+    -24.9,
+    17.3
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 138,
+   "nombre": "very dark yellowish green",
+   "munsell": "0.5G 1.5/4.9",
+   "lab": [
+    15.41,
+    -26.41,
+    14.49
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 139,
+   "nombre": "vivid green",
+   "munsell": "6.5G 5.2/18",
+   "lab": [
+    53.25,
+    -99.59,
+    16.68
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 140,
+   "nombre": "brilliant green",
+   "munsell": "6G 7.4/9.1",
+   "lab": [
+    74.88,
+    -49.44,
+    14.38
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 141,
+   "nombre": "strong green",
+   "munsell": "6G 4.5/9.1",
+   "lab": [
+    46.03,
+    -50.16,
+    11.95
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 142,
+   "nombre": "deep green",
+   "munsell": "6G 2.3/9.1",
+   "lab": [
+    23.34,
+    -46.4,
+    8.48
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 143,
+   "nombre": "very light green",
+   "munsell": "6G 8.6/5.1",
+   "lab": [
+    86.41,
+    -30.7,
+    10.07
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 144,
+   "nombre": "light green",
+   "munsell": "6G 6.5/5.1",
+   "lab": [
+    66.07,
+    -28.32,
+    8.65
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 145,
+   "nombre": "moderate green",
+   "munsell": "6G 4.5/5.1",
+   "lab": [
+    45.98,
+    -27.83,
+    7.69
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 146,
+   "nombre": "dark green",
+   "munsell": "6G 2.7/5",
+   "lab": [
+    27.37,
+    -25.27,
+    6.12
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 147,
+   "nombre": "very dark green",
+   "munsell": "6G 1.3/4.9",
+   "lab": [
+    13.46,
+    -28.41,
+    5.27
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 148,
+   "nombre": "very pale green",
+   "munsell": "9G 8.7/1.8",
+   "lab": [
+    87.31,
+    -11.79,
+    2.61
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 149,
+   "nombre": "pale green",
+   "munsell": "9G 6.5/1.8",
+   "lab": [
+    66.01,
+    -10.54,
+    2.06
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 150,
+   "nombre": "grayish green",
+   "munsell": "9G 4.5/1.8",
+   "lab": [
+    45.92,
+    -9.54,
+    1.61
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 151,
+   "nombre": "dark grayish green",
+   "munsell": "9G 2.8/1.6",
+   "lab": [
+    28.34,
+    -7.34,
+    1.02
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 152,
+   "nombre": "blackish green",
+   "munsell": "9G 1.1/1.4",
+   "lab": [
+    11.43,
+    -5.81,
+    0.63
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 153,
+   "nombre": "greenish white",
+   "munsell": "7G 9.2/0.8",
+   "lab": [
+    92.14,
+    -4.53,
+    1.41
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 154,
+   "nombre": "light greenish gray",
+   "munsell": "7G 7.5/0.8",
+   "lab": [
+    75.72,
+    -5.01,
+    1.48
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 155,
+   "nombre": "greenish gray",
+   "munsell": "7G 5.5/0.8",
+   "lab": [
+    56.07,
+    -4.55,
+    1.26
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 156,
+   "nombre": "dark greenish gray",
+   "munsell": "7G 3.5/0.8",
+   "lab": [
+    35.57,
+    -4.02,
+    0.99
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 157,
+   "nombre": "greenish black",
+   "munsell": "7.5G 0.9/0.7",
+   "lab": [
+    9.39,
+    -2.76,
+    0.49
+   ],
+   "categoria": "NEGRO",
+   "ajustes": [
+    "cromaticidad de V=1 (V=0.9 fuera de la renotacion)"
+   ]
+  },
+  {
+   "numero": 158,
+   "nombre": "vivid bluish green",
+   "munsell": "4.5BG 5.3/15.5",
+   "lab": [
+    54.18,
+    -80.1,
+    -11.27
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 159,
+   "nombre": "brilliant bluish green",
+   "munsell": "4.5BG 7.3/9",
+   "lab": [
+    73.87,
+    -46.5,
+    -3.64
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 160,
+   "nombre": "strong bluish green",
+   "munsell": "4.5BG 4.5/9",
+   "lab": [
+    45.98,
+    -46.55,
+    -7.37
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 161,
+   "nombre": "deep bluish green",
+   "munsell": "4.5BG 2.3/9",
+   "lab": [
+    23.3,
+    -43.19,
+    -9.56
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 162,
+   "nombre": "very light bluish green",
+   "munsell": "4.5BG 8.5/5",
+   "lab": [
+    85.42,
+    -28.21,
+    -0.86
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 163,
+   "nombre": "light bluish green",
+   "munsell": "4.5BG 6.5/5",
+   "lab": [
+    66.04,
+    -26.12,
+    -2.2
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 164,
+   "nombre": "moderate bluish green",
+   "munsell": "4.5BG 4.5/5",
+   "lab": [
+    45.95,
+    -25.35,
+    -3.72
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 165,
+   "nombre": "dark bluish green",
+   "munsell": "4.5BG 2.7/5",
+   "lab": [
+    27.34,
+    -23.42,
+    -4.93
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 166,
+   "nombre": "very dark bluish green",
+   "munsell": "4.5BG 1.3/4.9",
+   "lab": [
+    13.42,
+    -24.94,
+    -6.7
+   ],
+   "categoria": "VERDE"
+  },
+  {
+   "numero": 167,
+   "nombre": "vivid greenish blue",
+   "munsell": "4.5B 5.2/13",
+   "lab": [
+    53.01,
+    -40.62,
+    -42.09
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 168,
+   "nombre": "brilliant greenish blue",
+   "munsell": "4.5B 6.8/9",
+   "lab": [
+    68.92,
+    -29.61,
+    -27.16
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 169,
+   "nombre": "strong greenish blue",
+   "munsell": "4.5B 4.5/9",
+   "lab": [
+    45.88,
+    -27.64,
+    -30.07
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 170,
+   "nombre": "deep greenish blue",
+   "munsell": "4.5B 2.5/9",
+   "lab": [
+    25.21,
+    -25.47,
+    -32.75
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 171,
+   "nombre": "very light greenish blue",
+   "munsell": "4.5B 8.2/5.2",
+   "lab": [
+    82.47,
+    -19.15,
+    -14.99
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 172,
+   "nombre": "light greenish blue",
+   "munsell": "4.5B 6.5/5.2",
+   "lab": [
+    65.99,
+    -17.58,
+    -15.21
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 173,
+   "nombre": "moderate greenish blue",
+   "munsell": "4.5B 4.5/5.2",
+   "lab": [
+    45.89,
+    -16.41,
+    -16.88
+   ],
+   "categoria": "TURQUESA"
+  },
+  {
+   "numero": 174,
+   "nombre": "dark greenish blue",
+   "munsell": "4.5B 2.7/5",
+   "lab": [
+    27.29,
+    -14.58,
+    -17.91
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 175,
+   "nombre": "very dark greenish blue",
+   "munsell": "4.5B 1.3/4.9",
+   "lab": [
+    13.36,
+    -12.88,
+    -18.63
+   ],
+   "categoria": "AZUL_MARINO"
+  },
+  {
+   "numero": 176,
+   "nombre": "vivid blue",
+   "munsell": "3PB 4.2/15",
+   "lab": [
+    42.59,
+    -0.9,
+    -61.1
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 177,
+   "nombre": "brilliant blue",
+   "munsell": "3PB 6.4/11",
+   "lab": [
+    64.89,
+    -5.3,
+    -44.06
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 178,
+   "nombre": "strong blue",
+   "munsell": "3PB 4.2/11",
+   "lab": [
+    42.67,
+    -2.33,
+    -44.68
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 179,
+   "nombre": "deep blue",
+   "munsell": "3PB 2/9",
+   "lab": [
+    20.09,
+    1.98,
+    -39.51
+   ],
+   "categoria": "AZUL_MARINO"
+  },
+  {
+   "numero": 180,
+   "nombre": "very light blue",
+   "munsell": "2.4PB 8.2/7.2",
+   "lab": [
+    82.4,
+    -7.51,
+    -28.94
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 181,
+   "nombre": "light blue",
+   "munsell": "2.7PB 6.5/7.3",
+   "lab": [
+    65.92,
+    -4.96,
+    -28.03
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 182,
+   "nombre": "moderate blue",
+   "munsell": "2.9PB 4.2/7.2",
+   "lab": [
+    42.73,
+    -2.72,
+    -29.68
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 183,
+   "nombre": "dark blue",
+   "munsell": "2.8PB 1.7/5",
+   "lab": [
+    17.21,
+    -0.11,
+    -22.84
+   ],
+   "categoria": "AZUL_MARINO"
+  },
+  {
+   "numero": 184,
+   "nombre": "very pale blue",
+   "munsell": "0.9PB 8.4/3",
+   "lab": [
+    84.37,
+    -4.69,
+    -10.06
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 185,
+   "nombre": "pale blue",
+   "munsell": "0.9PB 6.5/3",
+   "lab": [
+    65.97,
+    -4.15,
+    -10.28
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 186,
+   "nombre": "grayish blue",
+   "munsell": "0.9PB 4.2/3",
+   "lab": [
+    42.79,
+    -3.71,
+    -12.04
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 187,
+   "nombre": "dark grayish blue",
+   "munsell": "9.5B 2.6/1.9",
+   "lab": [
+    26.26,
+    -3.16,
+    -8.37
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 188,
+   "nombre": "blackish blue",
+   "munsell": "9.5B 1.1/1.5",
+   "lab": [
+    11.4,
+    -2.04,
+    -6.98
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 189,
+   "nombre": "bluish white",
+   "munsell": "9.5B 9.1/1",
+   "lab": [
+    91.15,
+    -1.78,
+    -2.51
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 190,
+   "nombre": "light bluish gray",
+   "munsell": "9.5B 7.5/1",
+   "lab": [
+    75.7,
+    -1.81,
+    -2.95
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 191,
+   "nombre": "bluish gray",
+   "munsell": "9.5B 5.5/1",
+   "lab": [
+    56.05,
+    -1.79,
+    -3.47
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 192,
+   "nombre": "dark bluish gray",
+   "munsell": "9.5B 3.5/1",
+   "lab": [
+    35.55,
+    -1.72,
+    -4.28
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 193,
+   "nombre": "bluish black",
+   "munsell": "9.5B 1/0.7",
+   "lab": [
+    10.4,
+    -0.84,
+    -3.18
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 194,
+   "nombre": "vivid purplish blue",
+   "munsell": "8PB 2.5/22",
+   "lab": [
+    24.58,
+    66.38,
+    -79.73
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 195,
+   "nombre": "brilliant purplish blue",
+   "munsell": "8PB 6/10.8",
+   "lab": [
+    60.89,
+    15.06,
+    -41.24
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 196,
+   "nombre": "strong purplish blue",
+   "munsell": "8PB 4.1/11.4",
+   "lab": [
+    41.57,
+    20.4,
+    -45.22
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 197,
+   "nombre": "deep purplish blue",
+   "munsell": "8PB 1.6/9.1",
+   "lab": [
+    16.08,
+    24.16,
+    -38.06
+   ],
+   "categoria": "AZUL_MARINO"
+  },
+  {
+   "numero": 198,
+   "nombre": "very light purplish blue",
+   "munsell": "7PB 7.8/6.1",
+   "lab": [
+    78.53,
+    4.12,
+    -23.95
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 199,
+   "nombre": "light purplish blue",
+   "munsell": "7.5PB 6/6.8",
+   "lab": [
+    60.96,
+    7.3,
+    -25.98
+   ],
+   "categoria": "CELESTE"
+  },
+  {
+   "numero": 200,
+   "nombre": "moderate purplish blue",
+   "munsell": "8PB 3.5/6.9",
+   "lab": [
+    35.43,
+    12.68,
+    -29.69
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 201,
+   "nombre": "dark purplish blue",
+   "munsell": "7.9PB 1.1/4.7",
+   "lab": [
+    11.32,
+    11.05,
+    -21.13
+   ],
+   "categoria": "AZUL_MARINO"
+  },
+  {
+   "numero": 202,
+   "nombre": "very pale purplish blue",
+   "munsell": "7PB 8.2/4.1",
+   "lab": [
+    82.41,
+    2.32,
+    -14.96
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 203,
+   "nombre": "pale purplish blue",
+   "munsell": "7PB 6/4.1",
+   "lab": [
+    61.0,
+    3.1,
+    -15.07
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 204,
+   "nombre": "grayish purplish blue",
+   "munsell": "7.2PB 3.3/4",
+   "lab": [
+    33.42,
+    5.83,
+    -18.67
+   ],
+   "categoria": "AZUL"
+  },
+  {
+   "numero": 205,
+   "nombre": "vivid violet",
+   "munsell": "1P 2.7/21",
+   "lab": [
+    26.71,
+    70.54,
+    -69.49
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 206,
+   "nombre": "brilliant violet",
+   "munsell": "1P 5.9/11.1",
+   "lab": [
+    59.87,
+    25.57,
+    -39.29
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 207,
+   "nombre": "strong violet",
+   "munsell": "1P 3.5/11.1",
+   "lab": [
+    35.32,
+    32.19,
+    -41.3
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 208,
+   "nombre": "deep violet",
+   "munsell": "1P 1.4/10.3",
+   "lab": [
+    14.09,
+    35.06,
+    -36.97
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 209,
+   "nombre": "very light violet",
+   "munsell": "1P 7.9/7",
+   "lab": [
+    79.46,
+    14.16,
+    -25.85
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 210,
+   "nombre": "light violet",
+   "munsell": "1P 6/7.2",
+   "lab": [
+    60.94,
+    15.08,
+    -25.37
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 211,
+   "nombre": "moderate violet",
+   "munsell": "1P 3.5/7.2",
+   "lab": [
+    35.41,
+    20.24,
+    -28.32
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 212,
+   "nombre": "dark violet",
+   "munsell": "1P 1.3/5",
+   "lab": [
+    13.27,
+    16.67,
+    -20.53
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 213,
+   "nombre": "very pale violet",
+   "munsell": "1P 8.2/4.1",
+   "lab": [
+    82.4,
+    6.92,
+    -13.68
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 214,
+   "nombre": "pale violet",
+   "munsell": "1P 6/4.1",
+   "lab": [
+    60.99,
+    7.87,
+    -14.04
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 215,
+   "nombre": "grayish violet",
+   "munsell": "1P 3.3/4.1",
+   "lab": [
+    33.4,
+    11.76,
+    -17.67
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 216,
+   "nombre": "vivid purple",
+   "munsell": "6P 3.5/20",
+   "lab": [
+    35.08,
+    74.46,
+    -55.17
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 217,
+   "nombre": "brilliant purple",
+   "munsell": "6P 6.7/11.1",
+   "lab": [
+    67.75,
+    35.37,
+    -30.54
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 218,
+   "nombre": "strong purple",
+   "munsell": "6P 4.5/11.1",
+   "lab": [
+    45.69,
+    38.12,
+    -31.44
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 219,
+   "nombre": "deep purple",
+   "munsell": "6P 2.8/10.2",
+   "lab": [
+    28.1,
+    39.49,
+    -31.13
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 220,
+   "nombre": "very deep purple",
+   "munsell": "6P 1.2/10.2",
+   "lab": [
+    12.15,
+    40.09,
+    -29.8
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 221,
+   "nombre": "very light purple",
+   "munsell": "6P 8/7.2",
+   "lab": [
+    80.42,
+    21.6,
+    -19.75
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 222,
+   "nombre": "light purple",
+   "munsell": "6P 6.5/7.2",
+   "lab": [
+    65.87,
+    22.14,
+    -19.58
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 223,
+   "nombre": "moderate purple",
+   "munsell": "6P 4.5/7.2",
+   "lab": [
+    45.77,
+    24.66,
+    -21.14
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 224,
+   "nombre": "dark purple",
+   "munsell": "6P 2.7/5.1",
+   "lab": [
+    27.19,
+    20.03,
+    -16.79
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 225,
+   "nombre": "very dark purple",
+   "munsell": "6P 1.1/4.9",
+   "lab": [
+    11.3,
+    20.41,
+    -16.37
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 226,
+   "nombre": "very pale purple",
+   "munsell": "5.4P 8.4/3.3",
+   "lab": [
+    84.34,
+    7.86,
+    -8.62
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 227,
+   "nombre": "pale purple",
+   "munsell": "6.8P 6.4/3",
+   "lab": [
+    64.96,
+    9.11,
+    -7.06
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 228,
+   "nombre": "grayish purple",
+   "munsell": "7.8P 4.5/2.9",
+   "lab": [
+    45.85,
+    10.98,
+    -7.67
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 229,
+   "nombre": "dark grayish purple",
+   "munsell": "10P 2.8/2",
+   "lab": [
+    28.28,
+    10.33,
+    -5.8
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 230,
+   "nombre": "blackish purple",
+   "munsell": "10P 1/1.4",
+   "lab": [
+    10.37,
+    7.59,
+    -5.01
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 231,
+   "nombre": "purplish white",
+   "munsell": "9P 9.1/1",
+   "lab": [
+    91.14,
+    2.09,
+    -1.06
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 232,
+   "nombre": "light purplish gray",
+   "munsell": "9P 7.5/1",
+   "lab": [
+    75.69,
+    2.65,
+    -1.39
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 233,
+   "nombre": "purplish gray",
+   "munsell": "10P 5.5/1",
+   "lab": [
+    56.04,
+    3.53,
+    -1.72
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 234,
+   "nombre": "dark purplish gray",
+   "munsell": "10P 3.5/1",
+   "lab": [
+    35.54,
+    4.78,
+    -2.6
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 235,
+   "nombre": "purplish black",
+   "munsell": "10P 1/0.7",
+   "lab": [
+    10.39,
+    3.57,
+    -2.4
+   ],
+   "categoria": "NEGRO"
+  },
+  {
+   "numero": 236,
+   "nombre": "vivid reddish purple",
+   "munsell": "1RP 4/19",
+   "lab": [
+    40.35,
+    77.5,
+    -34.93
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 237,
+   "nombre": "strong reddish purple",
+   "munsell": "1RP 4.5/11.1",
+   "lab": [
+    45.7,
+    45.38,
+    -19.85
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 238,
+   "nombre": "deep reddish purple",
+   "munsell": "1RP 2.8/10.3",
+   "lab": [
+    28.11,
+    45.45,
+    -22.06
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 239,
+   "nombre": "very deep reddish purple",
+   "munsell": "1RP 1.3/10.3",
+   "lab": [
+    13.14,
+    43.89,
+    -25.04
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 240,
+   "nombre": "light reddish purple",
+   "munsell": "1RP 6/7.2",
+   "lab": [
+    60.94,
+    27.4,
+    -11.12
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 241,
+   "nombre": "moderate reddish purple",
+   "munsell": "1RP 4.5/7.2",
+   "lab": [
+    45.77,
+    30.1,
+    -13.02
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 242,
+   "nombre": "dark reddish purple",
+   "munsell": "1RP 2.7/5.1",
+   "lab": [
+    27.2,
+    23.26,
+    -11.34
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 243,
+   "nombre": "very dark reddish purple",
+   "munsell": "1RP 1.1/5",
+   "lab": [
+    11.3,
+    22.87,
+    -13.53
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 244,
+   "nombre": "pale reddish purple",
+   "munsell": "1RP 6/4.1",
+   "lab": [
+    60.99,
+    14.91,
+    -6.01
+   ],
+   "categoria": "LILA"
+  },
+  {
+   "numero": 245,
+   "nombre": "grayish reddish purple",
+   "munsell": "1RP 4.5/4.1",
+   "lab": [
+    45.83,
+    17.19,
+    -7.38
+   ],
+   "categoria": "MORADO"
+  },
+  {
+   "numero": 246,
+   "nombre": "brilliant purplish pink",
+   "munsell": "4RP 7.9/11",
+   "lab": [
+    79.41,
+    46.84,
+    -6.64
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 247,
+   "nombre": "strong purplish pink",
+   "munsell": "4RP 7/14.5",
+   "lab": [
+    70.65,
+    60.59,
+    -10.06
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 248,
+   "nombre": "deep purplish pink",
+   "munsell": "4RP 6/12",
+   "lab": [
+    60.87,
+    49.1,
+    -8.6
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 249,
+   "nombre": "light purplish pink",
+   "munsell": "4RP 8.3/7.1",
+   "lab": [
+    83.32,
+    29.41,
+    -3.67
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 250,
+   "nombre": "moderate purplish pink",
+   "munsell": "4RP 7/7.1",
+   "lab": [
+    70.77,
+    28.66,
+    -4.12
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 251,
+   "nombre": "dark purplish pink",
+   "munsell": "6RP 6/7.2",
+   "lab": [
+    60.96,
+    30.04,
+    -0.59
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 252,
+   "nombre": "pale purplish pink",
+   "munsell": "4RP 8.5/3.5",
+   "lab": [
+    85.31,
+    12.35,
+    -1.37
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 253,
+   "nombre": "grayish purplish pink",
+   "munsell": "4RP 7/3.5",
+   "lab": [
+    70.82,
+    12.7,
+    -1.66
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 254,
+   "nombre": "vivid purplish red",
+   "munsell": "7RP 4/17",
+   "lab": [
+    40.46,
+    75.09,
+    -4.37
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 255,
+   "nombre": "strong purplish red",
+   "munsell": "7RP 4.5/11.9",
+   "lab": [
+    45.71,
+    53.76,
+    -1.06
+   ],
+   "categoria": "FUCSIA"
+  },
+  {
+   "numero": 256,
+   "nombre": "deep purplish red",
+   "munsell": "7RP 2.8/11",
+   "lab": [
+    28.12,
+    52.5,
+    -6.6
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 257,
+   "nombre": "very deep purplish red",
+   "munsell": "7RP 1.3/9",
+   "lab": [
+    13.19,
+    42.04,
+    -13.33
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 258,
+   "nombre": "moderate purplish red",
+   "munsell": "7RP 4.5/9",
+   "lab": [
+    45.76,
+    41.06,
+    -0.24
+   ],
+   "categoria": "ROJO"
+  },
+  {
+   "numero": 259,
+   "nombre": "dark purplish red",
+   "munsell": "7RP 2.7/6.3",
+   "lab": [
+    27.19,
+    30.93,
+    -3.42
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 260,
+   "nombre": "very dark purplish red",
+   "munsell": "7RP 1.2/4.9",
+   "lab": [
+    12.31,
+    24.71,
+    -7.67
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 261,
+   "nombre": "light grayish purplish red",
+   "munsell": "7RP 6/4",
+   "lab": [
+    61.0,
+    16.08,
+    0.81
+   ],
+   "categoria": "ROSADO"
+  },
+  {
+   "numero": 262,
+   "nombre": "grayish purplish red",
+   "munsell": "7RP 4.5/5.2",
+   "lab": [
+    45.82,
+    24.09,
+    0.27
+   ],
+   "categoria": "VINOTINTO"
+  },
+  {
+   "numero": 263,
+   "nombre": "white",
+   "munsell": "3Y 9.25/0.06",
+   "lab": [
+    92.61,
+    -0.02,
+    0.38
+   ],
+   "categoria": "BLANCO"
+  },
+  {
+   "numero": 264,
+   "nombre": "light gray",
+   "munsell": "3Y 7.5/0.06",
+   "lab": [
+    75.71,
+    -0.01,
+    0.45
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 265,
+   "nombre": "medium gray",
+   "munsell": "3Y 5.5/0.06",
+   "lab": [
+    56.06,
+    0.02,
+    0.43
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 266,
+   "nombre": "dark gray",
+   "munsell": "N3.5",
+   "lab": [
+    35.55,
+    0.0,
+    0.0
+   ],
+   "categoria": "GRIS"
+  },
+  {
+   "numero": 267,
+   "nombre": "black",
+   "munsell": "N1.25",
+   "lab": [
+    12.9,
+    0.0,
+    0.0
+   ],
+   "categoria": "NEGRO"
+  }
+ ]
+}
