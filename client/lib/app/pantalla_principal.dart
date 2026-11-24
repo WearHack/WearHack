@@ -103,7 +103,10 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     key: ValueKey<int>(_seccion),
     desliz: 0,
     child: switch (_seccion) {
-      0 => PantallaCloset(repositorio: widget.closet),
+      0 => PantallaCloset(
+        repositorio: widget.closet,
+        subidas: widget.capturaPrendas?.cola.subidas,
+      ),
       1 => PantallaOutfits(
         repositorio: widget.outfits,
         clima: widget.clima,

@@ -52,7 +52,7 @@ class PantallaPrendaPuente extends StatelessWidget {
                         Text(
                           '${prenda.slot.etiqueta} · '
                           '${prenda.categoriaColor.etiqueta} · '
-                          '${prenda.formalidad.etiqueta}',
+                          '${prenda.formalidad?.etiqueta ?? ''}',
                           style: texto.bodySmall,
                         ),
                       ],

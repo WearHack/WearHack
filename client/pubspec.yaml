@@ -29,6 +29,7 @@ dependencies:
   # pausar la cola de captura de prendas si el telefono se calienta (#11).
   tflite_flutter: 0.12.1
   thermal: ^1.2.2
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:

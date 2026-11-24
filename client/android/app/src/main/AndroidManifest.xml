@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- El plugin de camara declara estos dos permisos aunque la app no los usa:
          no se graba audio y no se escribe en almacenamiento compartido (las fotos
          de calibracion van solo al almacenamiento privado de la app). Se quitan

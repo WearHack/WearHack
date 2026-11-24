@@ -232,18 +232,18 @@ EstadoTermicoDispositivo crearEstadoTermico() {
 /// Abre la captura de prendas con lo que tiene el telefono: el almacen privado
 /// de la app, el pipeline on-device, el sensor termico y la camara trasera.
 ///
-/// El subidor es [SubidorPendiente] hasta que el Closet reciba prendas (#25):
-/// las procesadas esperan en la cola sin perderse.
 Future<CapturaDePrendas> abrirCapturaDePrendas({
   FuenteAjustesColor? ajustesColor,
+  String? usuario,
+  SubidorDePrendas subidor = const SubidorPendiente(),
 }) async {
   final EstadoTermico termico = crearEstadoTermico();
   final ColaCaptura cola = await ColaCaptura.abrir(
-    almacen: await AlmacenColaArchivos.enSoporteDeLaApp(),
+    almacen: await AlmacenColaArchivos.enSoporteDeLaApp(usuario: usuario),
     procesador: ProcesadorSobrePipeline(
       crearGarmentPipeline(ajustesColor: ajustesColor),
     ),
-    subidor: const SubidorPendiente(),
+    subidor: subidor,
     termico: termico,
   );
   return CapturaDePrendas(

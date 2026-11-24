@@ -20,13 +20,12 @@
 /// - **Pausa por calor.** Si [EstadoTermico.caliente], no se procesa; la subida
 ///   sigue, que casi no gasta.
 ///
-/// **Que no hace todavia:** no hay pantalla, ni subidor real (necesita el
-/// cliente HTTP), ni sensor de temperatura real. Los tres entran como interfaces.
 library;
 
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:uuid/uuid.dart';
 import 'package:wearhack/features/closet/captura/almacen_cola.dart';
 import 'package:wearhack/features/closet/captura/item_cola.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
@@ -242,6 +241,7 @@ class ColaCaptura {
   final List<ItemCola> _items;
   final StreamController<List<ItemCola>> _cambios =
       StreamController<List<ItemCola>>.broadcast();
+  final StreamController<void> _subidas = StreamController<void>.broadcast();
 
   /// Las escrituras del indice van en fila, para que dos no se pisen.
   Future<void> _escrituras = Future<void>.value();
@@ -259,12 +259,7 @@ class ColaCaptura {
   /// El ultimo error inesperado del bucle (disco lleno, por ejemplo).
   Object? errorInterno;
 
-  static int _contador = 0;
-  static String _idPorDefecto() {
-    final int micro = DateTime.now().microsecondsSinceEpoch;
-    _contador = (_contador + 1) & 0xffff;
-    return '${micro.toRadixString(36)}${_contador.toRadixString(36)}';
-  }
+  static String _idPorDefecto() => const Uuid().v4();
 
   // -- Lo que ve la interfaz ------------------------------------------------
 
@@ -275,6 +270,7 @@ class ColaCaptura {
 
   /// Se emite una lista nueva en cada cambio.
   Stream<List<ItemCola>> get cambios => _cambios.stream;
+  Stream<void> get subidas => _subidas.stream;
 
   // -- Acciones -------------------------------------------------------------
 
@@ -520,6 +516,7 @@ class ColaCaptura {
       await _persistir();
       await _almacen.borrarArchivos(item.id);
       _avisar();
+      _subidas.add(null);
     }
   }
 

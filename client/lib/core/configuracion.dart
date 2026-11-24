@@ -35,10 +35,8 @@ class Configuracion {
   /// Enciende la captura de prendas en cola (issue #11): el boton "Agregar
   /// prendas" del closet y la cola en segundo plano.
   ///
-  /// Apagada por defecto mientras falten el pipeline on-device (#12, #13) y el
-  /// endpoint del Closet (#25): sin ellos cada foto acabaria fallida o
-  /// esperando para siempre. `--dart-define=CAPTURA_PRENDAS=true` la enciende
-  /// para probar la pantalla y la cola en un telefono.
+  /// `--dart-define=CAPTURA_PRENDAS=true` la enciende en móvil. Los modelos
+  /// deben estar incluidos en la build y la subida al Core requiere sesión.
   static const bool capturaPrendas = bool.fromEnvironment('CAPTURA_PRENDAS');
 
   /// Raiz del Core (perfil, consentimientos). El Core no va detras del gateway:

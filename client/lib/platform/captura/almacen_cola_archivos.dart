@@ -22,9 +22,14 @@ class AlmacenColaArchivos implements AlmacenCola {
   AlmacenColaArchivos(this._carpeta);
 
   /// La carpeta de la cola dentro del soporte privado de la app.
-  static Future<AlmacenColaArchivos> enSoporteDeLaApp() async {
+  static Future<AlmacenColaArchivos> enSoporteDeLaApp({String? usuario}) async {
+    if (usuario != null && !_idValido.hasMatch(usuario)) {
+      throw ArgumentError.value(usuario, 'usuario', 'Identificador inválido');
+    }
     final Directory base = await getApplicationSupportDirectory();
-    final Directory carpeta = Directory(p.join(base.path, 'cola_captura'));
+    final Directory carpeta = Directory(
+      p.join(base.path, 'cola_captura', usuario),
+    );
     await carpeta.create(recursive: true);
     return AlmacenColaArchivos(carpeta);
   }

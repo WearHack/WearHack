@@ -1,10 +1,9 @@
-/// El subidor mientras el Core no recibe prendas (issue #25).
+/// El subidor para las builds de captura sin una sesión de Cognito.
 ///
 /// Responde [SinConexion] en vez de un error: para la cola, no poder subir es
 /// lo mismo que no tener red. Asi las prendas ya procesadas esperan con
-/// retroceso exponencial, sin gastar intentos ni volverse fallidas, y se suben
-/// solas el dia que este el subidor real. La foto original sigue guardada hasta
-/// entonces: nada se pierde.
+/// retroceso exponencial, sin gastar intentos ni volverse fallidas, y se guardan
+/// en la cola local. Solo las capturas hechas con sesión se asocian a una cuenta.
 library;
 
 import 'package:wearhack/features/closet/captura/cola_captura.dart';
@@ -15,6 +14,6 @@ class SubidorPendiente implements SubidorDePrendas {
 
   @override
   Future<void> subir(String id, PrendaClasificada prenda) async {
-    throw const SinConexion('el Closet aun no recibe prendas (issue #25)');
+    throw const SinConexion('La captura se abrió sin una cuenta');
   }
 }
