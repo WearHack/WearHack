@@ -1,0 +1,9 @@
+[Unit]
+Description=WearHack: jobs batch del lab (#36)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/wearhack/correr-jobs.sh
+TimeoutStartSec=2h

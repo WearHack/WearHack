@@ -1,6 +1,7 @@
 # infra/lab/aws — El monolito en una EC2 del Learner Lab
 
-Issues: #60 (host EC2), #20 (Caddy y HTTPS), #21 (Cognito en el Core), #47 (imagenes en GHCR).
+Issues: #60 (host EC2), #20 (Caddy y HTTPS), #21 (Cognito en el Core), #47 (imagenes en GHCR),
+#36 (jobs batch).
 
 Una EC2 con Docker Compose corre `core`, `colorimetria` y `recomendador`, con Caddy
 delante (TLS automatico sobre `sslip.io`). Mongo es Atlas. La EC2 sigue `develop`: cada
@@ -21,7 +22,8 @@ AWS en GitHub.
 | `cognito.sh` | CloudShell | User Pool y app client; IDs a SSM |
 | `crear-host.sh` | CloudShell | Bucket de prendas, security group (80/443, sin 22), EC2 t3.large, IP elastica |
 | `instalar-host.sh` | EC2, user-data | Docker, Compose, git, clona el repo, timer, primer despliegue |
-| `desplegar.sh` | EC2, timer | Pull de `develop`, `.env` desde SSM, `compose pull` de GHCR (o build), rollback |
+| `desplegar.sh` | EC2, timer | Pull de `develop`, `.env` desde SSM, `compose pull` de GHCR (o build), rollback. Instala los jobs |
+| `correr-jobs.sh`, `systemd/wearhack-jobs.*` | EC2, timer | Jobs batch con la imagen desplegada: ranking de prendas puente, ajuste de preferencias, recalibracion |
 | `docker-compose.aws.yml`, `Caddyfile` | EC2 | Servicios y proxy. Solo Caddy publica puertos |
 
 Las imagenes de prendas van a `wearhack-prendas-<cuenta>` (privado, solo URLs firmadas).
@@ -47,6 +49,26 @@ En CloudShell, desde esta carpeta:
 4. `bash cognito.sh` (lo que imprime va en el `--dart-define` de la app).
 5. `bash crear-host.sh` y agregar la IP en Atlas → Network Access.
 6. ~10 minutos despues: `/health` da 200 y `/api/v1/usuarios/me` da 401.
+
+## Jobs batch (#36)
+
+`jobs-recomendador` y `jobs-colorimetria` son la imagen del servicio con otro comando (profile
+`jobs`, sin puertos) y se conectan con `MONGODB_URI_JOBS` (usuario `wh_jobs`).
+`correr-jobs.sh` los corre en orden y anota `OK` o `FALLO` de cada uno. El timer
+`wearhack-jobs` lo lanza a las 07:00 UTC y, como la EC2 casi nunca esta encendida a esa
+hora, al encenderla si se perdio la corrida: al inicio de cada ventana de prueba.
+`desplegar.sh` instala el script y el timer, asi que una EC2 ya creada los recibe con el
+siguiente despliegue.
+
+La recalibracion (#37) necesita el conjunto fijo de evaluacion en
+`/opt/wearhack/evaluacion/conjunto.json`; sin el, descarta la version nueva y no publica nada.
+
+```bash
+sudo /opt/wearhack/correr-jobs.sh                          # todos, ya
+sudo /opt/wearhack/correr-jobs.sh ranking_prendas_puente   # solo uno
+journalctl -u wearhack-jobs -n 50                          # la ultima corrida
+systemctl list-timers wearhack-jobs                        # la proxima
+```
 
 ## Operar
 

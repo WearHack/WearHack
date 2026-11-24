@@ -1,0 +1,13 @@
+[Unit]
+Description=WearHack: jobs batch una vez al dia
+
+[Timer]
+# 07:00 UTC, 2 de la manana en Colombia. La EC2 del lab casi nunca esta encendida a esa
+# hora: con Persistent la corrida perdida se hace al encenderla, que es el inicio de la
+# ventana de prueba.
+OnCalendar=*-*-* 07:00:00 UTC
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
