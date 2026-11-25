@@ -43,7 +43,7 @@ class PantallaPrincipal extends StatefulWidget {
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
-  final RepositorioClima clima;
+  final RepositorioClima? clima;
   final RepositorioPublicidad publicidad;
   final RepositorioConsentimiento consentimiento;
 

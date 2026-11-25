@@ -6,7 +6,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
-import 'package:wearhack/core/ui/etiquetas.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
@@ -59,7 +58,13 @@ class _PantallaSemanaState extends State<PantallaSemana> {
   }
 
   Future<void> _cambiar(DiaPlan dia) async {
-    final List<Outfit> outfits = await widget.repositorio.outfitsDeLaSemana();
+    final List<Outfit> outfits;
+    try {
+      outfits = await widget.repositorio.outfitsDeLaSemana();
+    } on Exception {
+      _mostrarError('No se pudieron cargar los outfits.');
+      return;
+    }
     if (!mounted) return;
 
     // Un record y no un String? a secas: hay que distinguir "dejar libre"
@@ -70,11 +75,22 @@ class _PantallaSemanaState extends State<PantallaSemana> {
       showDragHandle: true,
       builder: (_) => _SelectorOutfit(dia: dia, outfits: outfits),
     );
-    if (eleccion == null) return;
+    if (eleccion == null || !mounted) return;
 
-    await widget.repositorio.asignarOutfit(dia.fecha, eleccion.id);
+    try {
+      await widget.repositorio.asignarOutfit(dia.fecha, eleccion.id);
+    } on Exception {
+      _mostrarError('No se pudo actualizar el día.');
+      return;
+    }
     if (!mounted) return;
     _recargar();
+  }
+
+  void _mostrarError(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -167,11 +183,7 @@ class _FilaDia extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            '${outfit.formalidad.etiqueta} · '
-                            '${outfit.clima.etiqueta}',
-                            style: texto.bodySmall,
-                          ),
+                          Text(etiquetaOutfit(outfit), style: texto.bodySmall),
                         ],
                       ),
               ),

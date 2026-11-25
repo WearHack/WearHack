@@ -29,7 +29,7 @@ class PantallaOutfits extends StatefulWidget {
   });
 
   final RepositorioOutfits repositorio;
-  final RepositorioClima clima;
+  final RepositorioClima? clima;
   final ServicioUbicacion ubicacion;
 
   @override
@@ -45,10 +45,10 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
 
   late Future<(List<Outfit>, LoteOpciones)> _carga = _cargar();
 
-  Future<(List<Outfit>, LoteOpciones)> _cargar() async => (
-    await widget.repositorio.outfitsDeLaSemana(),
-    await widget.repositorio.opcionesDeHoy(_contexto),
-  );
+  Future<(List<Outfit>, LoteOpciones)> _cargar() async {
+    final LoteOpciones lote = await widget.repositorio.opcionesDeHoy(_contexto);
+    return (await widget.repositorio.outfitsDeLaSemana(), lote);
+  }
 
   void _recargar() {
     setState(() {
@@ -64,6 +64,8 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
   }
 
   Future<void> _usarUbicacion() async {
+    final RepositorioClima? clima = widget.clima;
+    if (clima == null) return;
     setState(() => _estadoClima = _EstadoClima.buscando);
 
     double? temperatura;
@@ -73,7 +75,7 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
         try {
           // Dos decimales son ~1 km: de sobra para el clima, y la posicion
           // exacta del usuario no sale del dispositivo.
-          temperatura = await widget.clima.temperaturaEn(
+          temperatura = await clima.temperaturaEn(
             latitud: _redondear(latitud),
             longitud: _redondear(longitud),
           );
@@ -146,6 +148,7 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
                         lote: lote,
                         estadoClima: _estadoClima,
                         temperatura: _temperatura,
+                        ofrecerClima: widget.clima != null,
                         ubicacionDisponible: widget.ubicacion.disponible,
                         onContexto: _cambiarContexto,
                         onUbicacion: _usarUbicacion,
@@ -188,6 +191,7 @@ class _PanelDeHoy extends StatelessWidget {
     required this.lote,
     required this.estadoClima,
     required this.temperatura,
+    required this.ofrecerClima,
     required this.ubicacionDisponible,
     required this.onContexto,
     required this.onUbicacion,
@@ -198,6 +202,7 @@ class _PanelDeHoy extends StatelessWidget {
   final LoteOpciones lote;
   final _EstadoClima estadoClima;
   final double? temperatura;
+  final bool ofrecerClima;
   final bool ubicacionDisponible;
   final ValueChanged<ContextoOutfit> onContexto;
   final VoidCallback onUbicacion;
@@ -249,16 +254,18 @@ class _PanelDeHoy extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text('Clima', style: texto.labelLarge),
-            const SizedBox(height: 4),
-            _FilaClima(
-              estado: estadoClima,
-              clima: contexto.clima,
-              temperatura: temperatura,
-              ubicacionDisponible: ubicacionDisponible,
-              onUbicacion: onUbicacion,
-            ),
+            if (ofrecerClima) ...<Widget>[
+              const SizedBox(height: 12),
+              Text('Clima', style: texto.labelLarge),
+              const SizedBox(height: 4),
+              _FilaClima(
+                estado: estadoClima,
+                clima: contexto.clima,
+                temperatura: temperatura,
+                ubicacionDisponible: ubicacionDisponible,
+                onUbicacion: onUbicacion,
+              ),
+            ],
             const Divider(height: 32),
             if (n >= 2)
               Row(
@@ -280,8 +287,11 @@ class _PanelDeHoy extends StatelessWidget {
               // Con menos de dos no hay nada que comparar, y una eleccion sin
               // descartados no ensena nada.
               Text(
-                'No hay suficientes outfits para esta ocasión y este clima. '
-                'Prueba con otra ocasión.',
+                n == 1
+                    ? 'Hay una combinación. Puedes asignarla en Mi semana.'
+                    : 'No hay suficientes outfits para esta ocasión. '
+                          'Agrega calzado y prendas para arriba y abajo, '
+                          'o un vestido o enterizo.',
                 style: texto.bodyMedium,
               ),
           ],

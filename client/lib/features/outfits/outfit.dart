@@ -20,7 +20,7 @@ class Outfit {
   final Map<SlotOutfit, Prenda> prendas;
 
   final Formalidad formalidad;
-  final Clima clima;
+  final Clima? clima;
 
   /// Las prendas en el orden de [SlotOutfit], que es el orden en que se viste.
   List<Prenda> get prendasEnOrden => <Prenda>[

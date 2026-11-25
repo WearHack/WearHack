@@ -23,6 +23,7 @@ import 'package:wearhack/features/cuenta/autenticacion.dart';
 import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/features/cuenta/ui/puerta_de_acceso.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
+import 'package:wearhack/features/outfits/cliente_outfits.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/publicidad/repositorio_publicidad.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
   ServicioColorimetria? colorimetria;
   FuenteAjustesColor? ajustesColor;
   ClienteCloset? closet;
+  RepositorioOutfits outfits = datos;
   if (Configuracion.cognitoConfigurado) {
     final Autenticacion autenticacion = await AutenticacionAmplify.configurar(
       region: Configuracion.cognitoRegion,
@@ -65,6 +67,7 @@ Future<void> main() async {
       token: autenticacion.tokenDeAcceso,
     );
     closet = ClienteCloset(conexion);
+    outfits = ClienteOutfits(conexion, closet);
     consentimiento = RepositorioConsentimientoCore(conexion);
     colorimetria = ClienteColorimetria(conexion);
     ajustesColor = ClienteAjustesColor(
@@ -98,8 +101,8 @@ Future<void> main() async {
   runApp(
     AplicacionWearHack(
       closet: closet ?? datos,
-      outfits: datos,
-      clima: datos,
+      outfits: outfits,
+      clima: closet == null ? datos : null,
       ubicacion: crearServicioUbicacion(),
       publicidad: datos,
       consentimiento: consentimiento,
@@ -136,7 +139,7 @@ class AplicacionWearHack extends StatelessWidget {
 
   final RepositorioCloset closet;
   final RepositorioOutfits outfits;
-  final RepositorioClima clima;
+  final RepositorioClima? clima;
   final ServicioUbicacion ubicacion;
   final RepositorioPublicidad publicidad;
   final RepositorioConsentimiento consentimiento;
