@@ -13,6 +13,35 @@ flutter run --dart-define=API_BASE=http://10.0.2.2:8080
 gateway del `docker compose`. En un dispositivo fisico hay que poner la IP de la
 maquina en la red local.
 
+### Probar el clóset real en Android por USB
+
+En PowerShell, desde la raíz del repo, configura el mismo pool de Cognito
+para el Core y Flutter. Usa el App Client móvil sin secreto.
+
+```powershell
+$env:COGNITO_REGION = 'us-east-1'
+$env:COGNITO_USER_POOL_ID = '<user-pool-id>'
+$env:COGNITO_CLIENT_IDS = '<app-client-id>'
+$env:S3_ENDPOINT_PUBLICO = 'http://127.0.0.1:9000'
+docker compose --env-file .env.example up -d --build core recomendador
+adb reverse tcp:8090 tcp:8090
+adb reverse tcp:9000 tcp:9000
+Set-Location client
+flutter run --debug --dart-define=CORE_BASE=http://127.0.0.1:8090 --dart-define=COGNITO_REGION=$env:COGNITO_REGION --dart-define=COGNITO_USER_POOL_ID=$env:COGNITO_USER_POOL_ID --dart-define=COGNITO_CLIENT_ID=$env:COGNITO_CLIENT_IDS --dart-define=CAPTURA_PRENDAS=true --dart-define=COLOR_METODO=kmeans --dart-define=COLOR_K=3 --dart-define=COLOR_SOMBRAS_PCT=10 --dart-define=COLOR_BRILLOS_PCT=5
+```
+
+El puerto 8090 sirve al Core y el 9000 permite abrir las imágenes firmadas.
+Para probar la captura, instala ambos modelos descritos en
+[assets/models/README.md](assets/models/README.md) antes de compilar.
+Puedes verificar el inicio de sesión y el listado sin activar la captura.
+Tras agregar una prenda, vuelve al clóset y reabre la app para comprobar que
+la prenda quedó guardada en el Core.
+
+Con sesión iniciada, **Outfits** usa las prendas del clóset y el motor de
+recomendaciones de Core. Para generar una combinación, registra calzado y
+una prenda superior e inferior, o calzado y un vestido o enterizo.
+**Mi semana** guarda las asignaciones de lunes a domingo en Core.
+
 ## Lo que hace el dispositivo y lo que hace el backend
 
 La clasificacion de prendas corre **aqui**, no en el servidor. Quitar el fondo y

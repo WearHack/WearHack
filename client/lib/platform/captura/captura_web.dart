@@ -14,6 +14,8 @@ import 'dart:typed_data';
 
 import 'package:wearhack/core/color/categoria_color.dart';
 import 'package:wearhack/features/closet/captura/captura_de_prendas.dart';
+import 'package:wearhack/features/closet/captura/cola_captura.dart';
+import 'package:wearhack/features/closet/captura/subidor_pendiente.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
@@ -62,6 +64,8 @@ CamaraDeCaptura crearCamaraTrasera() {
 
 Future<CapturaDePrendas> abrirCapturaDePrendas({
   FuenteAjustesColor? ajustesColor,
+  String? usuario,
+  SubidorDePrendas subidor = const SubidorPendiente(),
 }) async {
   throw const CapturaNoDisponible('La captura de prendas solo corre en movil.');
 }

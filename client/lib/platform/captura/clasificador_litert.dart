@@ -3,20 +3,20 @@
 /// `captura_movil.dart`.
 library;
 
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:wearhack/core/clasificacion/clasificador_prenda.dart';
+import 'package:wearhack/platform/captura/modelo_litert.dart';
 
 /// `prendas-v1` en FP16, desde los assets (ver `assets/models/README.md`).
 ///
 /// Cada [clasificar] carga el interprete, lo usa y lo cierra, en un isolate
 /// aparte: la inferencia no congela la interfaz y el modelo no queda en memoria
-/// cuando le toca a u2netp. Lo que si se guarda son los bytes del archivo
-/// (3 MB), para no releer el asset en cada prenda.
+/// cuando le toca a u2netp.
 ///
 /// En CPU con dos hilos. El delegado de GPU queda para cuando se mida en el
 /// telefono de referencia: en un MobileNetV3-Small no siempre compensa.
@@ -24,24 +24,22 @@ class ClasificadorLiteRT implements ClasificadorDePrendas {
   ClasificadorLiteRT({this.asset = 'assets/models/clasificador_prenda.tflite'});
 
   final String asset;
-  Uint8List? _modelo;
 
   @override
   Future<Clasificacion> clasificar(img.Image prendaSinFondo) async {
-    final Uint8List modelo = _modelo ??= (await rootBundle.load(asset)).buffer
-        .asUint8List();
     final Float32List entrada = entradaDelClasificador(prendaSinFondo);
-    final List<List<double>> salidas = await Isolate.run(
-      () => _inferir(modelo, entrada),
+    final List<List<double>> salidas = await conArchivoLiteRT(
+      asset,
+      (String ruta) => Isolate.run(() => _inferir(ruta, entrada)),
     );
     return leerSalidasDelClasificador(salidas);
   }
 }
 
-List<List<double>> _inferir(Uint8List modelo, Float32List entrada) {
+List<List<double>> _inferir(String ruta, Float32List entrada) {
   final InterpreterOptions opciones = InterpreterOptions()..threads = 2;
-  final Interpreter interprete = Interpreter.fromBuffer(
-    modelo,
+  final Interpreter interprete = Interpreter.fromFile(
+    File(ruta),
     options: opciones,
   );
   try {

@@ -72,8 +72,16 @@ class MuestraPrenda extends StatelessWidget {
       ),
     );
 
-    return tamano == null
+    final String? url = prenda.imagenUrl;
+    final Widget muestra = url == null
         ? caja
-        : SizedBox.square(dimension: tamano, child: caja);
+        : Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => caja,
+          );
+    return tamano == null
+        ? muestra
+        : SizedBox.square(dimension: tamano, child: muestra);
   }
 }

@@ -24,6 +24,8 @@ wearhack:
     client-ids: ${COGNITO_CLIENT_IDS:}
 
   ia:
+    recomendador:
+      url: ${RECOMENDADOR_URL:http://recomendador:8092}
     colorimetria:
       url: ${COLORIMETRIA_URL:http://colorimetria:8091}
       ruta: ${COLORIMETRIA_RUTA:/v1/colorimetria/analizar}

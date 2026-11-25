@@ -20,7 +20,7 @@ import 'package:wearhack/mock/datos_publicidad.dart';
 
 class RepositorioFalso
     implements
-        RepositorioCloset,
+        ClosetConBorrado,
         RepositorioOutfits,
         RepositorioClima,
         RepositorioPublicidad,

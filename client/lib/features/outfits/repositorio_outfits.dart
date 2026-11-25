@@ -1,7 +1,6 @@
 /// Lo que las pantallas de outfits y de la semana necesitan del backend.
 ///
-/// Hoy lo implementa el repositorio falso de `lib/mock/`. La version real
-/// llamara al gateway (`/api/v1/outfits/...`).
+/// En una sesión de Cognito, las pantallas consultan el Core.
 library;
 
 import 'package:wearhack/features/outfits/contexto.dart';

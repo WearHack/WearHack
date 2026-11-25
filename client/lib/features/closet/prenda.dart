@@ -1,8 +1,7 @@
 /// Una prenda del closet, tal como la guarda el servicio `closet`.
 ///
 /// Refleja el esquema de la coleccion `prendas` (ver
-/// `infra/local/mongo/init/01-colecciones.js`). Falta la imagen procesada:
-/// cuando llegue sera la que subio el telefono, nunca la foto original.
+/// `infra/local/mongo/init/01-colecciones.js`).
 library;
 
 import 'package:wearhack/core/vocabulario.dart';
@@ -18,6 +17,10 @@ class Prenda {
     required this.patron,
     required this.formalidad,
     required this.climaApto,
+    this.imagenUrl,
+    this.tipoCore,
+    this.texturaCore,
+    this.formalidadCore,
   });
 
   final String id;
@@ -31,9 +34,13 @@ class Prenda {
   /// filtrar y agrupar sin recalcular distancias.
   final CategoriaColor categoriaColor;
 
-  final Textura textura;
+  final Textura? textura;
   final Patron patron;
-  final Formalidad formalidad;
+  final Formalidad? formalidad;
+  final String? imagenUrl;
+  final String? tipoCore;
+  final String? texturaCore;
+  final String? formalidadCore;
 
   /// Nunca vacio: el esquema exige al menos un clima.
   final Set<Clima> climaApto;

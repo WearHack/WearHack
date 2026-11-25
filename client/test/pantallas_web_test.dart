@@ -9,9 +9,11 @@ import 'package:wearhack/app/pantalla_principal.dart';
 import 'package:wearhack/core/ui/formato.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/colorimetria/consentimiento.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
+import 'package:wearhack/features/outfits/ui/pantalla_outfits.dart';
 import 'package:wearhack/features/publicidad/catalogo.dart';
 import 'package:wearhack/mock/repositorio_falso.dart';
 import 'package:wearhack/platform/ubicacion.dart';
@@ -94,6 +96,30 @@ Future<RepositorioFalso> _abrir(
 }
 
 void main() {
+  testWidgets('la cuota agotada conserva visibles los outfits de la semana', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PantallaOutfits(
+            repositorio: _OutfitsSinCuota(),
+            clima: null,
+            ubicacion: _UbicacionFalsa(const UbicacionNoDisponible()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Se agotó la cuota de este mes'), findsOneWidget);
+    expect(
+      find.text('Generados a partir de tu clóset para esta semana.'),
+      findsOneWidget,
+    );
+    expect(find.text('Reintentar'), findsNothing);
+  });
+
   group('navegacion', () {
     testWidgets('en ancho de escritorio usa un riel lateral', (
       WidgetTester tester,
@@ -643,4 +669,13 @@ void main() {
       expect(formatoPesos(1000000), '\$ 1.000.000');
     });
   });
+}
+
+class _OutfitsSinCuota extends RepositorioFalso {
+  _OutfitsSinCuota() : super(hoy: _hoy, latencia: Duration.zero);
+
+  @override
+  Future<LoteOpciones> opcionesDeHoy(ContextoOutfit contexto) async {
+    throw ErrorDelCore(429, 'Se agotó la cuota de este mes');
+  }
 }

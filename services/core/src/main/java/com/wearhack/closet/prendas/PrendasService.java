@@ -97,6 +97,13 @@ public class PrendasService {
         return imagenes.urlFirmada(prenda.imagenKey());
     }
 
+    /** Mantiene el documento para reintentar si el borrado de la imagen falla. */
+    public void borrar(String usuarioId, String id) {
+        Prenda prenda = obtener(usuarioId, id);
+        imagenes.borrar(List.of(prenda.imagenKey()));
+        prendas.deleteByIdAndUsuarioId(id, usuarioId);
+    }
+
     /**
      * Lo que el usuario corrige en la pantalla de revision. Todo opcional: lo que no venga se queda.
      *

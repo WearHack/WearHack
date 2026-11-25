@@ -30,19 +30,17 @@ import 'package:wearhack/platform/captura/almacen_cola_archivos.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/clasificador_litert.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
+import 'package:wearhack/platform/captura/removedor_fondo_litert.dart';
 
 /// Pipeline on-device de prendas: fondo, clasificacion y color base, con un
 /// modelo en memoria a la vez (ver [PipelinePrendasOnDevice]).
-///
-/// La remocion de fondo es [RemovedorDeFondoPendiente] hasta que este u2netp
-/// (#12): sin ella el pipeline falla en vez de subir la foto original.
 ///
 /// Con [ajustesColor], la tabla ISCC-NBS lleva los ajustes de categoria que
 /// decidio el Core (#58). Si no se pueden leer (sin red, sin sesion), se usa la
 /// tabla tal cual: la categoria es una propuesta que la persona puede corregir.
 GarmentPipeline crearGarmentPipeline({FuenteAjustesColor? ajustesColor}) =>
     PipelinePrendasOnDevice(
-      removedor: const RemovedorDeFondoPendiente(),
+      removedor: RemovedorDeFondoLiteRT(),
       clasificador: ClasificadorLiteRT(),
       configuracionColor: ConfiguracionColorBase.desdeEntorno,
       tablaColores: () => _tablaColores(ajustesColor),
@@ -232,18 +230,18 @@ EstadoTermicoDispositivo crearEstadoTermico() {
 /// Abre la captura de prendas con lo que tiene el telefono: el almacen privado
 /// de la app, el pipeline on-device, el sensor termico y la camara trasera.
 ///
-/// El subidor es [SubidorPendiente] hasta que el Closet reciba prendas (#25):
-/// las procesadas esperan en la cola sin perderse.
 Future<CapturaDePrendas> abrirCapturaDePrendas({
   FuenteAjustesColor? ajustesColor,
+  String? usuario,
+  SubidorDePrendas subidor = const SubidorPendiente(),
 }) async {
   final EstadoTermico termico = crearEstadoTermico();
   final ColaCaptura cola = await ColaCaptura.abrir(
-    almacen: await AlmacenColaArchivos.enSoporteDeLaApp(),
+    almacen: await AlmacenColaArchivos.enSoporteDeLaApp(usuario: usuario),
     procesador: ProcesadorSobrePipeline(
       crearGarmentPipeline(ajustesColor: ajustesColor),
     ),
-    subidor: const SubidorPendiente(),
+    subidor: subidor,
     termico: termico,
   );
   return CapturaDePrendas(

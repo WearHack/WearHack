@@ -3,9 +3,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/etiquetas.dart';
+import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
+
+String etiquetaOutfit(Outfit outfit) => switch (outfit.clima) {
+  final Clima clima => '${outfit.formalidad.etiqueta} · ${clima.etiqueta}',
+  null => outfit.formalidad.etiqueta,
+};
 
 class TarjetaOutfit extends StatelessWidget {
   const TarjetaOutfit({
@@ -43,13 +49,15 @@ class TarjetaOutfit extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(outfit.clima.icono, size: 18),
-                  const SizedBox(width: 6),
+                  if (outfit.clima case final Clima clima) ...<Widget>[
+                    Icon(clima.icono, size: 18),
+                    const SizedBox(width: 6),
+                  ],
                   // Expanded y no Spacer: con tres tarjetas lado a lado el
                   // texto no siempre cabe, y sin limite desborda la fila.
                   Expanded(
                     child: Text(
-                      '${outfit.formalidad.etiqueta} · ${outfit.clima.etiqueta}',
+                      etiquetaOutfit(outfit),
                       style: Theme.of(context).textTheme.labelLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
