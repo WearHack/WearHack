@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,6 +76,12 @@ class PrendasController {
     @GetMapping("/{id}")
     PrendaRespuesta obtener(@AuthenticationPrincipal Jwt token, @PathVariable String id) {
         return respuesta(prendas.obtener(token.getSubject(), id));
+    }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> borrar(@AuthenticationPrincipal Jwt token, @PathVariable String id) {
+        prendas.borrar(token.getSubject(), id);
+        return ResponseEntity.noContent().build();
     }
 
     /** Correcciones de la pantalla de revision. Solo cambia lo que venga. */

@@ -65,7 +65,11 @@ class S3AlmacenImagenes implements AlmacenImagenes {
         var lista = claves.stream().map(c -> ObjectIdentifier.builder().key(c).build()).toList();
         for (int i = 0; i < lista.size(); i += MAXIMO_POR_BORRADO) {
             var lote = lista.subList(i, Math.min(i + MAXIMO_POR_BORRADO, lista.size()));
-            s3.deleteObjects(d -> d.bucket(bucket).delete(Delete.builder().objects(lote).quiet(true).build()));
+            var respuesta =
+                    s3.deleteObjects(d -> d.bucket(bucket).delete(Delete.builder().objects(lote).quiet(true).build()));
+            if (!respuesta.errors().isEmpty()) {
+                throw new IllegalStateException("El almacen no pudo borrar " + respuesta.errors().size() + " imagenes");
+            }
         }
     }
 

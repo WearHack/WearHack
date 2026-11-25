@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -113,6 +114,41 @@ class PrendasServiceTest {
         when(prendas.findById(ID)).thenReturn(Optional.of(ajena));
 
         assertThatThrownBy(() -> servicio.obtener(SUB, ID)).isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void borrarEliminaPrimeroLaImagenYDespuesElDocumentoDelUsuario() {
+        Prenda previa = guardada(Tipo.PANTALON, Textura.DENIM);
+        when(prendas.findById(ID)).thenReturn(Optional.of(previa));
+
+        servicio.borrar(SUB, ID);
+
+        var orden = inOrder(imagenes, prendas);
+        orden.verify(imagenes).borrar(List.of(previa.imagenKey()));
+        orden.verify(prendas).deleteByIdAndUsuarioId(ID, SUB);
+    }
+
+    @Test
+    void borrarUnaPrendaAjenaNoTocaLaImagenNiElDocumento() {
+        Prenda previa = guardada(Tipo.PANTALON, Textura.DENIM);
+        when(prendas.findById(ID)).thenReturn(Optional.of(previa));
+
+        assertThatThrownBy(() -> servicio.borrar("otro", ID))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+
+        verify(imagenes, never()).borrar(any());
+        verify(prendas, never()).deleteByIdAndUsuarioId(anyString(), anyString());
+    }
+
+    @Test
+    void borrarConElAlmacenCaidoConservaElDocumentoParaReintentar() {
+        Prenda previa = guardada(Tipo.PANTALON, Textura.DENIM);
+        when(prendas.findById(ID)).thenReturn(Optional.of(previa));
+        doThrow(new IllegalStateException("sin almacen")).when(imagenes).borrar(List.of(previa.imagenKey()));
+
+        assertThatThrownBy(() -> servicio.borrar(SUB, ID)).isInstanceOf(IllegalStateException.class);
+
+        verify(prendas, never()).deleteByIdAndUsuarioId(anyString(), anyString());
     }
 
     @Test
