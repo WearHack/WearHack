@@ -12,6 +12,7 @@ import 'package:wearhack/core/ui/movimiento.dart';
 import 'package:wearhack/core/vocabulario.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/features/outfits/contexto.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_clima.dart';
@@ -38,16 +39,36 @@ class PantallaOutfits extends StatefulWidget {
 
 enum _EstadoClima { sinPedir, buscando, obtenido, denegado, sinDato }
 
+typedef _CargaOutfits = ({
+  List<Outfit> semana,
+  LoteOpciones? hoy,
+  ErrorDelCore? cuota,
+});
+
 class _PantallaOutfitsState extends State<PantallaOutfits> {
   ContextoOutfit _contexto = const ContextoOutfit();
   _EstadoClima _estadoClima = _EstadoClima.sinPedir;
   double? _temperatura;
 
-  late Future<(List<Outfit>, LoteOpciones)> _carga = _cargar();
+  late Future<_CargaOutfits> _carga = _cargar();
 
-  Future<(List<Outfit>, LoteOpciones)> _cargar() async {
-    final LoteOpciones lote = await widget.repositorio.opcionesDeHoy(_contexto);
-    return (await widget.repositorio.outfitsDeLaSemana(), lote);
+  Future<_CargaOutfits> _cargar() async {
+    LoteOpciones? hoy;
+    ErrorDelCore? cuota;
+    try {
+      hoy = await widget.repositorio.opcionesDeHoy(_contexto);
+    } on ErrorDelCore catch (error) {
+      if (!error.esCuotaAgotada) rethrow;
+      cuota = error;
+    }
+    List<Outfit> semana = const <Outfit>[];
+    try {
+      semana = await widget.repositorio.outfitsDeLaSemana();
+    } on ErrorDelCore catch (error) {
+      if (!error.esCuotaAgotada) rethrow;
+      cuota ??= error;
+    }
+    return (semana: semana, hoy: hoy, cuota: cuota);
   }
 
   void _recargar() {
@@ -117,69 +138,72 @@ class _PantallaOutfitsState extends State<PantallaOutfits> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<(List<Outfit>, LoteOpciones)>(
+    return FutureBuilder<_CargaOutfits>(
       future: _carga,
-      builder:
-          (
-            BuildContext context,
-            AsyncSnapshot<(List<Outfit>, LoteOpciones)> snapshot,
-          ) {
-            if (snapshot.hasError) return ErrorDeCarga(onReintentar: _recargar);
-            final (List<Outfit>, LoteOpciones)? datos = snapshot.data;
-            if (datos == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final (List<Outfit> outfits, LoteOpciones lote) = datos;
+      builder: (BuildContext context, AsyncSnapshot<_CargaOutfits> snapshot) {
+        if (snapshot.hasError) return ErrorDeCarga(onReintentar: _recargar);
+        final _CargaOutfits? datos = snapshot.data;
+        if (datos == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final List<Outfit> outfits = datos.semana;
+        final LoteOpciones? lote = datos.hoy;
 
-            // En web la ventana puede ser muy ancha; una columna de tarjetas
-            // estiradas a 1900 px no se lee.
-            return Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: <Widget>[
-                    if (lote.elegidoId != null)
-                      _OutfitElegido(elegido: lote.elegido)
-                    else
-                      _PanelDeHoy(
-                        contexto: _contexto,
-                        lote: lote,
-                        estadoClima: _estadoClima,
-                        temperatura: _temperatura,
-                        ofrecerClima: widget.clima != null,
-                        ubicacionDisponible: widget.ubicacion.disponible,
-                        onContexto: _cambiarContexto,
-                        onUbicacion: _usarUbicacion,
-                        onElegir: () => _elegir(lote),
-                      ),
-                    const SizedBox(height: 16),
-                    if (outfits.isEmpty)
-                      const MensajeVacio(
-                        icono: Icons.style_outlined,
-                        texto: 'Todavía no hay outfits para esta semana.',
-                      )
-                    else ...<Widget>[
-                      Text(
-                        'Generados a partir de tu clóset para esta semana.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      for (final (int i, Outfit o)
-                          in outfits.indexed) ...<Widget>[
-                        const SizedBox(height: 8),
-                        Aparece(
-                          key: ValueKey<String>(o.id),
-                          indice: i,
-                          child: TarjetaOutfit(outfit: o),
-                        ),
-                      ],
-                    ],
+        // En web la ventana puede ser muy ancha; una columna de tarjetas
+        // estiradas a 1900 px no se lee.
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                if (datos.cuota case final ErrorDelCore cuota)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(cuota.mensaje),
+                    ),
+                  ),
+                if (lote?.elegidoId != null)
+                  _OutfitElegido(elegido: lote!.elegido)
+                else if (lote != null)
+                  _PanelDeHoy(
+                    contexto: _contexto,
+                    lote: lote,
+                    estadoClima: _estadoClima,
+                    temperatura: _temperatura,
+                    ofrecerClima: widget.clima != null,
+                    ubicacionDisponible: widget.ubicacion.disponible,
+                    onContexto: _cambiarContexto,
+                    onUbicacion: _usarUbicacion,
+                    onElegir: () => _elegir(lote),
+                  ),
+                const SizedBox(height: 16),
+                if (outfits.isEmpty)
+                  const MensajeVacio(
+                    icono: Icons.style_outlined,
+                    texto: 'Todavía no hay outfits para esta semana.',
+                  )
+                else ...<Widget>[
+                  Text(
+                    'Generados a partir de tu clóset para esta semana.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  for (final (int i, Outfit o) in outfits.indexed) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Aparece(
+                      key: ValueKey<String>(o.id),
+                      indice: i,
+                      child: TarjetaOutfit(outfit: o),
+                    ),
                   ],
-                ),
-              ),
-            );
-          },
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:wearhack/core/ui/estados.dart';
 import 'package:wearhack/features/closet/prenda.dart';
 import 'package:wearhack/features/closet/ui/muestra_prenda.dart';
+import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/features/outfits/outfit.dart';
 import 'package:wearhack/features/outfits/repositorio_outfits.dart';
 import 'package:wearhack/features/outfits/ui/tarjeta_outfit.dart';
@@ -61,6 +62,13 @@ class _PantallaSemanaState extends State<PantallaSemana> {
     final List<Outfit> outfits;
     try {
       outfits = await widget.repositorio.outfitsDeLaSemana();
+    } on ErrorDelCore catch (error) {
+      _mostrarError(
+        error.esCuotaAgotada
+            ? error.mensaje
+            : 'No se pudieron cargar los outfits.',
+      );
+      return;
     } on Exception {
       _mostrarError('No se pudieron cargar los outfits.');
       return;
