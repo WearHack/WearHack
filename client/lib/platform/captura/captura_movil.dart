@@ -30,19 +30,20 @@ import 'package:wearhack/platform/captura/almacen_cola_archivos.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/clasificador_litert.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
+import 'package:wearhack/platform/captura/removedor_fondo_litert.dart';
 
 /// Pipeline on-device de prendas: fondo, clasificacion y color base, con un
 /// modelo en memoria a la vez (ver [PipelinePrendasOnDevice]).
 ///
-/// La remocion de fondo es [RemovedorDeFondoPendiente] hasta que este u2netp
-/// (#12): sin ella el pipeline falla en vez de subir la foto original.
+/// La remocion de fondo es u2netp con LiteRT (#12). Si falta el asset, el
+/// pipeline falla en vez de subir la foto original.
 ///
 /// Con [ajustesColor], la tabla ISCC-NBS lleva los ajustes de categoria que
 /// decidio el Core (#58). Si no se pueden leer (sin red, sin sesion), se usa la
 /// tabla tal cual: la categoria es una propuesta que la persona puede corregir.
 GarmentPipeline crearGarmentPipeline({FuenteAjustesColor? ajustesColor}) =>
     PipelinePrendasOnDevice(
-      removedor: const RemovedorDeFondoPendiente(),
+      removedor: RemovedorDeFondoLiteRT(),
       clasificador: ClasificadorLiteRT(),
       configuracionColor: ConfiguracionColorBase.desdeEntorno,
       tablaColores: () => _tablaColores(ajustesColor),
