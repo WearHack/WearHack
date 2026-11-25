@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:wearhack/platform/captura/removedor_litert.dart';
+import 'package:wearhack/core/clasificacion/removedor_fondo.dart';
 
 void main() {
   const int lado = 320;
@@ -14,7 +14,7 @@ void main() {
     mascara.fillRange(lado * 312, mascara.length, 1);
 
     expect(
-      () => aplicarMascaraPrenda(imagen, mascara),
+      () => aplicarMascara(imagen, mascara),
       throwsA(isA<EncuadrePrendaInsuficiente>()),
     );
   });
@@ -26,7 +26,7 @@ void main() {
     }
     mascara[70 * lado + 105] = 0;
 
-    final img.Image prenda = aplicarMascaraPrenda(imagen, mascara);
+    final img.Image prenda = aplicarMascara(imagen, mascara);
     expect((prenda.width, prenda.height), (128, 192));
     final img.Pixel opaco = prenda.getPixel(0, 0);
     expect((opaco.r, opaco.g, opaco.b, opaco.a), (133, 42, 61, 255));

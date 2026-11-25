@@ -63,9 +63,20 @@ Get-FileHash client/assets/models/clasificador_prenda.tflite -Algorithm SHA256
 Aun no esta publicado en ningun sitio compartido: hoy solo lo tiene quien lo
 entreno. Los datos y licencias de origen estan en `docs/procedencia-datos-wearhack.md`.
 
-`u2netp.tflite` se comparte fuera de Git. Recibe RGB en `[0, 255]`
-`[1, 320, 320, 3]` y devuelve una máscara `[1, 320, 320, 1]`, ambos en float32.
-SHA-256 `69bbee91b885fc2df8182168c95293732694ed411b5b2cbdbd2f6ae1ab142eee`.
+`u2netp.tflite` son los pesos oficiales de U^2-Net (`u2netp.pth`, 4,7 MB,
+Apache 2.0, sin reentrenar), exportados con `tools/entrenamiento/fondo/` (ver su
+README). Es la variante `u2netp_fp16.tflite`, 2,5 MB:
+
+```
+SHA-256  69bbee91b885fc2df8182168c95293732694ed411b5b2cbdbd2f6ae1ab142eee
+```
+
+Entrada `(1, 320, 320, 3)` float32, RGB en `[0, 255]`, la foto entera escalada
+sin conservar la proporcion; la normalizacion va dentro. Salida `(1, 320, 320, 1)`,
+la probabilidad de primer plano. El preproceso y la mascara estan en
+`lib/core/clasificacion/removedor_fondo.dart`.
+
+Tampoco esta publicado en ningun sitio compartido.
 
 Los hashes anteriores identifican los archivos de origen. Si el runtime indica
 `Input tensor ... lacks data`, usa

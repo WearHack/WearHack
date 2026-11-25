@@ -30,7 +30,7 @@ import 'package:wearhack/platform/captura/almacen_cola_archivos.dart';
 import 'package:wearhack/platform/captura/camara.dart';
 import 'package:wearhack/platform/captura/clasificador_litert.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
-import 'package:wearhack/platform/captura/removedor_litert.dart';
+import 'package:wearhack/platform/captura/removedor_fondo_litert.dart';
 
 /// Pipeline on-device de prendas: fondo, clasificacion y color base, con un
 /// modelo en memoria a la vez (ver [PipelinePrendasOnDevice]).
@@ -40,7 +40,7 @@ import 'package:wearhack/platform/captura/removedor_litert.dart';
 /// tabla tal cual: la categoria es una propuesta que la persona puede corregir.
 GarmentPipeline crearGarmentPipeline({FuenteAjustesColor? ajustesColor}) =>
     PipelinePrendasOnDevice(
-      removedor: RemovedorLiteRT(),
+      removedor: RemovedorDeFondoLiteRT(),
       clasificador: ClasificadorLiteRT(),
       configuracionColor: ConfiguracionColorBase.desdeEntorno,
       tablaColores: () => _tablaColores(ajustesColor),
