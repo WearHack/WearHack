@@ -63,4 +63,12 @@ Get-FileHash client/assets/models/clasificador_prenda.tflite -Algorithm SHA256
 Aun no esta publicado en ningun sitio compartido: hoy solo lo tiene quien lo
 entreno. Los datos y licencias de origen estan en `docs/procedencia-datos-wearhack.md`.
 
-`u2netp.tflite` sigue pendiente.
+`u2netp.tflite` se comparte fuera de Git. Recibe RGB en `[0, 255]`
+`[1, 320, 320, 3]` y devuelve una máscara `[1, 320, 320, 1]`, ambos en float32.
+SHA-256 `69bbee91b885fc2df8182168c95293732694ed411b5b2cbdbd2f6ae1ab142eee`.
+
+Los hashes anteriores identifican los archivos de origen. Si el runtime indica
+`Input tensor ... lacks data`, usa
+`tools/entrenamiento/prendas/compatibilizar_tflite.py ORIGINAL COPIA` desde la
+raíz del repo para integrar los pesos de cada modelo. Conserva los originales y
+coloca las copias en esta carpeta con los nombres indicados arriba.
