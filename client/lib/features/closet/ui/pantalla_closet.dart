@@ -44,6 +44,7 @@ class _PantallaClosetState extends State<PantallaCloset> {
 
   /// `null` muestra todas.
   SlotOutfit? _filtro;
+  final Set<String> _borrando = <String>{};
 
   /// Las prendas que ya entraron con animacion: al desplazarse o filtrar, lo
   /// que ya se vio no vuelve a entrar.
@@ -56,6 +57,7 @@ class _PantallaClosetState extends State<PantallaCloset> {
   }
 
   Future<void> _abrir(Prenda prenda) async {
+    if (_borrando.contains(prenda.id)) return;
     final RepositorioCloset repositorio = widget.repositorio;
     final bool? eliminar = await showModalBottomSheet<bool>(
       context: context,
@@ -73,10 +75,8 @@ class _PantallaClosetState extends State<PantallaCloset> {
     final bool? confirmado = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('¿Eliminar ${prenda.tipo.etiqueta.toLowerCase()}?'),
-        content: const Text(
-          'Los outfits que la usan dejarán de estar disponibles.',
-        ),
+        title: Text('¿Eliminar ${_tipo(prenda).toLowerCase()}?'),
+        content: const Text('La prenda y su imagen se eliminarán del clóset.'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -89,9 +89,20 @@ class _PantallaClosetState extends State<PantallaCloset> {
         ],
       ),
     );
-    if (confirmado != true) return;
+    if (confirmado != true || !mounted || !_borrando.add(prenda.id)) return;
 
-    await repositorio.eliminarPrenda(prenda.id);
+    try {
+      await repositorio.eliminarPrenda(prenda.id);
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo eliminar la prenda')),
+        );
+      }
+      return;
+    } finally {
+      _borrando.remove(prenda.id);
+    }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Prenda eliminada del clóset')),

@@ -27,6 +27,22 @@ void main() {
     categoriaColor: CategoriaColor.verdeOliva,
   );
 
+  test('pide borrar una prenda del clóset con el token de la sesión', () async {
+    final ClienteCloset closet = ClienteCloset(
+      ConexionCore(
+        cliente: MockClient((http.Request solicitud) async {
+          expect(solicitud.method, 'DELETE');
+          expect(solicitud.url.path, '/api/v1/closet/me/prendas/$id');
+          expect(solicitud.headers['authorization'], 'Bearer $token');
+          return http.Response('', 204);
+        }),
+        base: 'http://127.0.0.1:8090',
+        token: () async => token,
+      ),
+    );
+    await closet.eliminarPrenda(id);
+  });
+
   test('la subida usa el UUID y solo envía la imagen procesada', () async {
     final ClienteCloset closet = ClienteCloset(
       ConexionCore(

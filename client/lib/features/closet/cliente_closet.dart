@@ -10,7 +10,7 @@ import 'package:wearhack/features/colorimetria/conexion_core.dart';
 import 'package:wearhack/features/cuenta/cliente_usuarios.dart';
 import 'package:wearhack/platform/captura/contratos.dart';
 
-class ClienteCloset implements RepositorioCloset {
+class ClienteCloset implements ClosetConBorrado {
   ClienteCloset(this.conexion);
 
   final ConexionCore conexion;
@@ -33,6 +33,15 @@ class ClienteCloset implements RepositorioCloset {
       for (final Object? prenda in cuerpo['prendas']! as List<Object?>)
         _prenda(prenda! as Map<String, Object?>),
     ];
+  }
+
+  @override
+  Future<void> eliminarPrenda(String id) async {
+    conexion.verificar(
+      await conexion.cliente
+          .delete(_uri(id), headers: await conexion.cabeceras())
+          .timeout(_espera),
+    );
   }
 
   SubidorDePrendas subidor(String usuario) => _SubidorCore(this, usuario);
