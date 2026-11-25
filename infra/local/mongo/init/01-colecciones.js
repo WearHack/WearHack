@@ -16,87 +16,76 @@
 const nombreBase = process.env.MONGO_DB || "wearhack";
 const base = db.getSiblingDB(nombreBase);
 
-// ---------------------------------------------------------------- vocabulario ---
-// Los enums viven aqui y en el cliente Flutter. Si cambian, cambian en los dos
-// sitios: el modelo on-device produce estos valores y la base los valida.
+// El vocabulario C.18 se persiste con los enums del módulo closet del Core.
 const TIPOS = [
-  "camiseta", "camisa", "blusa", "sueter", "chaqueta", "abrigo",
-  "pantalon", "jean", "falda", "short", "vestido",
-  "zapato", "bota", "tenis", "sandalia", "accesorio",
+  "CAMISA", "CAMISETA", "SUETER", "CARDIGAN", "CHAQUETA", "ABRIGO",
+  "CHALECO", "PANTALON", "SHORT", "FALDA", "VESTIDO", "ENTERIZO", "CALZADO",
+  "GAFAS", "SOMBRERO", "ACCESORIO_CABELLO", "CORBATA", "BUFANDA", "RELOJ",
+  "CINTURON", "BOLSO", "JOYERIA",
 ];
-
 const TEXTURAS = [
-  "lisa", "punto", "denim", "cuero", "lana", "lino", "seda", "algodon", "sintetico",
+  "LISO_LIGERO", "DENIM", "PUNTO", "PANO", "CUERO", "SATIN", "LINO",
+  "DEPORTIVO", "ACOLCHADO", "OTRA",
 ];
-
 const PATRONES = [
-  "solido", "rayas", "cuadros", "floral", "lunares", "animal", "geometrico", "estampado",
+  "LISO", "RAYAS", "CUADROS", "PUNTOS", "FLORAL", "ANIMAL", "GEOMETRICO",
+  "OTRO_ESTAMPADO",
 ];
-
-const FORMALIDADES = ["deportivo", "casual", "smart_casual", "formal"];
-
-// Un outfit se arma llenando slots. Un slot vacio es un hueco, no un error.
+const FORMALIDADES = ["DEPORTIVO", "CASUAL", "SMART_CASUAL", "FORMAL"];
 const SLOTS_OUTFIT = [
-  "superior", "inferior", "cuerpo_entero", "exterior", "calzado", "accesorio",
+  "TORSO_SUPERIOR", "TORSO_INFERIOR", "CUERPO_COMPLETO", "CALZADO", "EXTERIOR",
+  "ACCESORIO_CUELLO", "ACCESORIO_RELOJ", "ACCESORIO_CINTURA", "ACCESORIO_CABEZA",
+  "ACCESORIO_BOLSO", "ACCESORIO_OJOS", "ACCESORIO_JOYERIA",
 ];
-
-const CLIMAS = ["frio", "templado", "calido", "lluvia"];
-
+const CLIMAS = ["FRIO", "TEMPLADO", "CALIDO"];
 const CATEGORIAS_COLOR = [
-  "blanco", "negro", "gris", "beige", "marron",
-  "rojo", "naranja", "amarillo", "verde", "azul", "morado", "rosa",
-  "multicolor",
+  "NEGRO", "BLANCO", "GRIS", "BEIGE", "CAFE", "VINOTINTO", "ROJO", "ROSADO",
+  "FUCSIA", "NARANJA", "AMARILLO", "MOSTAZA", "VERDE_OLIVA", "VERDE", "TURQUESA",
+  "CELESTE", "AZUL", "AZUL_MARINO", "MORADO", "LILA",
 ];
 
-// ------------------------------------------------------------ esquema prendas ---
-// Minimo a proposito: solo lo que el pipeline on-device produce hoy y el
-// recomendador necesita para filtrar. Validar de mas ahora obligaria a migrar
-// documentos cada vez que el modelo aprenda un atributo nuevo.
 const esquemaPrenda = {
   $jsonSchema: {
     bsonType: "object",
     title: "prenda",
-    required: ["usuario_id", "tipo", "slot_outfit", "color", "atributos"],
-    additionalProperties: true,
+    required: ["usuario_id", "slot_outfit", "atributos"],
     properties: {
       usuario_id: { bsonType: "string" },
-      tipo: { enum: TIPOS },
       slot_outfit: { enum: SLOTS_OUTFIT },
-
-      color: {
-        bsonType: "object",
-        // Lab y no RGB: en Lab la distancia entre dos colores se parece a la
-        // diferencia que percibe el ojo, que es justo lo que necesita la
-        // colorimetria por nearest-centroid.
-        required: ["lab", "categoria"],
-        properties: {
-          lab: {
-            bsonType: "object",
-            required: ["l", "a", "b"],
-            properties: {
-              l: { bsonType: "double", minimum: 0, maximum: 100 },
-              a: { bsonType: "double", minimum: -128, maximum: 127 },
-              b: { bsonType: "double", minimum: -128, maximum: 127 },
-            },
-          },
-          // Redundante con lab a proposito: permite filtrar y agrupar sin
-          // recalcular distancias en cada consulta.
-          categoria: { enum: CATEGORIAS_COLOR },
-        },
-      },
-
       atributos: {
         bsonType: "object",
-        required: ["textura", "patron", "formalidad", "clima_apto"],
+        required: ["tipo", "patron", "clima_apto", "color"],
         properties: {
-          textura: { enum: TEXTURAS },
+          tipo: { enum: TIPOS },
+          subtipo_calzado: { enum: ["TENIS", "ZAPATO_FORMAL", "BOTAS", "SANDALIAS", "TACONES", null] },
+          textura: { enum: [...TEXTURAS, null] },
           patron: { enum: PATRONES },
-          formalidad: { enum: FORMALIDADES },
+          formalidad: {
+            bsonType: ["object", "null"],
+            required: ["min", "max"],
+            properties: {
+              min: { enum: FORMALIDADES },
+              max: { enum: FORMALIDADES },
+            },
+          },
           clima_apto: {
             bsonType: "array",
             minItems: 1,
             uniqueItems: true,
             items: { enum: CLIMAS },
+          },
+          color: {
+            bsonType: "object",
+            required: ["lab", "categoria"],
+            properties: {
+              lab: {
+                bsonType: "array",
+                minItems: 3,
+                maxItems: 3,
+                items: { bsonType: "double" },
+              },
+              categoria: { enum: CATEGORIAS_COLOR },
+            },
           },
         },
       },
@@ -126,6 +115,8 @@ crear("prendas", {
 });
 crear("outfits");
 crear("selecciones");
+base.outfits.createIndex({ usuario_id: 1, fecha: -1 }, { name: "outfits_usuario_fecha" });
+base.selecciones.createIndex({ usuario_id: 1 }, { name: "selecciones_usuario" });
 crear("correcciones_clasificacion");
 crear("configuracion");
 crear("catalogos");
