@@ -35,6 +35,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  # Genera los iconos de Android e iOS desde assets/icono/ (ver flutter_launcher_icons
+  # abajo): dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -45,3 +48,15 @@ flutter:
     - assets/models/
     # Tabla ISCC-NBS de categorias de color (#58). La genera tools/iscc-nbs/.
     - assets/color/
+
+# Icono de la app (el gancho con la W). Los iconos de android/ e ios/ salen de aqui:
+# no se editan a mano, se regeneran con `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  image_path: assets/icono/icono_wearhack.png
+  android: true
+  min_sdk_android: 26
+  # Icono adaptable (Android 8+): fondo crema y el logo dentro de la zona segura.
+  adaptive_icon_background: "#F9F5EA"
+  adaptive_icon_foreground: assets/icono/icono_frente.png
+  ios: true
+  remove_alpha_ios: true
