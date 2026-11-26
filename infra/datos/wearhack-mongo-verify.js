@@ -79,7 +79,7 @@ function noDebeEscribir(d, c) {
 const usuarios = {
   CORE: {
     env: "MONGODB_URI_CORE",
-    escribe: ["usuarios", "consentimientos", "correcciones_colorimetria", "perfiles_colorimetria",
+    escribe: ["usuarios", "consentimientos", "correcciones_colorimetria", "perfiles_colorimetria", "consumo_ia",
               "outfits", "selecciones", "catalogos_marcas", "centroides_color_prenda",
               "ajustes_categoria_color"],
     escribeValidadas: ["prendas", "correcciones_clasificacion", "configuracion"],
