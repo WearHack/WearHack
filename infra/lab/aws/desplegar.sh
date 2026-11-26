@@ -164,8 +164,16 @@ instalar_jobs() {
   fi
 }
 
+# Si el commit solo cambia el Caddyfile, compose no recrea Caddy y este sigue con la
+# configuracion vieja en memoria (el archivo montado si cambia). Recargar es seguro:
+# si la configuracion nueva no es valida, Caddy la rechaza y se queda con la anterior.
+recargar_caddy() {
+  "${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile     >/dev/null 2>&1 || log "Caddy no recargo el Caddyfile"
+}
+
 cd "$REPO"
 if levantar && sano; then
+  recargar_caddy
   docker logout ghcr.io >/dev/null 2>&1 || true
   log "OK ${NUEVO:0:7}"
   install -m 755 "$AWS_DIR/desplegar.sh" "$BASE/desplegar.sh"
@@ -181,5 +189,6 @@ for f in docker-compose.aws.yml Caddyfile; do cp "$AWS_DIR/$f" "$REPO/$f"; done
 sed -i "s/^IMAGEN_TAG=.*/IMAGEN_TAG=$ANTES/" "$REPO/.env"
 # Las imagenes del commit anterior ya estan en el host (descargadas o construidas).
 "${COMPOSE[@]}" up -d --no-build --remove-orphans || "${COMPOSE[@]}" up -d --build --remove-orphans || true
+recargar_caddy
 docker logout ghcr.io >/dev/null 2>&1 || true
 exit 1
