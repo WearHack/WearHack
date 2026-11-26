@@ -79,8 +79,9 @@ function noDebeEscribir(d, c) {
 const usuarios = {
   CORE: {
     env: "MONGODB_URI_CORE",
-    escribe: ["usuarios", "consentimientos", "correcciones_colorimetria", "outfits",
-              "selecciones", "catalogos_marcas", "centroides_color_prenda"],
+    escribe: ["usuarios", "consentimientos", "correcciones_colorimetria", "perfiles_colorimetria",
+              "outfits", "selecciones", "catalogos_marcas", "centroides_color_prenda",
+              "ajustes_categoria_color"],
     escribeValidadas: ["prendas", "correcciones_clasificacion", "configuracion"],
     lee: ["prendas", "correcciones_clasificacion", "configuracion", "recalibraciones", "ranking_prenda_puente"],
     noLee: ["centroides_temporada", "pesos_usuario", "coocurrencia_texturas"],
@@ -105,7 +106,7 @@ const usuarios = {
     escribe: ["centroides_temporada", "pesos_usuario", "coocurrencia_texturas", "recalibraciones", "ranking_prenda_puente"],
     lee: ["prendas", "correcciones_clasificacion", "correcciones_colorimetria", "outfits", "selecciones",
           "catalogos_marcas", "configuracion"],
-    noLee: ["usuarios", "consentimientos", "centroides_color_prenda"],
+    noLee: ["usuarios", "consentimientos", "perfiles_colorimetria", "centroides_color_prenda"],
     noEscribe: ["prendas", "correcciones_clasificacion", "outfits", "selecciones", "configuracion"],
   },
 };

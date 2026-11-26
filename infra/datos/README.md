@@ -29,8 +29,8 @@ Issues: #40 (épica), #41 (schema de Prenda), #42 (índice ESR), #43 (`configura
 
 | Colección | Dueño | Fuente |
 |---|---|---|
-| `usuarios`, `consentimientos`, `correcciones_colorimetria` | Módulo Usuarios | protocolos §6 · nombres **[PROPUESTA]** |
-| `prendas`, `correcciones_clasificacion`, `centroides_color_prenda` | Módulo Clóset | #41, #43 · el tercer nombre **[PROPUESTA]** |
+| `usuarios`, `consentimientos`, `correcciones_colorimetria`, `perfiles_colorimetria` | Módulo Usuarios | protocolos §6 · nombres **[PROPUESTA]** |
+| `prendas`, `correcciones_clasificacion`, `centroides_color_prenda`, `ajustes_categoria_color` | Módulo Clóset | #41, #43, #58 · el tercer nombre **[PROPUESTA]** |
 | `outfits`, `selecciones` | Módulo Outfits | protocolos §6 · nombres **[PROPUESTA]** |
 | `catalogos_marcas` | Módulo Publicidad | protocolos §6 · **[PROPUESTA]** |
 | `centroides_temporada`, `pesos_usuario`, `coocurrencia_texturas` | Servicios de IA y jobs | protocolos §6 · **[PROPUESTA]** |
@@ -44,10 +44,10 @@ Un usuario por componente, con TLS (viene por defecto en `mongodb+srv://`).
 
 | Usuario | Lee y escribe | Solo lee | Sin acceso |
 |---|---|---|---|
-| `wh_core` | `usuarios`, `consentimientos`, `correcciones_colorimetria`, `prendas`, `correcciones_clasificacion`, `centroides_color_prenda`, `outfits`, `selecciones`, `catalogos_marcas`, `configuracion` | `recalibraciones`, `ranking_prenda_puente` | `centroides_temporada`, `pesos_usuario`, `coocurrencia_texturas` |
+| `wh_core` | `usuarios`, `consentimientos`, `correcciones_colorimetria`, `perfiles_colorimetria`, `prendas`, `correcciones_clasificacion`, `centroides_color_prenda`, `ajustes_categoria_color`, `outfits`, `selecciones`, `catalogos_marcas`, `configuracion` | `recalibraciones`, `ranking_prenda_puente` | `centroides_temporada`, `pesos_usuario`, `coocurrencia_texturas` |
 | `wh_colorimetria` | — | `centroides_temporada`, `configuracion` | todo lo demás |
 | `wh_recomendacion` | — | `pesos_usuario`, `coocurrencia_texturas`, `configuracion` | todo lo demás |
-| `wh_jobs` | `centroides_temporada`, `pesos_usuario`, `coocurrencia_texturas`, `recalibraciones`, `ranking_prenda_puente` | `prendas`, `correcciones_clasificacion`, `correcciones_colorimetria`, `outfits`, `selecciones`, `catalogos_marcas`, `configuracion` | `usuarios`, `consentimientos`, `centroides_color_prenda` |
+| `wh_jobs` | `centroides_temporada`, `pesos_usuario`, `coocurrencia_texturas`, `recalibraciones`, `ranking_prenda_puente` | `prendas`, `correcciones_clasificacion`, `correcciones_colorimetria`, `outfits`, `selecciones`, `catalogos_marcas`, `configuracion` | `usuarios`, `consentimientos`, `perfiles_colorimetria`, `centroides_color_prenda` |
 
 ### Puntos abiertos
 
