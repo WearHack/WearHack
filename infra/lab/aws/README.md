@@ -70,6 +70,24 @@ journalctl -u wearhack-jobs -n 50                          # la ultima corrida
 systemctl list-timers wearhack-jobs                        # la proxima
 ```
 
+## Trazas (OpenTelemetry y Jaeger)
+
+Core, colorimetria, recomendador y los jobs mandan sus trazas por OTLP a `jaeger`, que las
+guarda en memoria: se pierden al reiniciar el contenedor o la EC2, y en el lab basta.
+Jaeger no publica puertos: su API de consulta se ve en `https://<dominio>/trazabilidad/api/`,
+detras del mismo usuario y clave que la pagina de trazabilidad.
+
+La pagina vive fuera del repo y se copia a `/opt/wearhack/trazabilidad/`. Caddy la sirve en
+`/trazabilidad/`. El usuario y el hash de la clave salen de SSM; sin ellos la ruta queda
+cerrada con una clave al azar. Para ponerlos (en CloudShell, la clave no queda en el historial):
+
+```bash
+pip install --user -q bcrypt
+read -rp 'Usuario: ' U && read -rsp 'Clave: ' P && echo && H=$(python3 -c 'import bcrypt,sys;print(bcrypt.hashpw(sys.argv[1].encode(),bcrypt.gensalt(12)).decode())' "$P") && aws ssm put-parameter --name /wearhack/TRAZABILIDAD_USUARIO --type String --value "$U" --overwrite >/dev/null && aws ssm put-parameter --name /wearhack/TRAZABILIDAD_HASH --type SecureString --value "$H" --overwrite >/dev/null && unset P H && echo TRAZABILIDAD OK
+```
+
+Se aplican con el siguiente despliegue (`sudo FORZAR=1 /opt/wearhack/desplegar.sh`).
+
 ## Operar
 
 ```bash

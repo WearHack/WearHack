@@ -1,4 +1,26 @@
 {$DOMINIO} {
 	encode gzip
-	reverse_proxy core:8090
+
+	# Trazabilidad: la pagina (fuera del repo, en /opt/wearhack/trazabilidad) y la API de
+	# consulta de Jaeger, las dos con usuario y clave (SSM /wearhack/TRAZABILIDAD_*).
+	redir /trazabilidad /trazabilidad/
+	handle /trazabilidad/* {
+		basic_auth {
+			{$TRAZABILIDAD_USUARIO} {$TRAZABILIDAD_HASH}
+		}
+		handle_path /trazabilidad/api/* {
+			# Jaeger 2 sirve su API HTTP (la que usa su propia UI) bajo /jaeger/api.
+			rewrite * /jaeger/api{uri}
+			reverse_proxy jaeger:16686
+		}
+		handle {
+			uri strip_prefix /trazabilidad
+			root * /srv/trazabilidad
+			file_server
+		}
+	}
+
+	handle {
+		reverse_proxy core:8090
+	}
 }

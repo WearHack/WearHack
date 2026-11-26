@@ -1,16 +1,21 @@
 # Despliegue del monolito en la EC2 del Learner Lab (#60, #20).
 # desplegar.sh lo copia a la raiz del checkout: las rutas de build son relativas a ella.
-# Mongo es Atlas (URIs en .env, desde SSM). Sin MinIO ni collector: el Core aun no
-# usa S3 y no hay donde mandar trazas. Solo Caddy publica puertos (80/443).
+# Mongo es Atlas (URIs en .env, desde SSM). Las trazas van a Jaeger (en memoria) y se
+# consultan en /trazabilidad, con usuario y clave. Solo Caddy publica puertos (80/443).
 x-logging: &logging
   driver: json-file
   options:
     max-size: 10m
     max-file: "3"
 
-x-sin-otel: &sin-otel
-  OTEL_SDK_DISABLED: "true"
-  OTEL_TRACES_EXPORTER: none
+# Trazas de OpenTelemetry hacia Jaeger, en la misma red. Solo trazas: Jaeger no recibe
+# metricas ni logs OTLP. El Core las emite con el agente Java; los de Python con su SDK.
+x-otel: &otel
+  OTEL_SDK_DISABLED: "false"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_TRACES_SAMPLER: parentbased_always_on
   OTEL_METRICS_EXPORTER: none
   OTEL_LOGS_EXPORTER: none
   MANAGEMENT_TRACING_ENABLED: "false"
@@ -25,7 +30,7 @@ services:
     restart: unless-stopped
     logging: *logging
     environment:
-      <<: *sin-otel
+      <<: *otel
       OTEL_SERVICE_NAME: core
       SERVER_PORT: 8090
       LOG_LEVEL: INFO
@@ -47,7 +52,7 @@ services:
     restart: unless-stopped
     logging: *logging
     environment:
-      <<: *sin-otel
+      <<: *otel
       SERVICIO: colorimetria
       SERVER_PORT: 8091
       ENTORNO: lab
@@ -60,7 +65,7 @@ services:
     restart: unless-stopped
     logging: *logging
     environment:
-      <<: *sin-otel
+      <<: *otel
       SERVICIO: recomendador
       SERVER_PORT: 8092
       ENTORNO: lab
@@ -79,7 +84,7 @@ services:
     healthcheck:
       disable: true
     environment:
-      <<: *sin-otel
+      <<: *otel
       SERVICIO: colorimetria
       ENTORNO: lab
       LOG_LEVEL: INFO
@@ -98,12 +103,22 @@ services:
     healthcheck:
       disable: true
     environment:
-      <<: *sin-otel
+      <<: *otel
       SERVICIO: recomendador
       ENTORNO: lab
       LOG_LEVEL: INFO
       MONGO_URI: ${MONGODB_URI_JOBS}
     command: ["python", "-c", "print('Uso: run --rm jobs-recomendador python -m app.jobs.<nombre>')"]
+
+  # Recibe las trazas (OTLP) y las guarda en memoria: se pierden al reiniciar, que en el
+  # lab basta. Sin puertos publicados: la consulta pasa por Caddy, con usuario y clave.
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      # Que escuche OTLP (4317) y la consulta (16686) en la red de compose, no en localhost.
+      JAEGER_LISTEN_HOST: 0.0.0.0
 
   caddy:
     image: caddy:2.10.2
@@ -114,12 +129,17 @@ services:
       - "443:443"
     environment:
       DOMINIO: ${DOMINIO}
+      TRAZABILIDAD_USUARIO: ${TRAZABILIDAD_USUARIO}
+      TRAZABILIDAD_HASH: ${TRAZABILIDAD_HASH}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # La pagina de trazabilidad vive fuera del repo; se copia aqui a mano.
+      - /opt/wearhack/trazabilidad:/srv/trazabilidad:ro
       - caddy-datos:/data
       - caddy-config:/config
     depends_on:
       - core
+      - jaeger
 
 volumes:
   caddy-datos:
