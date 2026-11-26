@@ -94,6 +94,9 @@ for f in docker-compose.aws.yml Caddyfile; do cp "$AWS_DIR/$f" "$REPO/$f"; done
 grep -qx '/docker-compose.aws.yml' "$REPO/.git/info/exclude" 2>/dev/null || \
   printf '/docker-compose.aws.yml\n/Caddyfile\n/.env\n' >> "$REPO/.git/info/exclude"
 
+# Carpeta de la pagina de trazabilidad (fuera del repo). Caddy la monta en solo lectura.
+mkdir -p "$BASE/trazabilidad"
+
 TOKEN=$(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 300')
 IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
 DB=$(leer MONGODB_DB); DB=${DB:-wearhack}
@@ -109,6 +112,16 @@ umask 077
     [ -n "$v" ] && v=$(con_base "$v" "$DB")
     echo "$n=$v"
   done
+  # Pagina de trazabilidad (Caddy, basic_auth). Sin clave en SSM queda cerrada con el
+  # hash de una clave al azar que nadie conoce: Caddy no arranca con el hash vacio.
+  tu=$(leer TRAZABILIDAD_USUARIO); th=$(leer TRAZABILIDAD_HASH)
+  if [ -z "$th" ]; then
+    tu=cerrado
+    th=$(docker run --rm caddy:2.10.2 caddy hash-password --plaintext "$(openssl rand -hex 24)")
+  fi
+  echo "TRAZABILIDAD_USUARIO=${tu:-wearhack}"
+  # Entre comillas simples: el hash bcrypt lleva '$' y compose lo interpolaria.
+  echo "TRAZABILIDAD_HASH='$th'"
   # IDs del User Pool (no son secretos): de SSM (cognito.sh) o de cognito.env.
   for n in COGNITO_REGION COGNITO_USER_POOL_ID COGNITO_CLIENT_IDS; do
     v=$(leer "$n")
