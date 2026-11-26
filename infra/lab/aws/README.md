@@ -74,7 +74,7 @@ systemctl list-timers wearhack-jobs                        # la proxima
 
 Core, colorimetria, recomendador y los jobs mandan sus trazas por OTLP a `jaeger`, que las
 guarda en memoria: se pierden al reiniciar el contenedor o la EC2, y en el lab basta.
-Jaeger no publica puertos: su API de consulta se ve en `https://<dominio>/trazabilidad/api/`,
+Jaeger no publica puertos: su API de consulta (v3) se ve en `https://<dominio>/trazabilidad/api/`,
 detras del mismo usuario y clave que la pagina de trazabilidad.
 
 La pagina vive fuera del repo y se copia a `/opt/wearhack/trazabilidad/`. Caddy la sirve en

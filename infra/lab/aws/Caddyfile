@@ -9,8 +9,9 @@
 			{$TRAZABILIDAD_USUARIO} {$TRAZABILIDAD_HASH}
 		}
 		handle_path /trazabilidad/api/* {
-			# Jaeger 2 sirve su API HTTP (la que usa su propia UI) bajo /jaeger/api.
-			rewrite * /jaeger/api{uri}
+			# Jaeger 2.22 solo trae la API v3 (/api/v3). Bajo /jaeger/api responde su
+			# propia interfaz web, no JSON.
+			rewrite * /api/v3{uri}
 			reverse_proxy jaeger:16686
 		}
 		handle {
